@@ -1,0 +1,93 @@
+﻿<Window x:Class="QuickTechPOS.Views.OpenDrawerDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Open Cash Drawer" 
+        Height="380" 
+        Width="400"
+        WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize">
+
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <TextBlock Grid.Row="0" 
+                   Text="Open Cash Drawer" 
+                   FontSize="20" 
+                   FontWeight="Bold"
+                   Foreground="#2C3E50"
+                   Margin="0,0,0,15"/>
+
+        <!-- Content -->
+        <StackPanel Grid.Row="1">
+            <TextBlock Text="Please enter the opening balance for this cash drawer session:" 
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,15"/>
+
+            <TextBlock Text="Opening Balance:" 
+                       FontWeight="Bold"
+                       Margin="0,0,0,5"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" 
+                           Text="$" 
+                           FontWeight="Bold"
+                           VerticalAlignment="Center"
+                           Margin="5,0,5,0"/>
+                <TextBox Grid.Column="1" 
+                         Text="{Binding OpeningBalance, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" 
+                         Height="32"
+                         Padding="5,0"
+                         VerticalContentAlignment="Center"/>
+            </Grid>
+
+            <TextBlock Text="Notes (optional):" 
+                       FontWeight="Bold"
+                       Margin="0,15,0,5"/>
+            <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" 
+                     Height="80"
+                     TextWrapping="Wrap"
+                     AcceptsReturn="True"
+                     VerticalScrollBarVisibility="Auto"
+                     Padding="5"/>
+
+            <!-- Error message -->
+            <TextBlock Text="{Binding ErrorMessage}" 
+                       Foreground="Red" 
+                       TextWrapping="Wrap" 
+                       Margin="0,15,0,0" 
+                       Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisibilityConverter}}"/>
+
+            <!-- Loading indicator -->
+            <ProgressBar IsIndeterminate="True" 
+                         Height="4" 
+                         Margin="0,15,0,0"
+                         Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+        </StackPanel>
+
+        <!-- Buttons -->
+        <StackPanel Grid.Row="2" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right" 
+                    Margin="0,15,0,0">
+            <Button Content="Cancel" 
+                    Command="{Binding CancelCommand}"
+                    Width="80" 
+                    Height="32"
+                    Margin="0,0,10,0"/>
+            <Button Content="Open Drawer" 
+                    Command="{Binding OpenDrawerCommand}"
+                    Width="120" 
+                    Height="32"
+                    Background="#2ECC71" 
+                    Foreground="White"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -354,12 +354,15 @@ namespace QuickTechPOS.ViewModels
             LoadExchangeRateAsync();
         }
 
-        private async void LoadExchangeRateAsync()
+        private async Task LoadExchangeRateAsync()
         {
             try
             {
                 ExchangeRate = await _businessSettingsService.GetExchangeRateAsync();
                 Console.WriteLine($"Loaded exchange rate: {ExchangeRate}");
+                // Always enable exchange rate display by default
+                UseExchangeRate = true;
+                CalculateExchangeAmount();
             }
             catch (Exception ex)
             {
@@ -367,11 +370,14 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+
         private void CalculateExchangeAmount()
         {
-            if (UseExchangeRate && ExchangeRate > 0)
+            // Always calculate exchange amount if we have a valid exchange rate
+            if (ExchangeRate > 0)
             {
                 ExchangeAmount = TotalAmount * ExchangeRate;
+                Console.WriteLine($"Calculated exchange amount: {TotalAmount} USD × {ExchangeRate} = {ExchangeAmount} LBP");
             }
             else
             {
@@ -990,12 +996,14 @@ namespace QuickTechPOS.ViewModels
                 PaidAmount = TotalAmount;
             }
 
+            // Always calculate exchange amount whenever totals change
             CalculateExchangeAmount();
             CalculateAmountToDebt();
 
             OnPropertyChanged(nameof(CanCheckout));
+            // Ensure ExchangeAmount property change is notified
+            OnPropertyChanged(nameof(ExchangeAmount));
         }
-
         private async Task CheckoutAsync()
         {
             try
@@ -1187,7 +1195,7 @@ namespace QuickTechPOS.ViewModels
                 PaidAmount = 0;
                 AddToCustomerDebt = false;
                 AmountToDebt = 0;
-                UseExchangeRate = false;
+                UseExchangeRate = true;
 
                 await LookupTransactionAsync();
 
@@ -1280,7 +1288,8 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 await CheckNavigationAvailabilityAsync(transactionId);
-
+                CalculateExchangeAmount();
+                OnPropertyChanged(nameof(ExchangeAmount));
                 StatusMessage = $"Loaded transaction #{transactionId} completed on {transaction.FormattedDate}.";
             }
             catch (Exception ex)

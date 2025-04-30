@@ -190,5 +190,10 @@ namespace QuickTechPOS.Views
                 _viewModel.UpdateCartItemDiscount(cartItem);
             }
         }
+
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

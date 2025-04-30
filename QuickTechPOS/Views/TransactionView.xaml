@@ -142,11 +142,14 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
+        <!-- Fixed top nav bar with properly positioned buttons -->
         <Border Grid.Row="0" Background="#1E293B" Padding="20,12">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
@@ -186,7 +189,24 @@
                     </Border>
                 </StackPanel>
 
+                <!-- Cash Out button - Only visible when drawer is open -->
                 <Button Grid.Column="2" 
+                    Content="Cash Out" 
+                    Command="{Binding CashOutCommand}"
+                    Style="{StaticResource WarningButton}"
+                    Margin="0,0,10,0"
+                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <!-- Close Drawer button - Only visible when drawer is open -->
+                <Button Grid.Column="3" 
+                    Content="Close Drawer" 
+                    Command="{Binding CloseDrawerCommand}"
+                    Style="{StaticResource DangerButton}"
+                    Margin="0,0,10,0"
+                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                <!-- Logout button always on the far right -->
+                <Button Grid.Column="4" 
                     Content="Logout" 
                     Command="{Binding LogoutCommand}"
                     Style="{StaticResource SecondaryButton}"/>
@@ -233,7 +253,7 @@
                                 <Button Content="Select Customer" 
                                         Command="{Binding SelectCustomerCommand}"
                                         Style="{StaticResource PrimaryButton}"
-                                        Margin="0,0,8,0"/>
+                                        Margin="0,0,10,0" Height="33"/>
 
                                 <Button Content="Add New" 
                                         Command="{Binding AddCustomerCommand}"
@@ -413,18 +433,7 @@
                                         Style="{StaticResource PrimaryButton}"/>
                             </Grid>
 
-                            <StackPanel Orientation="Horizontal"
-                                        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <Button Content="Cash Out" 
-                                        Command="{Binding CashOutCommand}"
-                                        Style="{StaticResource WarningButton}"
-                                        Margin="0,0,8,0"/>
-
-                                <Button Content="Close Drawer" 
-                                        Command="{Binding CloseDrawerCommand}"
-                                        Style="{StaticResource DangerButton}"/>
-                            </StackPanel>
-
+                            <!-- Open Drawer button - Only visible when drawer is closed -->
                             <Button Content="Open Drawer" 
                                     Command="{Binding OpenDrawerCommand}"
                                     Style="{StaticResource SuccessButton}"
@@ -476,7 +485,7 @@
                             <Button Grid.Column="1"
                                     Content="Clear Cart" 
                                     Command="{Binding ClearCartCommand}"
-                                    Style="{StaticResource DangerButton}"/>
+                                    Style="{StaticResource DangerButton}" Margin="0,0,0,-8"/>
                         </Grid>
                     </Border>
 

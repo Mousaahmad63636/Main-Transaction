@@ -1,0 +1,29 @@
+===================================
+             RECEIPT              
+===================================
+
+          QuickTech Systems          
+
+Transaction #: 12
+Date: 2025-04-30 18:17:44
+Cashier: System Administrator
+Customer: ahmad
+Payment Method: Cash
+
+------------- ITEMS ---------------
+Qty  Description            Price   Total
+------------------------------------
+1.00 1111                 USD2.00   USD2.00
+------------------------------------
+Subtotal:         USD2.00
+Exchange Rate:     1 USD = 90000 LBP
+Total (LBP):       LBP 180000
+Amount Paid:       USD2.00
+Change:            USD0.00
+
+Stay caffeinated!!
+See you next time
+
+===================================
+         Thank You!               
+===================================

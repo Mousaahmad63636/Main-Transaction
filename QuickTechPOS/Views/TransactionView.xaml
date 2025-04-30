@@ -9,50 +9,12 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- App Bar (Blue) -->
-        <Border Grid.Row="0" Background="#2196F3" Padding="15,10">
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
-
-                <!-- App Title -->
-                <TextBlock Grid.Column="0" 
-                       Text="QuickTech POS" 
-                       FontSize="22" 
-                       FontWeight="Bold" 
-                       Foreground="White" 
-                       VerticalAlignment="Center"/>
-
-                <!-- Welcome Message -->
-                <TextBlock Grid.Column="1" 
-                       Text="{Binding WelcomeMessage}" 
-                       FontSize="16" 
-                       Foreground="White" 
-                       HorizontalAlignment="Center" 
-                       VerticalAlignment="Center"/>
-
-                <!-- Logout Button -->
-                <Button Grid.Column="2" 
-                    Content="Logout" 
-                    Command="{Binding LogoutCommand}"
-                    Background="Transparent"
-                    Foreground="White"
-                    FontSize="14"
-                    BorderThickness="0"
-                    Cursor="Hand"/>
-            </Grid>
-        </Border>
-
         <!-- Transaction Bar (Dark Blue) -->
-        <Border Grid.Row="1" Background="#2C3E50" Padding="15,10">
+        <Border Grid.Row="0" Background="#2C3E50" Padding="15,10">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
@@ -174,7 +136,7 @@
         </Border>
 
         <!-- Main Content Area -->
-        <Grid Grid.Row="2" Margin="15">
+        <Grid Grid.Row="1" Margin="15">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="350"/>
                 <ColumnDefinition Width="*"/>

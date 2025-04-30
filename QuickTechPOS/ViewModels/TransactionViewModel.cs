@@ -667,7 +667,6 @@ namespace QuickTechPOS.ViewModels
                 {
                     AddToCart(product);
                     BarcodeQuery = string.Empty;
-                    StatusMessage = $"Added {product.Name} to cart.";
                 }
                 else
                 {
@@ -875,15 +874,36 @@ namespace QuickTechPOS.ViewModels
                 }
             }
 
-            var existingItem = CartItems.FirstOrDefault(i => i.Product.ProductId == product.ProductId);
+            // Check if the product already exists in the cart
+            var existingItemIndex = CartItems.ToList().FindIndex(i => i.Product.ProductId == product.ProductId);
 
-            if (existingItem != null)
+            if (existingItemIndex >= 0)
             {
+                // Get the existing cart item
+                var existingItem = CartItems[existingItemIndex];
+
+                // Update the quantity
                 existingItem.Quantity += 1;
-                UpdateCartItemQuantity(existingItem);
+
+                // Recalculate discount if it's a percentage-based discount
+                if (existingItem.DiscountType == 1)
+                {
+                    // Store the current percentage
+                    decimal percentage = existingItem.DiscountValue;
+                    // Update the discount amount based on the new quantity
+                    existingItem.DiscountValue = percentage;
+                }
+
+                // Force UI refresh by removing and re-adding the item
+                var updatedItem = existingItem;
+                CartItems.RemoveAt(existingItemIndex);
+                CartItems.Insert(existingItemIndex, updatedItem);
+
+                StatusMessage = $"Updated {product.Name} quantity to {updatedItem.Quantity}";
             }
             else
             {
+                // Product doesn't exist in the cart, add it as a new item
                 var newItem = new CartItem
                 {
                     Product = product,
@@ -894,10 +914,10 @@ namespace QuickTechPOS.ViewModels
                 };
 
                 CartItems.Add(newItem);
+                StatusMessage = $"Added {product.Name} to cart.";
             }
 
             UpdateTotals();
-            StatusMessage = $"Added {product.Name} to cart.";
         }
 
         public void UpdateCartItemQuantity(CartItem cartItem)

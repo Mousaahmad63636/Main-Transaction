@@ -417,10 +417,14 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 CurrentDrawer = drawer;
+
+                // Important: Notify UI that drawer state has changed
                 OnPropertyChanged(nameof(IsDrawerOpen));
 
-                // Refresh command states
-                CommandManager.InvalidateRequerySuggested();
+                // Force UI update through dispatcher for immediate refresh
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    CommandManager.InvalidateRequerySuggested();
+                });
             }
             catch (Exception ex)
             {
@@ -442,13 +446,22 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 var dialog = new CashOutDialog(CurrentDrawer);
+                dialog.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
+                dialog.Owner = System.Windows.Application.Current.MainWindow;
 
                 if (dialog.ShowDialog() == true)
                 {
+                    // Explicit refresh after successful cash out
+                    await Task.Delay(100); // Small delay to ensure DB transaction completes
+                    await RefreshDrawerStatusAsync();
+
                     var updatedDrawer = dialog.UpdatedDrawer;
                     StatusMessage = $"Cash out operation completed successfully.";
 
-                    await GetCurrentDrawerAsync();
+                    // Force UI update
+                    OnPropertyChanged(nameof(CurrentDrawer));
+                    OnPropertyChanged(nameof(IsDrawerOpen));
+                    CommandManager.InvalidateRequerySuggested();
                 }
             }
             catch (Exception ex)
@@ -461,10 +474,27 @@ namespace QuickTechPOS.ViewModels
 
         public async Task RefreshDrawerStatusAsync()
         {
-            await GetCurrentDrawerAsync();
+            try
+            {
+                // Get fresh drawer status from database
+                await GetCurrentDrawerAsync();
+
+                // Additional UI refreshes to ensure all drawer-related UI updates
+                OnPropertyChanged(nameof(CurrentDrawer));
+                OnPropertyChanged(nameof(IsDrawerOpen));
+
+                // Force command manager to update button states
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    CommandManager.InvalidateRequerySuggested();
+                });
+
+                Console.WriteLine($"Drawer status refreshed. IsDrawerOpen: {IsDrawerOpen}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error refreshing drawer status: {ex.Message}");
+            }
         }
-
-
 
         private async Task OpenDrawerDialogAsync()
         {

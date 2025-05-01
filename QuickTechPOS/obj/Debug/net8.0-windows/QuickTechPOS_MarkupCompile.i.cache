@@ -16,5 +16,5 @@ C:\Users\Gundam\Desktop\transactionpage-main\transactionpage-main\QuickTechPOS\A
 2361498152771
 MainView.xaml;MainWindow.xaml;Views\AddCustomerDialog.xaml;Views\CashOutDialog.xaml;Views\CloseDrawerDialog.xaml;Views\CustomerSelectionDialog.xaml;Views\LoginView.xaml;Views\OpenDrawerDialog.xaml;Views\TransactionView.xaml;
 
-True
+False
 

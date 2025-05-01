@@ -131,12 +131,21 @@ namespace QuickTechPOS.ViewModels
                 // Use the drawer service to perform the cash out operation
                 var updatedDrawer = await _drawerService.PerformCashOutAsync(_drawer.DrawerId, CashOutAmount, Notes);
 
+                // Copy updated values to our drawer object
+                _drawer.CashOut = updatedDrawer.CashOut;
+                _drawer.CurrentBalance = updatedDrawer.CurrentBalance;
+                _drawer.NetCashFlow = updatedDrawer.NetCashFlow;
+                _drawer.Notes = updatedDrawer.Notes;
+                _drawer.LastUpdated = updatedDrawer.LastUpdated;
+
                 DialogResult = true;
+                OnPropertyChanged(nameof(DialogResult));
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Error performing cash out: {ex.Message}";
                 DialogResult = false;
+                OnPropertyChanged(nameof(DialogResult));
             }
             finally
             {
@@ -150,6 +159,7 @@ namespace QuickTechPOS.ViewModels
         private void Cancel()
         {
             DialogResult = false;
+            OnPropertyChanged(nameof(DialogResult));
         }
 
         /// <summary>

@@ -28,6 +28,12 @@ namespace QuickTechPOS.Views
                     _viewModel.DialogResult.HasValue)
                 {
                     DialogResult = _viewModel.DialogResult;
+
+                    // Close immediately on success to ensure prompt UI update
+                    if (_viewModel.DialogResult == true)
+                    {
+                        this.Close();
+                    }
                 }
             };
         }

@@ -17,6 +17,7 @@ namespace QuickTechPOS
         private Frame _mainFrame;
         private MainWindow _mainWindow;
         private Customer _walkInCustomer;
+        private TransactionViewModel _transactionViewModel;
 
         protected override async void OnStartup(StartupEventArgs e)
         {
@@ -69,7 +70,15 @@ namespace QuickTechPOS
 
                     bool? result = dialog.ShowDialog();
 
-                    if (result != true)
+                    if (result == true)
+                    {
+                        // Drawer was successfully opened - explicitly refresh the transaction view's drawer status
+                        if (_transactionViewModel != null)
+                        {
+                            await _transactionViewModel.RefreshDrawerStatusAsync();
+                        }
+                    }
+                    else
                     {
                         // If user cancels opening a drawer, show message
                         MessageBox.Show("You must open a drawer to continue using the system.",
@@ -98,7 +107,16 @@ namespace QuickTechPOS
             dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             dialog.Topmost = true;
             dialog.Owner = _mainWindow;
-            return dialog.ShowDialog() == true;
+
+            bool? result = dialog.ShowDialog();
+
+            if (result == true && _transactionViewModel != null)
+            {
+                // Refresh drawer status if drawer was opened successfully
+                await _transactionViewModel.RefreshDrawerStatusAsync();
+            }
+
+            return result == true;
         }
 
         private void RegisterViews()
@@ -117,8 +135,8 @@ namespace QuickTechPOS
                 var mainView = new MainView(mainViewModel);
 
                 // Add transaction view to the main view content
-                var transactionViewModel = new TransactionViewModel(authService, _walkInCustomer);
-                var transactionView = new TransactionView(transactionViewModel);
+                _transactionViewModel = new TransactionViewModel(authService, _walkInCustomer);
+                var transactionView = new TransactionView(_transactionViewModel);
 
                 // Set the transaction view as the main content
                 mainView.SetContent(transactionView);

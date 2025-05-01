@@ -74,15 +74,36 @@ namespace QuickTechPOS
                     // Show the open drawer dialog
                     var viewModel = new OpenDrawerViewModel(authService);
                     var dialog = new OpenDrawerDialog(viewModel);
-                    dialog.ShowDialog();
+                    bool? result = dialog.ShowDialog();
+
+                    if (result != true)
+                    {
+                        // If user cancels opening a drawer, show message
+                        MessageBox.Show("You must open a drawer to continue using the system.",
+                            "Drawer Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                        // Try again or exit
+                        if (!await RetryOpenDrawerAsync(authService))
+                        {
+                            Application.Current.Shutdown();
+                        }
+                    }
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error checking for open drawer: {ex.Message}");
+                MessageBox.Show($"Error checking for open drawer: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
+        private async Task<bool> RetryOpenDrawerAsync(AuthenticationService authService)
+        {
+            var viewModel = new OpenDrawerViewModel(authService);
+            var dialog = new OpenDrawerDialog(viewModel);
+            return dialog.ShowDialog() == true;
+        }
         /// <summary>
         /// Registers all views with the navigation service
         /// </summary>

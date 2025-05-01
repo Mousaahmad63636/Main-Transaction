@@ -121,6 +121,7 @@
                                    Foreground="#334155"/>
                     </Border>
                     <TextBox Grid.Column="1" 
+                             Name="OpeningBalanceTextBox"
                              Text="{Binding OpeningBalance, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" 
                              Style="{StaticResource InputField}"
                              BorderThickness="0,1,1,1"
@@ -166,7 +167,10 @@
                 <Button Content="Open Drawer" 
                         Command="{Binding OpenDrawerCommand}"
                         Style="{StaticResource SuccessButton}"
-                        Width="130"/>
+                        Width="150"
+                        Height="40"
+                        FontWeight="Bold"
+                        FontSize="14"/>
             </StackPanel>
         </Grid>
     </Border>

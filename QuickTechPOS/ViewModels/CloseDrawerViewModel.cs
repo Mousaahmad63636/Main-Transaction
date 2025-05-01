@@ -141,11 +141,13 @@ namespace QuickTechPOS.ViewModels
 
                 // Signal success to the view
                 DialogResult = true;
+                OnPropertyChanged(nameof(DialogResult));
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Error closing drawer: {ex.Message}";
                 DialogResult = false;
+                OnPropertyChanged(nameof(DialogResult));
             }
             finally
             {

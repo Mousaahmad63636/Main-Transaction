@@ -11,10 +11,6 @@ namespace QuickTechPOS.Views
     {
         private readonly OpenDrawerViewModel _viewModel;
 
-        /// <summary>
-        /// Initializes a new instance of the open drawer dialog
-        /// </summary>
-        /// <param name="viewModel">The view model for this dialog</param>
         public OpenDrawerDialog(OpenDrawerViewModel viewModel)
         {
             InitializeComponent();
@@ -28,6 +24,10 @@ namespace QuickTechPOS.Views
                     _viewModel.DialogResult.HasValue)
                 {
                     DialogResult = _viewModel.DialogResult;
+                    if (_viewModel.DialogResult == true)
+                    {
+                        this.Close();
+                    }
                 }
             };
         }

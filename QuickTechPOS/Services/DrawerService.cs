@@ -1,8 +1,11 @@
-﻿using QuickTechPOS.Models;
+﻿// File: QuickTechPOS/Services/DrawerService.cs (key updated methods)
+
+using QuickTechPOS.Models;
 using System;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace QuickTechPOS.Services
 {
@@ -70,6 +73,38 @@ namespace QuickTechPOS.Services
                 _dbContext.Drawers.Add(drawer);
                 await _dbContext.SaveChangesAsync();
 
+                // Create a drawer transaction for the opening balance
+                var drawerTransaction = new DrawerTransaction
+                {
+                    DrawerId = drawer.DrawerId,
+                    Timestamp = DateTime.Now,
+                    Type = "Open",
+                    Amount = openingBalance,
+                    Balance = openingBalance,
+                    ActionType = "Open",
+                    Description = "Drawer opened with initial balance",
+                    TransactionReference = drawer.DrawerId.ToString(),
+                    IsVoided = false,
+                    PaymentMethod = "Cash"
+                };
+
+                _dbContext.DrawerTransactions.Add(drawerTransaction);
+                await _dbContext.SaveChangesAsync();
+
+                // Also create a drawer history entry
+                var historyEntry = new DrawerHistoryEntry
+                {
+                    Timestamp = DateTime.Now,
+                    ActionType = "Open",
+                    Description = "Drawer opened with initial balance",
+                    Amount = openingBalance,
+                    ResultingBalance = openingBalance,
+                    UserId = cashierId
+                };
+
+                _dbContext.DrawerHistoryEntries.Add(historyEntry);
+                await _dbContext.SaveChangesAsync();
+
                 return drawer;
             }
             catch (Exception ex)
@@ -78,6 +113,7 @@ namespace QuickTechPOS.Services
                 throw;
             }
         }
+
         /// <summary>
         /// Performs a cash out operation on a drawer
         /// </summary>
@@ -127,6 +163,36 @@ namespace QuickTechPOS.Services
                 else
                     drawer.Notes = $"{drawer.Notes}\n{cashOutNote}";
 
+                // Create a drawer transaction for the cash out
+                var drawerTransaction = new DrawerTransaction
+                {
+                    DrawerId = drawer.DrawerId,
+                    Timestamp = DateTime.Now,
+                    Type = "Cash Out",
+                    Amount = cashOutAmount,
+                    Balance = drawer.CurrentBalance,
+                    ActionType = "Cash Out",
+                    Description = notes,
+                    TransactionReference = drawer.DrawerId.ToString(),
+                    IsVoided = false,
+                    PaymentMethod = "Cash"
+                };
+
+                _dbContext.DrawerTransactions.Add(drawerTransaction);
+
+                // Create a drawer history entry
+                var historyEntry = new DrawerHistoryEntry
+                {
+                    Timestamp = DateTime.Now,
+                    ActionType = "Cash Out",
+                    Description = notes,
+                    Amount = cashOutAmount,
+                    ResultingBalance = drawer.CurrentBalance,
+                    UserId = drawer.CashierId
+                };
+
+                _dbContext.DrawerHistoryEntries.Add(historyEntry);
+
                 await _dbContext.SaveChangesAsync();
 
                 return drawer;
@@ -137,6 +203,7 @@ namespace QuickTechPOS.Services
                 throw;
             }
         }
+
         /// <summary>
         /// Closes an open drawer session
         /// </summary>
@@ -159,18 +226,81 @@ namespace QuickTechPOS.Services
                     throw new InvalidOperationException("Cannot close a drawer that is not open.");
                 }
 
+                // Calculate difference between expected and closing balance
+                decimal expectedBalance = drawer.OpeningBalance + drawer.CashIn - drawer.CashOut + drawer.TotalSales - drawer.TotalExpenses - drawer.TotalSupplierPayments;
+                decimal difference = closingBalance - expectedBalance;
+
                 drawer.CurrentBalance = closingBalance;
                 drawer.ClosedAt = DateTime.Now;
                 drawer.LastUpdated = DateTime.Now;
                 drawer.Status = "Closed";
 
                 // Update notes - append closing notes to existing notes
+                string closingNote = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Drawer closed with balance: ${closingBalance:F2}";
+                if (Math.Abs(difference) > 0.01m)
+                {
+                    string differenceNote = difference > 0
+                        ? $" (Overage: ${difference:F2})"
+                        : $" (Shortage: ${Math.Abs(difference):F2})";
+                    closingNote += differenceNote;
+                }
+
                 if (!string.IsNullOrEmpty(closingNotes))
                 {
-                    if (string.IsNullOrEmpty(drawer.Notes))
-                        drawer.Notes = $"Closing notes: {closingNotes}";
-                    else
-                        drawer.Notes = $"{drawer.Notes}\nClosing notes: {closingNotes}";
+                    closingNote += $" - {closingNotes}";
+                }
+
+                if (string.IsNullOrEmpty(drawer.Notes))
+                    drawer.Notes = closingNote;
+                else
+                    drawer.Notes = $"{drawer.Notes}\n{closingNote}";
+
+                // Create a drawer transaction for closing
+                var drawerTransaction = new DrawerTransaction
+                {
+                    DrawerId = drawer.DrawerId,
+                    Timestamp = DateTime.Now,
+                    Type = "Close",
+                    Amount = closingBalance,
+                    Balance = closingBalance,
+                    ActionType = "Close",
+                    Description = closingNotes,
+                    TransactionReference = drawer.DrawerId.ToString(),
+                    IsVoided = false,
+                    PaymentMethod = "Cash"
+                };
+
+                _dbContext.DrawerTransactions.Add(drawerTransaction);
+
+                // Create a drawer history entry
+                var historyEntry = new DrawerHistoryEntry
+                {
+                    Timestamp = DateTime.Now,
+                    ActionType = "Close",
+                    Description = $"Drawer closed with balance: ${closingBalance:F2} {(string.IsNullOrEmpty(closingNotes) ? "" : $" - {closingNotes}")}",
+                    Amount = closingBalance,
+                    ResultingBalance = closingBalance,
+                    UserId = drawer.CashierId
+                };
+
+                _dbContext.DrawerHistoryEntries.Add(historyEntry);
+
+                // If there's a significant difference, create an adjustment entry
+                if (Math.Abs(difference) > 0.01m)
+                {
+                    var adjustmentEntry = new DrawerHistoryEntry
+                    {
+                        Timestamp = DateTime.Now,
+                        ActionType = difference > 0 ? "Overage" : "Shortage",
+                        Description = difference > 0
+                            ? $"Cash overage of ${difference:F2}"
+                            : $"Cash shortage of ${Math.Abs(difference):F2}",
+                        Amount = Math.Abs(difference),
+                        ResultingBalance = closingBalance,
+                        UserId = drawer.CashierId
+                    };
+
+                    _dbContext.DrawerHistoryEntries.Add(adjustmentEntry);
                 }
 
                 await _dbContext.SaveChangesAsync();
@@ -209,6 +339,48 @@ namespace QuickTechPOS.Services
             {
                 Console.WriteLine($"Error in GetOpenDrawerAsync: {ex.Message}");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Gets the drawer transactions for a specific drawer
+        /// </summary>
+        /// <param name="drawerId">The drawer ID</param>
+        /// <returns>A list of drawer transactions</returns>
+        public async Task<List<DrawerTransaction>> GetDrawerTransactionsAsync(int drawerId)
+        {
+            try
+            {
+                return await _dbContext.DrawerTransactions
+                    .Where(dt => dt.DrawerId == drawerId)
+                    .OrderByDescending(dt => dt.Timestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting drawer transactions: {ex.Message}");
+                return new List<DrawerTransaction>();
+            }
+        }
+
+        /// <summary>
+        /// Gets the drawer history entries for a specific drawer
+        /// </summary>
+        /// <param name="drawerId">The drawer ID</param>
+        /// <returns>A list of drawer history entries</returns>
+        public async Task<List<DrawerHistoryEntry>> GetDrawerHistoryAsync(string cashierId)
+        {
+            try
+            {
+                return await _dbContext.DrawerHistoryEntries
+                    .Where(dhe => dhe.UserId == cashierId)
+                    .OrderByDescending(dhe => dhe.Timestamp)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting drawer history: {ex.Message}");
+                return new List<DrawerHistoryEntry>();
             }
         }
 
@@ -256,6 +428,64 @@ namespace QuickTechPOS.Services
 
                 // Update timestamp
                 drawer.LastUpdated = DateTime.Now;
+
+                // Create drawer transactions if needed
+                if (salesAmount > 0)
+                {
+                    var saleTransaction = new DrawerTransaction
+                    {
+                        DrawerId = drawer.DrawerId,
+                        Timestamp = DateTime.Now,
+                        Type = "Cash Sale",
+                        Amount = salesAmount,
+                        Balance = drawer.CurrentBalance,
+                        ActionType = "Sale",
+                        Description = "Sale added to drawer",
+                        TransactionReference = "",
+                        IsVoided = false,
+                        PaymentMethod = "Cash"
+                    };
+
+                    _dbContext.DrawerTransactions.Add(saleTransaction);
+                }
+
+                if (expensesAmount > 0)
+                {
+                    var expenseTransaction = new DrawerTransaction
+                    {
+                        DrawerId = drawer.DrawerId,
+                        Timestamp = DateTime.Now,
+                        Type = "Expense",
+                        Amount = expensesAmount,
+                        Balance = drawer.CurrentBalance,
+                        ActionType = "Expense",
+                        Description = "Expense deducted from drawer",
+                        TransactionReference = "",
+                        IsVoided = false,
+                        PaymentMethod = "Cash"
+                    };
+
+                    _dbContext.DrawerTransactions.Add(expenseTransaction);
+                }
+
+                if (supplierPayments > 0)
+                {
+                    var supplierTransaction = new DrawerTransaction
+                    {
+                        DrawerId = drawer.DrawerId,
+                        Timestamp = DateTime.Now,
+                        Type = "Supplier Payment",
+                        Amount = supplierPayments,
+                        Balance = drawer.CurrentBalance,
+                        ActionType = "Supplier Payment",
+                        Description = "Supplier payment deducted from drawer",
+                        TransactionReference = "",
+                        IsVoided = false,
+                        PaymentMethod = "Cash"
+                    };
+
+                    _dbContext.DrawerTransactions.Add(supplierTransaction);
+                }
 
                 await _dbContext.SaveChangesAsync();
 

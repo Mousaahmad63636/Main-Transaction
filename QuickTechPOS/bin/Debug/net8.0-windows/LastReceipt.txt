@@ -1,32 +1,29 @@
 ===================================
-           DRAWER REPORT           
+             RECEIPT              
 ===================================
 
           QuickTech Systems          
 
-Report Date: 2025-05-01 16:06:58
-Drawer ID: 8
-Status: Closed
-
+Transaction #: 2
+Date: 2025-05-01 17:08:38
 Cashier: System Administrator
-Opened At: 2025-05-01 15:56:23
-Closed At: 2025-05-01 16:06:58
+Customer: Walk-in Customer
+Payment Method: Cash
 
------------- BALANCES --------------
-Opening Balance:    $5.00
-Closing Balance:    $5.00
+------------- ITEMS ---------------
+Qty  Description            Price   Total
+------------------------------------
+1.00 aadssasa             USD2.00   USD2.00
+------------------------------------
+Subtotal:         USD2.00
+Exchange Rate:     1 USD = 90000 LBP
+Total (LBP):       LBP 180000
+Amount Paid:       USD2.00
+Change:            USD0.00
 
------------- SALES -----------------
-Daily Sales:        $0.00
-Total Sales:        $0.00
-
------------- CASH FLOW ------------
-Cash Out:          $0.00
-
------------- SUMMARY --------------
-Net Sales:          $0.00
-Net Cash Flow:      $0.00
+Thank you for your business!
+See you next time
 
 ===================================
-         End of Report             
+         Thank You!               
 ===================================

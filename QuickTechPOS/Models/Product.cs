@@ -1,8 +1,8 @@
 ﻿// File: QuickTechPOS/Models/Product.cs
-
 using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Collections.Generic;
 
 namespace QuickTechPOS.Models
 {
@@ -101,6 +101,44 @@ namespace QuickTechPOS.Models
         public int? MainStockId { get; set; }
 
         /// <summary>
+        /// Barcode image data
+        /// </summary>
+        public byte[]? BarcodeImage { get; set; }
+
+        /// <summary>
+        /// Box barcode for scanning boxes
+        /// </summary>
+        [MaxLength(50)]
+        public string BoxBarcode { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Number of boxes in inventory
+        /// </summary>
+        public int NumberOfBoxes { get; set; }
+
+        /// <summary>
+        /// Number of items per box
+        /// </summary>
+        public int ItemsPerBox { get; set; } = 1;
+
+        /// <summary>
+        /// Purchase price per box
+        /// </summary>
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal BoxPurchasePrice { get; set; }
+
+        /// <summary>
+        /// Sale price per box
+        /// </summary>
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal BoxSalePrice { get; set; }
+
+        /// <summary>
+        /// Minimum box stock level before reordering
+        /// </summary>
+        public int MinimumBoxStock { get; set; }
+
+        /// <summary>
         /// Gets the formatted sale price with currency symbol
         /// </summary>
         [NotMapped]
@@ -112,5 +150,24 @@ namespace QuickTechPOS.Models
         [NotMapped]
         public string StockStatus => CurrentStock <= 0 ? "Out of Stock" :
                                     CurrentStock < MinimumStock ? "Low Stock" : "In Stock";
+
+        /// <summary>
+        /// Gets the box stock status description
+        /// </summary>
+        [NotMapped]
+        public string BoxStockStatus => NumberOfBoxes <= 0 ? "Out of Stock" :
+                                        NumberOfBoxes < MinimumBoxStock ? "Low Stock" : "In Stock";
+
+        /// <summary>
+        /// Gets the total stock (individual items plus items in boxes)
+        /// </summary>
+        [NotMapped]
+        public decimal TotalStockCount => CurrentStock + (NumberOfBoxes * ItemsPerBox);
+
+        /// <summary>
+        /// Gets the formatted box sale price with currency symbol
+        /// </summary>
+        [NotMapped]
+        public string FormattedBoxSalePrice => $"${BoxSalePrice:F2}";
     }
 }

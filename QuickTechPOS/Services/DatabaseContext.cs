@@ -1,7 +1,7 @@
 ﻿// File: QuickTechPOS/Services/DatabaseContext.cs
-
 using Microsoft.EntityFrameworkCore;
 using QuickTechPOS.Models;
+using QuickTechPOS.Models.Enums;
 using System;
 
 namespace QuickTechPOS.Services
@@ -17,10 +17,12 @@ namespace QuickTechPOS.Services
         /// Employees table in the database
         /// </summary>
         public DbSet<Employee> Employees { get; set; }
+
         /// <summary>
         /// Drawers table in the database
         /// </summary>
         public DbSet<Drawer> Drawers { get; set; }
+
         /// <summary>
         /// Products table in the database
         /// </summary>
@@ -40,11 +42,27 @@ namespace QuickTechPOS.Services
         /// Customers table in the database
         /// </summary>
         public DbSet<Customer> Customers { get; set; }
-        // Add this DbSet property after the other DbSet properties:
+
         /// <summary>
         /// Customer product prices table in the database
         /// </summary>
         public DbSet<CustomerProductPrice> CustomerProductPrices { get; set; }
+
+        /// <summary>
+        /// Drawer transactions table in the database
+        /// </summary>
+        public DbSet<DrawerTransaction> DrawerTransactions { get; set; }
+
+        /// <summary>
+        /// Drawer history entries table in the database
+        /// </summary>
+        public DbSet<DrawerHistoryEntry> DrawerHistoryEntries { get; set; }
+
+        /// <summary>
+        /// Business settings table in the database
+        /// </summary>
+        public DbSet<BusinessSetting> BusinessSettings { get; set; }
+
         /// <summary>
         /// Initializes a new instance of the database context
         /// </summary>
@@ -94,7 +112,7 @@ namespace QuickTechPOS.Services
             modelBuilder.Entity<Product>(entity =>
             {
                 entity.HasKey(e => e.ProductId);
-                entity.Property(e => e.Barcode).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Barcode).HasMaxLength(50);
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(200);
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.PurchasePrice).HasColumnType("decimal(18,2)");
@@ -102,6 +120,9 @@ namespace QuickTechPOS.Services
                 entity.Property(e => e.CurrentStock).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.Speed).HasMaxLength(50);
                 entity.Property(e => e.ImagePath).HasMaxLength(500);
+                entity.Property(e => e.BoxBarcode).HasMaxLength(50);
+                entity.Property(e => e.BoxPurchasePrice).HasColumnType("decimal(18,2)");
+                entity.Property(e => e.BoxSalePrice).HasColumnType("decimal(18,2)");
             });
 
             // Configure Transaction entity
@@ -110,8 +131,13 @@ namespace QuickTechPOS.Services
                 entity.HasKey(e => e.TransactionId);
                 entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.PaidAmount).HasColumnType("decimal(18,2)");
-                entity.Property(e => e.TransactionType).HasMaxLength(450);
-                entity.Property(e => e.Status).HasMaxLength(450);
+                // Map enum properties to database
+                entity.Property(e => e.TransactionType).HasConversion<int>();
+                entity.Property(e => e.Status).HasConversion<int>();
+                entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+                entity.Property(e => e.CashierId).HasMaxLength(50);
+                entity.Property(e => e.CashierName).HasMaxLength(100);
+                entity.Property(e => e.CashierRole).HasMaxLength(50);
             });
 
             // Configure TransactionDetail entity
@@ -125,9 +151,9 @@ namespace QuickTechPOS.Services
                 entity.Property(e => e.Total).HasColumnType("decimal(18,2)");
 
                 entity.HasOne(d => d.Transaction)
-          .WithMany()
-          .HasForeignKey(d => d.TransactionId)
-          .OnDelete(DeleteBehavior.NoAction);
+                    .WithMany()
+                    .HasForeignKey(d => d.TransactionId)
+                    .OnDelete(DeleteBehavior.NoAction);
             });
 
             // Configure Customer entity
@@ -135,11 +161,12 @@ namespace QuickTechPOS.Services
             {
                 entity.HasKey(c => c.CustomerId);
                 entity.Property(c => c.Name).IsRequired().HasMaxLength(200);
-                entity.Property(c => c.Phone).IsRequired().HasMaxLength(20);
+                entity.Property(c => c.Phone).HasMaxLength(20);
                 entity.Property(c => c.Email).HasMaxLength(100);
                 entity.Property(c => c.Address).HasMaxLength(500);
                 entity.Property(c => c.Balance).HasColumnType("decimal(18,2)");
             });
+
             // Configure CustomerProductPrice entity
             modelBuilder.Entity<CustomerProductPrice>(entity =>
             {
@@ -159,8 +186,8 @@ namespace QuickTechPOS.Services
                           .WithMany()
                           .HasForeignKey(d => d.ProductId)
                           .OnDelete(DeleteBehavior.NoAction);
-
             });
+
             // Configure Drawer entity
             modelBuilder.Entity<Drawer>(entity =>
             {
@@ -181,6 +208,51 @@ namespace QuickTechPOS.Services
                 entity.Property(d => d.Notes).HasMaxLength(500).IsRequired(false); // Allow null values
                 entity.Property(d => d.CashierId).HasMaxLength(50);
                 entity.Property(d => d.CashierName).HasMaxLength(100);
+            });
+
+            // Configure DrawerTransaction entity
+            modelBuilder.Entity<DrawerTransaction>(entity =>
+            {
+                entity.HasKey(dt => dt.TransactionId);
+                entity.Property(dt => dt.Type).HasMaxLength(50);
+                entity.Property(dt => dt.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(dt => dt.Balance).HasColumnType("decimal(18,2)");
+                entity.Property(dt => dt.Notes).HasMaxLength(500);
+                entity.Property(dt => dt.ActionType).HasMaxLength(50);
+                entity.Property(dt => dt.Description).HasMaxLength(500);
+                entity.Property(dt => dt.TransactionReference).HasMaxLength(50);
+                entity.Property(dt => dt.PaymentMethod).HasMaxLength(50);
+
+                entity.HasOne(dt => dt.Drawer)
+                      .WithMany(d => d.Transactions)
+                      .HasForeignKey(dt => dt.DrawerId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Configure DrawerHistoryEntry entity
+            modelBuilder.Entity<DrawerHistoryEntry>(entity =>
+            {
+                entity.HasKey(dhe => dhe.Id);
+                entity.Property(dhe => dhe.ActionType).HasMaxLength(50);
+                entity.Property(dhe => dhe.Description).HasMaxLength(500);
+                entity.Property(dhe => dhe.Amount).HasColumnType("decimal(18,2)");
+                entity.Property(dhe => dhe.ResultingBalance).HasColumnType("decimal(18,2)");
+                entity.Property(dhe => dhe.UserId).HasMaxLength(50);
+            });
+
+            // Configure BusinessSetting entity
+            modelBuilder.Entity<BusinessSetting>(entity =>
+            {
+                entity.HasKey(bs => bs.Id);
+                entity.Property(bs => bs.Key).IsRequired().HasMaxLength(100);
+                entity.Property(bs => bs.Value).HasMaxLength(500);
+                entity.Property(bs => bs.Description).HasMaxLength(500);
+                entity.Property(bs => bs.Group).HasMaxLength(100);
+                entity.Property(bs => bs.DataType).HasMaxLength(50);
+                entity.Property(bs => bs.ModifiedBy).HasMaxLength(100);
+
+                // Create index on Key column for faster lookups
+                entity.HasIndex(bs => bs.Key).IsUnique();
             });
         }
     }

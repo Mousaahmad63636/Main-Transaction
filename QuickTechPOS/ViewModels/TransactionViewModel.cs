@@ -1,5 +1,6 @@
 ﻿using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
+using QuickTechPOS.Models.Enums;
 using QuickTechPOS.Services;
 using QuickTechPOS.Views;
 using System;
@@ -432,7 +433,61 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error retrieving drawer information: {ex.Message}";
             }
         }
+        /// <summary>
+        /// Converts a string transaction type to the corresponding enum value
+        /// </summary>
+        private TransactionType ConvertToTransactionType(string type)
+        {
+            if (string.IsNullOrEmpty(type))
+                return TransactionType.Sale;
 
+            if (Enum.TryParse<TransactionType>(type, true, out var result))
+                return result;
+
+            switch (type.ToLower())
+            {
+                case "sale":
+                    return TransactionType.Sale;
+                case "return":
+                    return TransactionType.Return;
+                case "exchange":
+                    return TransactionType.Exchange;
+                case "void":
+                    return TransactionType.Void;
+                case "refund":
+                    return TransactionType.Refund;
+                default:
+                    return TransactionType.Sale;
+            }
+        }
+
+        /// <summary>
+        /// Converts a string transaction status to the corresponding enum value
+        /// </summary>
+        private TransactionStatus ConvertToTransactionStatus(string status)
+        {
+            if (string.IsNullOrEmpty(status))
+                return TransactionStatus.Completed;
+
+            if (Enum.TryParse<TransactionStatus>(status, true, out var result))
+                return result;
+
+            switch (status.ToLower())
+            {
+                case "pending":
+                    return TransactionStatus.Pending;
+                case "completed":
+                    return TransactionStatus.Completed;
+                case "cancelled":
+                    return TransactionStatus.Cancelled;
+                case "voided":
+                    return TransactionStatus.Voided;
+                case "refunded":
+                    return TransactionStatus.Refunded;
+                default:
+                    return TransactionStatus.Completed;
+            }
+        }
         private async Task ShowCashOutDialogAsync()
         {
             try
@@ -1158,13 +1213,13 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Customer: {customerNameForTransaction} (ID: {customerIdForTransaction})");
 
                 var transaction = await _transactionService.CreateTransactionAsync(
-                    CartItems.ToList(),
-                    PaidAmount,
-                    currentEmployee,
-                    "Cash",
-                    customerNameForTransaction,
-                    customerIdForTransaction
-                );
+     CartItems.ToList(),
+     PaidAmount,
+     currentEmployee,
+     "Cash",
+     customerNameForTransaction,
+     customerIdForTransaction
+ );
 
                 if (transaction == null || transaction.TransactionId <= 0)
                 {
@@ -1340,12 +1395,12 @@ namespace QuickTechPOS.ViewModels
                 LoadedTransaction = transaction;
                 IsTransactionLoaded = true;
 
-                if (transaction.CustomerId > 0)
+                if (transaction.CustomerId.HasValue && transaction.CustomerId.Value > 0)
                 {
-                    CustomerId = transaction.CustomerId;
+                    CustomerId = transaction.CustomerId.Value;
                     CustomerName = transaction.CustomerName;
 
-                    var customer = await _customerService.GetByIdAsync(transaction.CustomerId);
+                    var customer = await _customerService.GetByIdAsync(transaction.CustomerId.Value);
                     if (customer != null)
                     {
                         SelectedCustomer = customer;
@@ -1361,7 +1416,8 @@ namespace QuickTechPOS.ViewModels
                 await CheckNavigationAvailabilityAsync(transactionId);
                 CalculateExchangeAmount();
                 OnPropertyChanged(nameof(ExchangeAmount));
-                StatusMessage = $"Loaded transaction #{transactionId} completed on {transaction.FormattedDate}.";
+
+                StatusMessage = $"Loaded transaction #{transactionId} ({transaction.TransactionTypeString}/{transaction.StatusString}) completed on {transaction.FormattedDate}.";
             }
             catch (Exception ex)
             {
@@ -1377,7 +1433,6 @@ namespace QuickTechPOS.ViewModels
                 IsProcessing = false;
             }
         }
-
         private async Task LoadTransactionToCartAsync(Transaction transaction)
         {
             if (transaction == null || transaction.Details == null || !transaction.Details.Any())
@@ -1449,13 +1504,13 @@ namespace QuickTechPOS.ViewModels
                 var updatedTransaction = new Transaction
                 {
                     TransactionId = LoadedTransaction.TransactionId,
-                    CustomerId = CustomerId,
+                    CustomerId = CustomerId > 0 ? CustomerId : null,
                     CustomerName = CustomerName,
                     TotalAmount = TotalAmount,
                     PaidAmount = LoadedTransaction.PaidAmount,
                     TransactionDate = LoadedTransaction.TransactionDate,
-                    TransactionType = LoadedTransaction.TransactionType,
-                    Status = LoadedTransaction.Status,
+                    TransactionType = LoadedTransaction.TransactionType, // Keep the original type
+                    Status = LoadedTransaction.Status, // Keep the original status
                     PaymentMethod = LoadedTransaction.PaymentMethod,
                     CashierId = LoadedTransaction.CashierId,
                     CashierName = LoadedTransaction.CashierName,
@@ -1499,7 +1554,6 @@ namespace QuickTechPOS.ViewModels
                 IsProcessing = false;
             }
         }
-
         private async void PrintReceipt()
         {
             try

@@ -1,6 +1,9 @@
-﻿using System;
+﻿// File: QuickTechPOS/Models/Drawer.cs
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace QuickTechPOS.Models
 {
@@ -106,24 +109,43 @@ namespace QuickTechPOS.Models
         /// Status of the drawer (Open/Closed)
         /// </summary>
         [MaxLength(50)]
-        public string Status { get; set; }
+        public string Status { get; set; } = "Open";
 
         /// <summary>
         /// Additional notes for this drawer session
         /// </summary>
         [MaxLength(500)]
-        public string Notes { get; set; } = string.Empty;
+        public string? Notes { get; set; }
+
         /// <summary>
         /// ID of the cashier who opened the drawer
         /// </summary>
         [MaxLength(50)]
-        public string CashierId { get; set; }
+        public string CashierId { get; set; } = string.Empty;
 
         /// <summary>
         /// Name of the cashier who opened the drawer
         /// </summary>
         [MaxLength(100)]
-        public string CashierName { get; set; }
+        public string CashierName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Collection of drawer transactions
+        /// </summary>
+        [NotMapped]
+        public virtual ICollection<DrawerTransaction> Transactions { get; set; } = new List<DrawerTransaction>();
+
+        /// <summary>
+        /// Gets the expected balance based on recorded transactions
+        /// </summary>
+        [NotMapped]
+        public decimal ExpectedBalance => OpeningBalance + CashIn - CashOut;
+
+        /// <summary>
+        /// Gets the difference between current and expected balance
+        /// </summary>
+        [NotMapped]
+        public decimal Difference => CurrentBalance - ExpectedBalance;
 
         /// <summary>
         /// Gets the formatted opening balance with currency symbol
@@ -166,5 +188,51 @@ namespace QuickTechPOS.Models
         /// </summary>
         [NotMapped]
         public string FormattedClosedAt => ClosedAt.HasValue ? ClosedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") : "Not closed";
+
+        /// <summary>
+        /// Gets the formatted difference amount with currency symbol
+        /// </summary>
+        [NotMapped]
+        public string FormattedDifference => $"${Difference:F2}";
+
+        /// <summary>
+        /// Updates the net calculations
+        /// </summary>
+        public void UpdateNetCalculations()
+        {
+            NetCashFlow = TotalSales - TotalExpenses - TotalSupplierPayments;
+            NetSales = TotalSales - TotalExpenses;
+        }
+
+        /// <summary>
+        /// Checks if there is a discrepancy between the expected and current balance
+        /// </summary>
+        public bool HasDiscrepancy()
+        {
+            return Math.Abs(Difference) > 0.01m;
+        }
+
+        /// <summary>
+        /// Gets the duration the drawer has been open
+        /// </summary>
+        public TimeSpan GetDuration()
+        {
+            return Status.Equals("Closed", StringComparison.OrdinalIgnoreCase) && ClosedAt.HasValue
+                ? ClosedAt.Value - OpenedAt
+                : DateTime.Now - OpenedAt;
+        }
+
+        /// <summary>
+        /// Gets the formatted duration
+        /// </summary>
+        [NotMapped]
+        public string FormattedDuration
+        {
+            get
+            {
+                TimeSpan duration = GetDuration();
+                return $"{(int)duration.TotalHours}h {duration.Minutes}m";
+            }
+        }
     }
 }

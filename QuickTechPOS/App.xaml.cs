@@ -1,5 +1,4 @@
-﻿// File: QuickTechPOS/App.xaml.cs
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using QuickTechPOS.ViewModels;
@@ -12,9 +11,6 @@ using System.Windows.Controls;
 
 namespace QuickTechPOS
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
         private NavigationService _navigationService;
@@ -22,9 +18,6 @@ namespace QuickTechPOS
         private MainWindow _mainWindow;
         private Customer _walkInCustomer;
 
-        /// <summary>
-        /// Application startup handler
-        /// </summary>
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
@@ -54,10 +47,6 @@ namespace QuickTechPOS
             _mainWindow.Show();
         }
 
-        /// <summary>
-        /// Checks if the cashier has an open drawer and prompts to open one if needed
-        /// </summary>
-        /// <param name="authService">The authentication service</param>
         private async Task CheckForOpenDrawerAsync(AuthenticationService authService)
         {
             if (authService.CurrentEmployee == null)
@@ -74,6 +63,10 @@ namespace QuickTechPOS
                     // Show the open drawer dialog
                     var viewModel = new OpenDrawerViewModel(authService);
                     var dialog = new OpenDrawerDialog(viewModel);
+                    dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    dialog.Topmost = true;
+                    dialog.Owner = _mainWindow;
+
                     bool? result = dialog.ShowDialog();
 
                     if (result != true)
@@ -102,11 +95,12 @@ namespace QuickTechPOS
         {
             var viewModel = new OpenDrawerViewModel(authService);
             var dialog = new OpenDrawerDialog(viewModel);
+            dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            dialog.Topmost = true;
+            dialog.Owner = _mainWindow;
             return dialog.ShowDialog() == true;
         }
-        /// <summary>
-        /// Registers all views with the navigation service
-        /// </summary>
+
         private void RegisterViews()
         {
             // Create a shared authentication service
@@ -136,9 +130,6 @@ namespace QuickTechPOS
             });
         }
 
-        /// <summary>
-        /// Ensures the appsettings.json file exists
-        /// </summary>
         private void EnsureAppSettingsExists()
         {
             string appSettingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "appsettings.json");

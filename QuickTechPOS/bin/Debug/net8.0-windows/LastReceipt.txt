@@ -1,0 +1,32 @@
+===================================
+           DRAWER REPORT           
+===================================
+
+          QuickTech Systems          
+
+Report Date: 2025-05-01 15:56:08
+Drawer ID: 7
+Status: Closed
+
+Cashier: System Administrator
+Opened At: 2025-05-01 15:48:15
+Closed At: 2025-05-01 15:56:08
+
+------------ BALANCES --------------
+Opening Balance:    $4.00
+Closing Balance:    $4.00
+
+------------ SALES -----------------
+Daily Sales:        $0.00
+Total Sales:        $0.00
+
+------------ CASH FLOW ------------
+Cash Out:          $0.00
+
+------------ SUMMARY --------------
+Net Sales:          $0.00
+Net Cash Flow:      $0.00
+
+===================================
+         End of Report             
+===================================

@@ -432,14 +432,6 @@
                                         Command="{Binding LookupTransactionCommand}"
                                         Style="{StaticResource PrimaryButton}"/>
                             </Grid>
-
-                            <!-- Open Drawer button - Only visible when drawer is closed -->
-                            <Button Content="Open Drawer" 
-                                    Command="{Binding OpenDrawerCommand}"
-                                    Style="{StaticResource SuccessButton}"
-                                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                                    Width="120"
-                                    HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Grid>
                 </Border>

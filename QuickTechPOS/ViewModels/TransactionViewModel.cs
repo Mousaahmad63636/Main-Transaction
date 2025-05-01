@@ -483,30 +483,27 @@ namespace QuickTechPOS.ViewModels
 
                 dialog.WindowStartupLocation = System.Windows.WindowStartupLocation.CenterScreen;
                 dialog.Owner = System.Windows.Application.Current.MainWindow;
-
-                // Force the dialog to be top-most
                 dialog.Topmost = true;
 
-                // Show the dialog and wait for it to close
                 bool? result = dialog.ShowDialog();
-
-                // Refresh drawer status regardless of dialog result
-                await GetCurrentDrawerAsync();
-
-                // Force UI refresh
-                OnPropertyChanged(nameof(IsDrawerOpen));
-                OnPropertyChanged(nameof(CurrentDrawer));
-
-                // Invalidate commands to update their CanExecute status
-                CommandManager.InvalidateRequerySuggested();
 
                 if (result == true)
                 {
+                    await Task.Delay(500); // Allow time for DB to complete operation
+                    await GetCurrentDrawerAsync();
+
+                    // Force UI update by notifying all drawer-related properties
+                    OnPropertyChanged(nameof(IsDrawerOpen));
+                    OnPropertyChanged(nameof(CurrentDrawer));
+
                     StatusMessage = "Drawer opened successfully.";
+
+                    // Force command manager to reevaluate all commands
+                    CommandManager.InvalidateRequerySuggested();
                 }
                 else
                 {
-                    StatusMessage = "Drawer opening was cancelled.";
+                    StatusMessage = "Drawer opening was cancelled or failed.";
                 }
             }
             catch (Exception ex)
@@ -515,7 +512,6 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Open drawer dialog error: {ex}");
             }
         }
-
 
         private async Task CloseDrawerDialogAsync()
         {

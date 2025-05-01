@@ -1,12 +1,8 @@
-﻿// File: QuickTechPOS/Views/OpenDrawerDialog.xaml.cs
-using QuickTechPOS.ViewModels;
+﻿using QuickTechPOS.ViewModels;
 using System.Windows;
 
 namespace QuickTechPOS.Views
 {
-    /// <summary>
-    /// Interaction logic for OpenDrawerDialog.xaml
-    /// </summary>
     public partial class OpenDrawerDialog : Window
     {
         private readonly OpenDrawerViewModel _viewModel;
@@ -23,12 +19,15 @@ namespace QuickTechPOS.Views
                 if (e.PropertyName == nameof(OpenDrawerViewModel.DialogResult) &&
                     _viewModel.DialogResult.HasValue)
                 {
-                    DialogResult = _viewModel.DialogResult;
-                    if (_viewModel.DialogResult == true)
-                    {
-                        this.Close();
-                    }
+                    this.DialogResult = _viewModel.DialogResult;
                 }
+            };
+
+            // Focus on the opening balance field when the dialog loads
+            this.Loaded += (s, e) =>
+            {
+                OpeningBalanceTextBox.Focus();
+                OpeningBalanceTextBox.SelectAll();
             };
         }
     }

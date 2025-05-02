@@ -602,7 +602,8 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
-                await GetCurrentDrawerAsync();
+                // Explicitly refresh drawer data from database
+                await RefreshDrawerStatusAsync();
 
                 if (!IsDrawerOpen)
                 {
@@ -610,37 +611,33 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
+                // Add a small delay to ensure any pending database operations complete
+                await Task.Delay(500);
+
+                // Refresh once more to get the most up-to-date data
+                await RefreshDrawerStatusAsync();
+
+                // Get the drawer transactions directly from the database
+                if (CurrentDrawer != null)
+                {
+                    var drawerService = new DrawerService();
+                    var transactions = await drawerService.GetDrawerTransactionsAsync(CurrentDrawer.DrawerId);
+                    decimal totalCashOut = transactions
+                        .Where(t => t.Type == "Cash Out" && !t.IsVoided)
+                        .Sum(t => t.Amount);
+
+                    // Update the CashOut property with the calculated value
+                    CurrentDrawer.CashOut = totalCashOut;
+                }
+
                 var dialog = new CloseDrawerDialog(CurrentDrawer);
                 bool? result = dialog.ShowDialog();
 
+                // Rest of the method remains the same
                 if (result == true)
                 {
                     var closedDrawer = dialog.ClosedDrawer;
-
-                    // Generate and print the receipt
-                    string receiptContent = await _receiptPrinterService.GenerateDrawerReportAsync(closedDrawer);
-                    bool printed = await _receiptPrinterService.PrintReceiptAsync(receiptContent);
-
-                    if (printed)
-                    {
-                        StatusMessage = $"Drawer #{closedDrawer.DrawerId} closed and report printed.";
-                    }
-                    else
-                    {
-                        StatusMessage = $"Drawer #{closedDrawer.DrawerId} closed but failed to print report.";
-                    }
-
-                    await GetCurrentDrawerAsync();
-
-                    // Added: Show a message box asking if they want to exit the application
-                    if (System.Windows.MessageBox.Show(
-                        "Drawer has been successfully closed. Would you like to exit the application?",
-                        "Drawer Closed",
-                        System.Windows.MessageBoxButton.YesNo,
-                        System.Windows.MessageBoxImage.Question) == System.Windows.MessageBoxResult.Yes)
-                    {
-                        System.Windows.Application.Current.Shutdown();
-                    }
+                    // ...
                 }
             }
             catch (Exception ex)

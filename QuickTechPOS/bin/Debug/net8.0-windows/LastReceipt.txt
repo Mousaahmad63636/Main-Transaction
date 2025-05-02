@@ -4,8 +4,8 @@
 
           QuickTech Systems          
 
-Transaction #: 2
-Date: 2025-05-01 17:08:38
+Transaction #: 5
+Date: 2025-05-02 12:15:51
 Cashier: System Administrator
 Customer: Walk-in Customer
 Payment Method: Cash

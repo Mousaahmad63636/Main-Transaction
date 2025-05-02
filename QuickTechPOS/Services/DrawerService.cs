@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using System.Linq;
 using System.Collections.Generic;
+using System.Text;
+using Microsoft.Data.SqlClient;
 
 namespace QuickTechPOS.Services
 {
@@ -114,6 +116,52 @@ namespace QuickTechPOS.Services
             }
         }
 
+        public void CheckDatabaseConnection()
+        {
+            try
+            {
+                Console.WriteLine("Testing database connection...");
+                Console.WriteLine($"Connection string: {ConfigurationService.ConnectionString}");
+
+                // First check if we can connect
+                bool canConnect = _dbContext.Database.CanConnect();
+                Console.WriteLine($"Can connect: {canConnect}");
+
+                if (canConnect)
+                {
+                    try
+                    {
+                        // Try a simple query
+                        var drawerCount = _dbContext.Drawers.Count();
+                        Console.WriteLine($"Total drawers in database: {drawerCount}");
+
+                        // Try specific drawer
+                        var drawerIds = _dbContext.Drawers.Select(d => d.DrawerId).Take(5).ToList();
+                        Console.WriteLine($"Sample drawer IDs: {string.Join(", ", drawerIds)}");
+
+                        // Check schema
+                        Console.WriteLine("Checking database schema...");
+                        var drawerTableExists = _dbContext.Model.FindEntityType(typeof(Drawer)) != null;
+                        var transactionTableExists = _dbContext.Model.FindEntityType(typeof(DrawerTransaction)) != null;
+                        var historyTableExists = _dbContext.Model.FindEntityType(typeof(DrawerHistoryEntry)) != null;
+
+                        Console.WriteLine($"Drawer table exists: {drawerTableExists}");
+                        Console.WriteLine($"DrawerTransaction table exists: {transactionTableExists}");
+                        Console.WriteLine($"DrawerHistoryEntry table exists: {historyTableExists}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error executing queries: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database connection test failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+            }
+        }
+
         /// <summary>
         /// Performs a cash out operation on a drawer
         /// </summary>
@@ -123,14 +171,36 @@ namespace QuickTechPOS.Services
         /// <returns>The updated drawer record</returns>
         public async Task<Drawer> PerformCashOutAsync(int drawerId, decimal cashOutAmount, string notes)
         {
+            // Don't use transaction scope initially - let's see the raw error first
             try
             {
-                var drawer = await _dbContext.Drawers.FindAsync(drawerId);
+                Console.WriteLine($"Starting cash out operation for drawer #{drawerId}");
+                Console.WriteLine($"Cash out amount: ${cashOutAmount:F2}");
+                Console.WriteLine($"Notes: {notes}");
+
+                // Load drawer with more detailed error handling
+                Drawer? drawer = null;
+                try
+                {
+                    drawer = await _dbContext.Drawers.FindAsync(drawerId);
+                    Console.WriteLine($"Drawer found: {drawer != null}");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"ERROR finding drawer: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                    }
+                    throw;
+                }
+
                 if (drawer == null)
                 {
                     throw new ArgumentException($"Drawer with ID {drawerId} not found.");
                 }
 
+                // Basic validation
                 if (drawer.Status != "Open")
                 {
                     throw new InvalidOperationException("Cannot perform cash out on a drawer that is not open.");
@@ -146,64 +216,143 @@ namespace QuickTechPOS.Services
                     throw new ArgumentException("Cash out amount cannot exceed current drawer balance.");
                 }
 
+                // Save initial values for logging
+                decimal initialCashOut = drawer.CashOut;
+                decimal initialBalance = drawer.CurrentBalance;
+
                 // Update cash out amount
                 drawer.CashOut += cashOutAmount;
 
-                // Update current balance and net cash flow
+                // Update current balance
                 drawer.CurrentBalance -= cashOutAmount;
-                drawer.NetCashFlow = drawer.CashIn - drawer.CashOut + drawer.TotalSales - drawer.TotalExpenses - drawer.TotalSupplierPayments;
+
+                // Update net calculations
+                drawer.NetCashFlow = drawer.TotalSales - drawer.TotalExpenses - drawer.TotalSupplierPayments - drawer.CashOut + drawer.CashIn;
 
                 // Update timestamp
                 drawer.LastUpdated = DateTime.Now;
 
-                // Update notes - append cash out notes to existing notes
+                // Update notes - handle null notes
                 string cashOutNote = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Cash Out: ${cashOutAmount:F2} - {notes}";
-                if (string.IsNullOrEmpty(drawer.Notes))
-                    drawer.Notes = cashOutNote;
-                else
-                    drawer.Notes = $"{drawer.Notes}\n{cashOutNote}";
+                drawer.Notes = string.IsNullOrEmpty(drawer.Notes)
+                    ? cashOutNote
+                    : $"{drawer.Notes}\n{cashOutNote}";
 
-                // Create a drawer transaction for the cash out
-                var drawerTransaction = new DrawerTransaction
+                // Separate try blocks to see which operation is failing
+                try
                 {
-                    DrawerId = drawer.DrawerId,
-                    Timestamp = DateTime.Now,
-                    Type = "Cash Out",
-                    Amount = cashOutAmount,
-                    Balance = drawer.CurrentBalance,
-                    ActionType = "Cash Out",
-                    Description = notes,
-                    TransactionReference = drawer.DrawerId.ToString(),
-                    IsVoided = false,
-                    PaymentMethod = "Cash"
-                };
-
-                _dbContext.DrawerTransactions.Add(drawerTransaction);
-
-                // Create a drawer history entry
-                var historyEntry = new DrawerHistoryEntry
+                    // First attempt to save drawer changes alone
+                    Console.WriteLine("Saving drawer changes...");
+                    _dbContext.Drawers.Update(drawer);  // Explicitly mark as updated
+                    await _dbContext.SaveChangesAsync();
+                    Console.WriteLine("Drawer updated successfully");
+                }
+                catch (DbUpdateException dbEx)
                 {
-                    Timestamp = DateTime.Now,
-                    ActionType = "Cash Out",
-                    Description = notes,
-                    Amount = cashOutAmount,
-                    ResultingBalance = drawer.CurrentBalance,
-                    UserId = drawer.CashierId
-                };
+                    Console.WriteLine($"ERROR updating drawer: {dbEx.Message}");
 
-                _dbContext.DrawerHistoryEntries.Add(historyEntry);
+                    // Log the SQL error details from inner exception 
+                    if (dbEx.InnerException is Microsoft.Data.SqlClient.SqlException sqlEx)
+                    {
+                        Console.WriteLine($"SQL Error Number: {sqlEx.Number}");
+                        Console.WriteLine($"SQL Error Message: {sqlEx.Message}");
+                        Console.WriteLine($"SQL Server Error: {sqlEx.Server}");
+                        Console.WriteLine($"SQL Line Number: {sqlEx.LineNumber}");
+                    }
 
-                await _dbContext.SaveChangesAsync();
+                    if (dbEx.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+                        if (dbEx.InnerException.InnerException != null)
+                        {
+                            Console.WriteLine($"Inner inner exception: {dbEx.InnerException.InnerException.Message}");
+                        }
+                    }
+                    throw;
+                }
+
+                // Now create and save transactions
+                try
+                {
+                    // Create a drawer transaction for the cash out
+                    var drawerTransaction = new DrawerTransaction
+                    {
+                        DrawerId = drawer.DrawerId,
+                        Timestamp = DateTime.Now,
+                        Type = "Cash Out",
+                        Amount = cashOutAmount,
+                        Balance = drawer.CurrentBalance,
+                        ActionType = "Cash Out",
+                        Description = notes,
+                        TransactionReference = drawer.DrawerId.ToString(),
+                        IsVoided = false,
+                        PaymentMethod = "Cash"
+                    };
+
+                    // Add transaction
+                    Console.WriteLine("Adding drawer transaction...");
+                    _dbContext.DrawerTransactions.Add(drawerTransaction);
+                    await _dbContext.SaveChangesAsync();
+                    Console.WriteLine("Transaction added successfully");
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    Console.WriteLine($"ERROR adding transaction: {dbEx.Message}");
+                    if (dbEx.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+                    }
+                    // Don't throw, let's try to continue with history entry
+                }
+
+                try
+                {
+                    // Create drawer history entry
+                    var historyEntry = new DrawerHistoryEntry
+                    {
+                        Timestamp = DateTime.Now,
+                        ActionType = "Cash Out",
+                        Description = notes,
+                        Amount = cashOutAmount,
+                        ResultingBalance = drawer.CurrentBalance,
+                        UserId = drawer.CashierId
+                    };
+
+                    // Add history entry
+                    Console.WriteLine("Adding drawer history entry...");
+                    _dbContext.DrawerHistoryEntries.Add(historyEntry);
+                    await _dbContext.SaveChangesAsync();
+                    Console.WriteLine("History entry added successfully");
+                }
+                catch (DbUpdateException dbEx)
+                {
+                    Console.WriteLine($"ERROR adding history entry: {dbEx.Message}");
+                    if (dbEx.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+                    }
+                    // Don't throw, we've already updated the drawer which is most important
+                }
+
+                Console.WriteLine($"Cash out completed successfully:");
+                Console.WriteLine($"  - Drawer ID: {drawer.DrawerId}");
+                Console.WriteLine($"  - CashOut: ${initialCashOut:F2} → ${drawer.CashOut:F2} (Δ ${cashOutAmount:F2})");
+                Console.WriteLine($"  - Balance: ${initialBalance:F2} → ${drawer.CurrentBalance:F2} (Δ -${cashOutAmount:F2})");
 
                 return drawer;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error in PerformCashOutAsync: {ex.Message}");
-                throw;
+                Console.WriteLine($"ERROR in PerformCashOutAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                throw; // Re-throw the exception to be handled by the caller
             }
         }
-
         /// <summary>
         /// Closes an open drawer session
         /// </summary>
@@ -313,7 +462,122 @@ namespace QuickTechPOS.Services
                 throw;
             }
         }
+        public async Task<string> DiagnoseCashOutIssueAsync(int drawerId)
+        {
+            var report = new StringBuilder();
 
+            try
+            {
+                report.AppendLine($"===== CASH OUT DIAGNOSTIC REPORT =====");
+                report.AppendLine($"Timestamp: {DateTime.Now}");
+
+                // 1. Check if drawer exists
+                var drawer = await _dbContext.Drawers.FindAsync(drawerId);
+                report.AppendLine($"Drawer exists: {drawer != null}");
+
+                if (drawer != null)
+                {
+                    report.AppendLine($"Drawer ID: {drawer.DrawerId}");
+                    report.AppendLine($"Status: {drawer.Status}");
+                    report.AppendLine($"Current Balance: ${drawer.CurrentBalance:F2}");
+                    report.AppendLine($"CashOut: ${drawer.CashOut:F2}");
+
+                    // 2. Check recent transactions
+                    var recentTransactions = await _dbContext.DrawerTransactions
+                        .Where(t => t.DrawerId == drawerId)
+                        .OrderByDescending(t => t.Timestamp)
+                        .Take(5)
+                        .ToListAsync();
+
+                    report.AppendLine($"\nRecent Transactions: {recentTransactions.Count}");
+                    foreach (var tx in recentTransactions)
+                    {
+                        report.AppendLine($"  - {tx.Timestamp}: {tx.Type} ${tx.Amount:F2} ({tx.Description})");
+                    }
+
+                    // 3. Check DB connection
+                    report.AppendLine($"\nDatabase Connection:");
+                    try
+                    {
+                        bool canConnect = _dbContext.Database.CanConnect();
+                        report.AppendLine($"  Can connect: {canConnect}");
+                    }
+                    catch (Exception ex)
+                    {
+                        report.AppendLine($"  Connection error: {ex.Message}");
+                    }
+                }
+
+                return report.ToString();
+            }
+            catch (Exception ex)
+            {
+                report.AppendLine($"\nDIAGNOSTIC ERROR: {ex.Message}");
+                return report.ToString();
+            }
+        }
+
+        public async Task<bool> TestDatabaseConnectionAsync()
+        {
+            try
+            {
+                // Test specific to cash out functionality
+                var canConnect = await _dbContext.Database.CanConnectAsync();
+
+                if (canConnect)
+                {
+                    // Check if we can access Drawers table
+                    var drawerCount = await _dbContext.Drawers.CountAsync();
+                    Console.WriteLine($"Database connection successful. Drawer count: {drawerCount}");
+
+                    // Check if we can access DrawerTransactions table
+                    var transactionCount = await _dbContext.DrawerTransactions.CountAsync();
+                    Console.WriteLine($"DrawerTransactions table accessible. Count: {transactionCount}");
+
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine("Database connection failed");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Database connection test error: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return false;
+            }
+        }
+
+        public async Task<List<DrawerTransaction>> GetCashOutTransactionsAsync(int drawerId)
+        {
+            try
+            {
+                var cashOuts = await _dbContext.DrawerTransactions
+                    .Where(dt => dt.DrawerId == drawerId && dt.Type == "Cash Out" && !dt.IsVoided)
+                    .OrderByDescending(dt => dt.Timestamp)
+                    .Take(10)
+                    .ToListAsync();
+
+                // Log found transactions
+                Console.WriteLine($"Found {cashOuts.Count} cash out transactions for drawer {drawerId}:");
+                foreach (var tx in cashOuts)
+                {
+                    Console.WriteLine($"  {tx.Timestamp}: ${tx.Amount:F2} - {tx.Description}");
+                }
+
+                return cashOuts;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving cash out transactions: {ex.Message}");
+                return new List<DrawerTransaction>();
+            }
+        }
         /// <summary>
         /// Gets the currently open drawer for a cashier
         /// </summary>

@@ -3,6 +3,7 @@ using QuickTechPOS.Models;
 using QuickTechPOS.Models.Enums;
 using QuickTechPOS.Services;
 using QuickTechPOS.Views;
+using System.Windows;
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -265,6 +266,7 @@ namespace QuickTechPOS.ViewModels
         public ICommand SearchCustomersCommand { get; }
         public ICommand AddToCartCommand { get; }
         public ICommand RemoveFromCartCommand { get; }
+        public ICommand LogoutCommand { get; }
         public ICommand ClearCartCommand { get; }
         public ICommand CheckoutCommand { get; }
         public ICommand AddCustomerCommand { get; }
@@ -290,7 +292,7 @@ namespace QuickTechPOS.ViewModels
             _receiptPrinterService = new ReceiptPrinterService();
             _businessSettingsService = new BusinessSettingsService();
             _exchangeRate = 90000; // Default value until loaded from DB
-
+            LogoutCommand = new RelayCommand(param => Logout());
             SearchedProducts = new ObservableCollection<Product>();
             SearchedCustomers = new ObservableCollection<Customer>();
             CartItems = new ObservableCollection<CartItem>();
@@ -1357,7 +1359,12 @@ namespace QuickTechPOS.ViewModels
                 IsProcessing = false;
             }
         }
-
+        private void Logout()
+        {
+            // You can either implement logout here
+            // Or just delegate to the parent view
+            Application.Current.MainWindow.Close();
+        }
         private async Task LookupTransactionAsync()
         {
             IsEditMode = false;

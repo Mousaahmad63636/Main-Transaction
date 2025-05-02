@@ -29,9 +29,18 @@ namespace QuickTechPOS.Views
                 {
                     DialogResult = _viewModel.DialogResult;
 
-                    // Close immediately on success to ensure prompt UI update
+                    // Set the result before closing to ensure the updated drawer is available
                     if (_viewModel.DialogResult == true)
                     {
+                        // Log the updated drawer values without assigning to UpdatedDrawer
+                        Console.WriteLine($"CashOutDialog: Updated drawer values before closing:");
+                        Console.WriteLine($"  - DrawerID: {_viewModel.Drawer.DrawerId}");
+                        Console.WriteLine($"  - CashOut: ${_viewModel.Drawer.CashOut:F2}");
+                        Console.WriteLine($"  - CurrentBalance: ${_viewModel.Drawer.CurrentBalance:F2}");
+
+                        // Ensure all UI updates are processed
+                        System.Windows.Application.Current.Dispatcher.Invoke(() => { });
+
                         this.Close();
                     }
                 }

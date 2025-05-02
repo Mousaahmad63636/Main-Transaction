@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.Helpers;
+﻿using Microsoft.EntityFrameworkCore;
+using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using System;
@@ -128,21 +129,42 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
+                // Log before cash out attempt
+                Console.WriteLine($"[CashOutViewModel] Executing cash out: Amount=${CashOutAmount:F2}, DrawerID={_drawer.DrawerId}");
+                Console.WriteLine($"Drawer before cash out: Balance=${_drawer.CurrentBalance:F2}, CashOut=${_drawer.CashOut:F2}");
+
                 // Use the drawer service to perform the cash out operation
                 var updatedDrawer = await _drawerService.PerformCashOutAsync(_drawer.DrawerId, CashOutAmount, Notes);
 
-                // Copy updated values to our drawer object
-                _drawer.CashOut = updatedDrawer.CashOut;
-                _drawer.CurrentBalance = updatedDrawer.CurrentBalance;
-                _drawer.NetCashFlow = updatedDrawer.NetCashFlow;
-                _drawer.Notes = updatedDrawer.Notes;
-                _drawer.LastUpdated = updatedDrawer.LastUpdated;
+                if (updatedDrawer != null)
+                {
+                    // Copy updated values to our drawer object
+                    _drawer.CashOut = updatedDrawer.CashOut;
+                    _drawer.CurrentBalance = updatedDrawer.CurrentBalance;
+                    _drawer.NetCashFlow = updatedDrawer.NetCashFlow;
+                    _drawer.Notes = updatedDrawer.Notes;
+                    _drawer.LastUpdated = updatedDrawer.LastUpdated;
 
-                DialogResult = true;
-                OnPropertyChanged(nameof(DialogResult));
+                    Console.WriteLine($"[CashOutViewModel] Cash out operation completed successfully.");
+                    Console.WriteLine($"Drawer after: Balance=${_drawer.CurrentBalance:F2}, CashOut=${_drawer.CashOut:F2}");
+
+                    DialogResult = true;
+                    OnPropertyChanged(nameof(DialogResult));
+                }
+                else
+                {
+                    Console.WriteLine("[CashOutViewModel] Cash out operation failed: drawer service returned null");
+                    ErrorMessage = "Cash out operation failed. Please try again.";
+                }
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"[CashOutViewModel] Cash out operation failed with exception: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+
                 ErrorMessage = $"Error performing cash out: {ex.Message}";
                 DialogResult = false;
                 OnPropertyChanged(nameof(DialogResult));

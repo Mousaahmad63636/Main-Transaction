@@ -776,14 +776,19 @@ namespace QuickTechPOS.Services
             {
                 if (drawer == null)
                 {
+                    Console.WriteLine("Cannot print report: Drawer is null");
                     return "No drawer to print report for.";
                 }
 
                 // Generate report
+                Console.WriteLine($"Generating report for drawer #{drawer.DrawerId}...");
                 string reportContent = await GenerateDrawerReportAsync(drawer);
+                Console.WriteLine("Report generated successfully");
 
                 // Print report
+                Console.WriteLine("Sending report to printer...");
                 bool printed = await PrintReceiptAsync(reportContent);
+                Console.WriteLine($"Print result: {(printed ? "Success" : "Failed")}");
 
                 // Return appropriate message
                 if (printed)
@@ -798,6 +803,10 @@ namespace QuickTechPOS.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error printing drawer report: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 return $"Error printing drawer report: {ex.Message}";
             }
         }

@@ -140,42 +140,70 @@ namespace QuickTechPOS.ViewModels
                 if (ClosingBalance < 0)
                 {
                     ErrorMessage = "Closing balance cannot be negative.";
+                    IsProcessing = false;
                     return;
                 }
+
+                Console.WriteLine($"Attempting to close drawer #{_drawer.DrawerId} with balance ${ClosingBalance:F2}");
 
                 // Close the drawer
                 var updatedDrawer = await _drawerService.CloseDrawerAsync(_drawer.DrawerId, ClosingBalance, ClosingNotes);
 
                 if (updatedDrawer != null)
                 {
-                    // If the user checked the print option, print the drawer report
+                    // Update our local drawer object with the updated values from the database
+                    Drawer = updatedDrawer;
+                    Console.WriteLine($"Drawer #{_drawer.DrawerId} closed successfully. Status: {Drawer.Status}");
+
+                    // Print the drawer report if requested
                     if (PrintReportAfterClosing)
                     {
-                        var receiptPrinterService = new ReceiptPrinterService();
-                        await receiptPrinterService.PrintDrawerReportAsync(updatedDrawer);
-                        Console.WriteLine("Drawer report printed after closing drawer.");
+                        try
+                        {
+                            Console.WriteLine("Printing drawer report...");
+                            var receiptPrinterService = new ReceiptPrinterService();
+                            string printResult = await receiptPrinterService.PrintDrawerReportAsync(updatedDrawer);
+                            Console.WriteLine($"Print result: {printResult}");
+                        }
+                        catch (Exception printEx)
+                        {
+                            Console.WriteLine($"Error printing drawer report: {printEx.Message}");
+                            // Don't fail the closing operation if printing fails
+                        }
                     }
 
+                    // Set DialogResult to true to indicate success and close the dialog
                     DialogResult = true;
                     OnPropertyChanged(nameof(DialogResult));
+
+                    // Log success
+                    Console.WriteLine("Close drawer operation completed successfully");
                 }
                 else
                 {
                     ErrorMessage = "Failed to close drawer. Please try again.";
+                    Console.WriteLine("Close drawer operation failed: drawer service returned null");
+                    DialogResult = false;
+                    OnPropertyChanged(nameof(DialogResult));
                 }
             }
             catch (Exception ex)
             {
                 ErrorMessage = $"Error closing drawer: {ex.Message}";
+                Console.WriteLine($"Exception in CloseDrawerAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 DialogResult = false;
                 OnPropertyChanged(nameof(DialogResult));
             }
             finally
             {
                 IsProcessing = false;
+                CommandManager.InvalidateRequerySuggested();
             }
         }
-
         /// <summary>
         /// Cancels the operation
         /// </summary>

@@ -364,25 +364,38 @@ namespace QuickTechPOS.Services
         {
             try
             {
+                Console.WriteLine($"Starting close drawer operation for drawer #{drawerId}");
+                Console.WriteLine($"Closing balance: ${closingBalance:F2}");
+                Console.WriteLine($"Notes: {closingNotes}");
+
+                // Load the drawer with tracking enabled
                 var drawer = await _dbContext.Drawers.FindAsync(drawerId);
                 if (drawer == null)
                 {
+                    Console.WriteLine($"ERROR: Drawer with ID {drawerId} not found");
                     throw new ArgumentException($"Drawer with ID {drawerId} not found.");
                 }
 
+                Console.WriteLine($"Found drawer. Current status: {drawer.Status}");
                 if (drawer.Status != "Open")
                 {
+                    Console.WriteLine($"ERROR: Cannot close drawer that is not open (status: {drawer.Status})");
                     throw new InvalidOperationException("Cannot close a drawer that is not open.");
                 }
 
                 // Calculate difference between expected and closing balance
-                decimal expectedBalance = drawer.OpeningBalance + drawer.CashIn - drawer.CashOut + drawer.TotalSales - drawer.TotalExpenses - drawer.TotalSupplierPayments;
+                decimal expectedBalance = drawer.CurrentBalance;
                 decimal difference = closingBalance - expectedBalance;
+                Console.WriteLine($"Expected balance: ${expectedBalance:F2}, Closing balance: ${closingBalance:F2}, Difference: ${difference:F2}");
 
+                // Update the drawer with closing information
                 drawer.CurrentBalance = closingBalance;
                 drawer.ClosedAt = DateTime.Now;
                 drawer.LastUpdated = DateTime.Now;
-                drawer.Status = "Closed";
+                drawer.Status = "Closed";  // This is critical for proper status update
+
+                Console.WriteLine($"Updated drawer status to: {drawer.Status}");
+                Console.WriteLine($"Set ClosedAt to: {drawer.ClosedAt}");
 
                 // Update notes - append closing notes to existing notes
                 string closingNote = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] Drawer closed with balance: ${closingBalance:F2}";
@@ -399,11 +412,13 @@ namespace QuickTechPOS.Services
                     closingNote += $" - {closingNotes}";
                 }
 
+                // Ensure notes is not null before appending
                 if (string.IsNullOrEmpty(drawer.Notes))
                     drawer.Notes = closingNote;
                 else
                     drawer.Notes = $"{drawer.Notes}\n{closingNote}";
 
+                Console.WriteLine("Creating drawer transaction for closing...");
                 // Create a drawer transaction for closing
                 var drawerTransaction = new DrawerTransaction
                 {
@@ -421,6 +436,7 @@ namespace QuickTechPOS.Services
 
                 _dbContext.DrawerTransactions.Add(drawerTransaction);
 
+                Console.WriteLine("Creating drawer history entry...");
                 // Create a drawer history entry
                 var historyEntry = new DrawerHistoryEntry
                 {
@@ -437,6 +453,7 @@ namespace QuickTechPOS.Services
                 // If there's a significant difference, create an adjustment entry
                 if (Math.Abs(difference) > 0.01m)
                 {
+                    Console.WriteLine($"Creating adjustment entry for {(difference > 0 ? "overage" : "shortage")} of ${Math.Abs(difference):F2}");
                     var adjustmentEntry = new DrawerHistoryEntry
                     {
                         Timestamp = DateTime.Now,
@@ -452,13 +469,28 @@ namespace QuickTechPOS.Services
                     _dbContext.DrawerHistoryEntries.Add(adjustmentEntry);
                 }
 
+                Console.WriteLine("Saving changes to database...");
                 await _dbContext.SaveChangesAsync();
 
+                Console.WriteLine($"Drawer #{drawerId} closed successfully. Status is now '{drawer.Status}'");
                 return drawer;
+            }
+            catch (DbUpdateException dbEx)
+            {
+                Console.WriteLine($"Database error closing drawer: {dbEx.Message}");
+                if (dbEx.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {dbEx.InnerException.Message}");
+                }
+                throw;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in CloseDrawerAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 throw;
             }
         }
@@ -587,14 +619,30 @@ namespace QuickTechPOS.Services
         {
             try
             {
+                Console.WriteLine($"Searching for open drawer for cashier ID: {cashierId}");
+
+                // Add logging to show the current query
+                Console.WriteLine("Running query: SELECT * FROM Drawers WHERE CashierId = {cashierId} AND Status = 'Open'");
+
                 var drawer = await _dbContext.Drawers
                     .Where(d => d.CashierId == cashierId && d.Status == "Open")
                     .FirstOrDefaultAsync();
 
-                // Ensure Notes is never null
-                if (drawer != null && drawer.Notes == null)
+                Console.WriteLine($"Query result: {(drawer != null ? "Drawer found" : "No drawer found")}");
+
+                if (drawer != null)
                 {
-                    drawer.Notes = string.Empty;
+                    Console.WriteLine($"Found open drawer ID: {drawer.DrawerId}, Status: {drawer.Status}");
+
+                    // Ensure Notes is never null
+                    if (drawer.Notes == null)
+                    {
+                        drawer.Notes = string.Empty;
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No open drawer found for this cashier");
                 }
 
                 return drawer;
@@ -602,6 +650,10 @@ namespace QuickTechPOS.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetOpenDrawerAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 throw;
             }
         }

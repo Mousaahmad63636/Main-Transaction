@@ -548,26 +548,44 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
-                // Get fresh drawer status from database
-                await GetCurrentDrawerAsync();
+                // Force refresh of drawer status from database
+                if (_authService.CurrentEmployee == null)
+                {
+                    CurrentDrawer = null;
+                    Console.WriteLine("RefreshDrawerStatusAsync: No employee logged in");
+                    OnPropertyChanged(nameof(IsDrawerOpen));
+                    return;
+                }
 
-                // Additional UI refreshes to ensure all drawer-related UI updates
+                string cashierId = _authService.CurrentEmployee.EmployeeId.ToString();
+                Console.WriteLine($"Refreshing drawer status for cashier ID: {cashierId}...");
+
+                // Get current open drawer from the database
+                var drawer = await _drawerService.GetOpenDrawerAsync(cashierId);
+
+                Console.WriteLine($"Drawer status refreshed. Found drawer: {drawer != null}, " +
+                    $"Status: {drawer?.Status ?? "None"}, DrawerId: {drawer?.DrawerId.ToString() ?? "None"}");
+
+                // Update current drawer and notify UI
+                CurrentDrawer = drawer;
+
+                // Ensure all drawer-related properties are updated
                 OnPropertyChanged(nameof(CurrentDrawer));
                 OnPropertyChanged(nameof(IsDrawerOpen));
 
-                // Force command manager to update button states
+                // Force UI refresh through dispatcher
                 System.Windows.Application.Current.Dispatcher.Invoke(() => {
                     CommandManager.InvalidateRequerySuggested();
                 });
 
-                Console.WriteLine($"Drawer status refreshed. IsDrawerOpen: {IsDrawerOpen}");
+                Console.WriteLine($"Drawer refresh complete. IsDrawerOpen = {IsDrawerOpen}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error refreshing drawer status: {ex.Message}");
+                Console.WriteLine($"Error in RefreshDrawerStatusAsync: {ex.Message}");
+                StatusMessage = $"Error refreshing drawer status: {ex.Message}";
             }
         }
-
         private async Task OpenDrawerDialogAsync()
         {
             try
@@ -628,42 +646,50 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
-                // Add a small delay to ensure any pending database operations complete
-                await Task.Delay(500);
+                // Log the drawer we're about to close
+                Console.WriteLine($"About to close drawer #{CurrentDrawer.DrawerId}, Current status: {CurrentDrawer.Status}");
 
-                // Refresh once more to get the most up-to-date data
+                // Create and show the dialog
+                var dialog = new CloseDrawerDialog(CurrentDrawer);
+                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                dialog.Owner = Application.Current.MainWindow;
+                dialog.Topmost = true;  // Force dialog to stay on top
+
+                // Show the dialog
+                bool? result = dialog.ShowDialog();
+                Console.WriteLine($"Dialog result: {result}");
+
+                // Give database operations time to complete
+                await Task.Delay(1000);
+
+                // Explicitly refresh drawer status after dialog closes
                 await RefreshDrawerStatusAsync();
 
-                // Get the drawer transactions directly from the database
-                if (CurrentDrawer != null)
-                {
-                    var drawerService = new DrawerService();
-                    var transactions = await drawerService.GetDrawerTransactionsAsync(CurrentDrawer.DrawerId);
-                    decimal totalCashOut = transactions
-                        .Where(t => t.Type == "Cash Out" && !t.IsVoided)
-                        .Sum(t => t.Amount);
-
-                    // Update the CashOut property with the calculated value
-                    CurrentDrawer.CashOut = totalCashOut;
-                }
-
-                var dialog = new CloseDrawerDialog(CurrentDrawer);
-                bool? result = dialog.ShowDialog();
+                // Force UI to update for drawer status changes
+                OnPropertyChanged(nameof(IsDrawerOpen));
+                OnPropertyChanged(nameof(CurrentDrawer));
+                CommandManager.InvalidateRequerySuggested();
 
                 // If drawer was successfully closed
                 if (result == true)
                 {
-                    // The drawer report printing is now handled in the CloseDrawerViewModel
                     StatusMessage = "Drawer closed successfully.";
-
-                    // Refresh drawer status to update UI
-                    await RefreshDrawerStatusAsync();
+                    Console.WriteLine("Drawer closed successfully according to dialog result");
+                }
+                else
+                {
+                    StatusMessage = "Drawer closing was cancelled or unsuccessful.";
+                    Console.WriteLine("Drawer closing was cancelled or unsuccessful");
                 }
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error closing drawer: {ex.Message}";
-                Console.WriteLine($"Close drawer dialog error: {ex}");
+                Console.WriteLine($"Close drawer dialog error: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
             }
         }
         private async void LoadInitialProductsAsync()

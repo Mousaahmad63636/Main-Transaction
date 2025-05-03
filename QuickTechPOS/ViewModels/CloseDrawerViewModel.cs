@@ -20,6 +20,7 @@ namespace QuickTechPOS.ViewModels
         private string _errorMessage;
         private bool _isProcessing;
         private string _closingNotes;
+        private bool _printReportAfterClosing = true;
 
         /// <summary>
         /// Gets the current drawer
@@ -44,7 +45,14 @@ namespace QuickTechPOS.ViewModels
                 }
             }
         }
-
+        /// <summary>
+        /// Gets or sets whether to print the drawer report after closing
+        /// </summary>
+        public bool PrintReportAfterClosing
+        {
+            get => _printReportAfterClosing;
+            set => SetProperty(ref _printReportAfterClosing, value);
+        }
         /// <summary>
         /// Gets the calculated difference between the system balance and the entered closing balance
         /// </summary>
@@ -136,12 +144,25 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 // Close the drawer
-                var closedDrawer = await _drawerService.CloseDrawerAsync(Drawer.DrawerId, ClosingBalance, ClosingNotes);
-                Drawer = closedDrawer;
+                var updatedDrawer = await _drawerService.CloseDrawerAsync(_drawer.DrawerId, ClosingBalance, ClosingNotes);
 
-                // Signal success to the view
-                DialogResult = true;
-                OnPropertyChanged(nameof(DialogResult));
+                if (updatedDrawer != null)
+                {
+                    // If the user checked the print option, print the drawer report
+                    if (PrintReportAfterClosing)
+                    {
+                        var receiptPrinterService = new ReceiptPrinterService();
+                        await receiptPrinterService.PrintDrawerReportAsync(updatedDrawer);
+                        Console.WriteLine("Drawer report printed after closing drawer.");
+                    }
+
+                    DialogResult = true;
+                    OnPropertyChanged(nameof(DialogResult));
+                }
+                else
+                {
+                    ErrorMessage = "Failed to close drawer. Please try again.";
+                }
             }
             catch (Exception ex)
             {

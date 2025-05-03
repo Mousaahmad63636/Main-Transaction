@@ -10,6 +10,7 @@ namespace QuickTechPOS
         public MainWindow()
         {
             InitializeComponent();
+            this.WindowState = WindowState.Maximized;
         }
     }
 }

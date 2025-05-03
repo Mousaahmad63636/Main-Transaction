@@ -7,6 +7,7 @@
         Title="QuickTech POS" 
         Height="650" 
         Width="1000"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen">
 
     <!-- Main window content is set programmatically in App.xaml.cs -->

@@ -9,6 +9,17 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Printing;
+using System.Threading.Tasks;
+using System.Windows.Controls;
+using System.Windows.Documents;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Collections.Generic;
+using System.IO;
 
 namespace QuickTechPOS.ViewModels
 {
@@ -269,9 +280,11 @@ namespace QuickTechPOS.ViewModels
         public ICommand LogoutCommand { get; }
         public ICommand ClearCartCommand { get; }
         public ICommand CheckoutCommand { get; }
+
         public ICommand AddCustomerCommand { get; }
         public ICommand LookupTransactionCommand { get; }
         public ICommand EditTransactionCommand { get; }
+        public ICommand PrintDrawerReportCommand { get; }
         public ICommand SaveTransactionCommand { get; }
         public ICommand PrintReceiptCommand { get; }
         public ICommand NextTransactionCommand { get; }
@@ -322,6 +335,7 @@ namespace QuickTechPOS.ViewModels
             AmountToDebt = 0;
 
             // Initialize commands
+            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportAsync(), param => IsDrawerOpen);
             CashOutCommand = new RelayCommand(async param => await ShowCashOutDialogAsync(), param => IsDrawerOpen);
             SearchBarcodeCommand = new RelayCommand(async param => await SearchByBarcodeAsync());
             SearchNameCommand = new RelayCommand(async param => await SearchByNameAsync());
@@ -329,12 +343,13 @@ namespace QuickTechPOS.ViewModels
             AddToCartCommand = new RelayCommand(param => AddToCart(param as Product));
             RemoveFromCartCommand = new RelayCommand(param => RemoveFromCart(param as CartItem), param => param != null);
             ClearCartCommand = new RelayCommand(param => ClearCart());
+            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportAsync(), param => IsDrawerOpen);
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout);
             AddCustomerCommand = new RelayCommand(param => OpenAddCustomerDialog());
             SelectCustomerCommand = new RelayCommand(param => OpenCustomerSelectionDialog());
             OpenDrawerCommand = new RelayCommand(async param => await OpenDrawerDialogAsync());
             CloseDrawerCommand = new RelayCommand(async param => await CloseDrawerDialogAsync(), param => IsDrawerOpen);
-
+            PrintReceiptCommand = new RelayCommand(param => PrintReceipt(), param => IsTransactionLoaded);
             LookupTransactionCommand = new RelayCommand(async param =>
             {
                 if (param != null)
@@ -346,7 +361,7 @@ namespace QuickTechPOS.ViewModels
 
             EditTransactionCommand = new RelayCommand(param => EnterEditMode(), param => IsTransactionLoaded && !IsEditMode);
             SaveTransactionCommand = new RelayCommand(async param => await SaveTransactionChangesAsync(), param => IsTransactionLoaded && IsEditMode);
-            PrintReceiptCommand = new RelayCommand(param => PrintReceipt(), param => IsTransactionLoaded);
+          
 
             NextTransactionCommand = new RelayCommand(async param => await NavigateToNextTransactionAsync(), param => CanNavigateNext);
             PreviousTransactionCommand = new RelayCommand(async param => await NavigateToPreviousTransactionAsync(), param => CanNavigatePrevious);
@@ -635,11 +650,14 @@ namespace QuickTechPOS.ViewModels
                 var dialog = new CloseDrawerDialog(CurrentDrawer);
                 bool? result = dialog.ShowDialog();
 
-                // Rest of the method remains the same
+                // If drawer was successfully closed
                 if (result == true)
                 {
-                    var closedDrawer = dialog.ClosedDrawer;
-                    // ...
+                    // The drawer report printing is now handled in the CloseDrawerViewModel
+                    StatusMessage = "Drawer closed successfully.";
+
+                    // Refresh drawer status to update UI
+                    await RefreshDrawerStatusAsync();
                 }
             }
             catch (Exception ex)
@@ -966,6 +984,34 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        private async Task PrintDrawerReportAsync()
+        {
+            try
+            {
+                if (CurrentDrawer == null)
+                {
+                    StatusMessage = "No drawer available to print report.";
+                    return;
+                }
+
+                IsProcessing = true;
+                StatusMessage = $"Printing drawer report for drawer #{CurrentDrawer.DrawerId}...";
+
+                // Use the receipt service to print the drawer report
+                string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
+
+                StatusMessage = result;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error printing drawer report: {ex.Message}";
+                Console.WriteLine($"Drawer report print error: {ex}");
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
         private void OpenAddCustomerDialog()
         {
             var newCustomerDialog = new Views.AddCustomerDialog();
@@ -1212,13 +1258,13 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Customer: {customerNameForTransaction} (ID: {customerIdForTransaction})");
 
                 var transaction = await _transactionService.CreateTransactionAsync(
-     CartItems.ToList(),
-     PaidAmount,
-     currentEmployee,
-     "Cash",
-     customerNameForTransaction,
-     customerIdForTransaction
- );
+                    CartItems.ToList(),
+                    PaidAmount,
+                    currentEmployee,
+                    "Cash",
+                    customerNameForTransaction,
+                    customerIdForTransaction
+                );
 
                 if (transaction == null || transaction.TransactionId <= 0)
                 {
@@ -1231,23 +1277,16 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Transaction #{transaction.TransactionId} created successfully");
                 Console.WriteLine($"- Total Amount: {transaction.TotalAmount:C2}, Paid Amount: {transaction.PaidAmount:C2}");
 
-                // Generate and print receipt
-                string receiptContent = await _receiptPrinterService.GenerateTransactionReceiptAsync(
+                // Updated receipt printing using the new service method
+                string receiptResult = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                     transaction,
                     CartItems.ToList(),
-                    ExchangeRate,
-                    UseExchangeRate);
+                    customerIdForTransaction,
+                    0, // No previous balance for new transactions
+                    ExchangeRate);
 
-                bool printed = await _receiptPrinterService.PrintReceiptAsync(receiptContent);
-
-                if (printed)
-                {
-                    Console.WriteLine("Receipt printed successfully");
-                }
-                else
-                {
-                    Console.WriteLine("Failed to print receipt");
-                }
+                bool printed = !receiptResult.Contains("cancelled") && !receiptResult.Contains("error");
+                Console.WriteLine(receiptResult);
 
                 // After successful transaction, update the drawer
                 try
@@ -1558,42 +1597,6 @@ namespace QuickTechPOS.ViewModels
                 IsProcessing = false;
             }
         }
-        private async void PrintReceipt()
-        {
-            try
-            {
-                if (LoadedTransaction == null)
-                {
-                    StatusMessage = "No transaction loaded to print.";
-                    return;
-                }
-
-                StatusMessage = $"Printing receipt for transaction #{LoadedTransaction.TransactionId}...";
-
-                // Generate and print receipt for loaded transaction
-                string receiptContent = await _receiptPrinterService.GenerateTransactionReceiptAsync(
-                    LoadedTransaction,
-                    CartItems.ToList(),
-                    ExchangeRate,
-                    UseExchangeRate);
-
-                bool printed = await _receiptPrinterService.PrintReceiptAsync(receiptContent);
-
-                if (printed)
-                {
-                    StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} printed successfully.";
-                }
-                else
-                {
-                    StatusMessage = $"Failed to print receipt for transaction #{LoadedTransaction.TransactionId}.";
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error printing receipt: {ex.Message}";
-                Console.WriteLine($"Print receipt error: {ex}");
-            }
-        }
 
         private async Task CheckNavigationAvailabilityAsync(int currentTransactionId)
         {
@@ -1613,6 +1616,59 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        private async void PrintReceipt()
+        {
+            try
+            {
+                if (LoadedTransaction == null)
+                {
+                    StatusMessage = "No transaction loaded to print.";
+                    return;
+                }
+
+                StatusMessage = $"Printing receipt for transaction #{LoadedTransaction.TransactionId}...";
+                IsProcessing = true;
+
+                decimal previousBalance = 0;
+                if (CustomerId > 0 && SelectedCustomer != null)
+                {
+                    try
+                    {
+                        var customer = await _customerService.GetByIdAsync(CustomerId);
+                        if (customer != null)
+                        {
+                            previousBalance = customer.Balance;
+                            // If this is a loaded transaction, subtract its total to avoid double counting
+                            if (IsTransactionLoaded && !IsEditMode)
+                            {
+                                previousBalance -= TotalAmount;
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"Error retrieving customer balance: {ex.Message}");
+                    }
+                }
+
+                // Use the enhanced service method
+                string result = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
+                    LoadedTransaction,
+                    CartItems.ToList(),
+                    CustomerId,
+                    previousBalance,
+                    ExchangeRate);
+
+                StatusMessage = result;
+                IsProcessing = false;
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error printing receipt: {ex.Message}";
+                Console.WriteLine($"Print receipt error: {ex}");
+                IsProcessing = false;
+            }
+        }
         private async Task NavigateToNextTransactionAsync()
         {
             try
@@ -1635,7 +1691,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Next transaction navigation error: {ex}");
             }
         }
-
+       
         private async Task NavigateToPreviousTransactionAsync()
         {
             try

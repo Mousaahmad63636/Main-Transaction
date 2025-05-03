@@ -560,21 +560,56 @@ namespace QuickTechPOS.ViewModels
                 string cashierId = _authService.CurrentEmployee.EmployeeId.ToString();
                 Console.WriteLine($"Refreshing drawer status for cashier ID: {cashierId}...");
 
-                // Get current open drawer from the database
-                var drawer = await _drawerService.GetOpenDrawerAsync(cashierId);
+                try
+                {
+                    // Test database connection first
+                    var connectionTest = await _drawerService.TestDatabaseConnectionAsync();
+                    if (!connectionTest)
+                    {
+                        Console.WriteLine("Database connection test failed in RefreshDrawerStatusAsync");
+                        StatusMessage = "Warning: Database connection issue detected.";
+                        return;
+                    }
+                }
+                catch (Exception connEx)
+                {
+                    Console.WriteLine($"Connection test error: {connEx.Message}");
+                    // Continue anyway to try the main operation
+                }
 
-                Console.WriteLine($"Drawer status refreshed. Found drawer: {drawer != null}, " +
-                    $"Status: {drawer?.Status ?? "None"}, DrawerId: {drawer?.DrawerId.ToString() ?? "None"}");
+                // Get current open drawer from the database with a direct query
+                try
+                {
+                    var drawer = await _drawerService.GetOpenDrawerAsync(cashierId);
 
-                // Update current drawer and notify UI
-                CurrentDrawer = drawer;
+                    Console.WriteLine($"Drawer status refreshed. Found drawer: {drawer != null}, " +
+                        $"Status: {drawer?.Status ?? "None"}, DrawerId: {drawer?.DrawerId.ToString() ?? "None"}");
+
+                    // Update current drawer and notify UI
+                    CurrentDrawer = drawer;
+
+                    // Explicitly force null check on drawer properties to avoid binding errors
+                    if (CurrentDrawer != null && CurrentDrawer.Notes == null)
+                    {
+                        CurrentDrawer.Notes = string.Empty;
+                    }
+                }
+                catch (Exception queryEx)
+                {
+                    Console.WriteLine($"Error querying drawer: {queryEx.Message}");
+                    if (queryEx.InnerException != null)
+                    {
+                        Console.WriteLine($"Inner exception: {queryEx.InnerException.Message}");
+                    }
+                    // Don't update CurrentDrawer if there's an error
+                }
 
                 // Ensure all drawer-related properties are updated
                 OnPropertyChanged(nameof(CurrentDrawer));
                 OnPropertyChanged(nameof(IsDrawerOpen));
 
                 // Force UI refresh through dispatcher
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                Application.Current.Dispatcher.Invoke(() => {
                     CommandManager.InvalidateRequerySuggested();
                 });
 
@@ -583,6 +618,7 @@ namespace QuickTechPOS.ViewModels
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in RefreshDrawerStatusAsync: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 StatusMessage = $"Error refreshing drawer status: {ex.Message}";
             }
         }
@@ -637,49 +673,104 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
+                Console.WriteLine("CloseDrawerDialogAsync started");
+
                 // Explicitly refresh drawer data from database
+                Console.WriteLine("Refreshing drawer status from database");
                 await RefreshDrawerStatusAsync();
 
                 if (!IsDrawerOpen)
                 {
                     StatusMessage = "No open drawer found.";
+                    Console.WriteLine("Cannot close drawer: No open drawer found");
+                    MessageBox.Show("No open drawer found. Please open a drawer first.",
+                        "No Drawer", MessageBoxButton.OK, MessageBoxImage.Information);
+                    return;
+                }
+
+                // Additional checks on drawer state
+                if (CurrentDrawer == null)
+                {
+                    StatusMessage = "Drawer information is not available.";
+                    Console.WriteLine("CurrentDrawer is null despite IsDrawerOpen being true");
+                    return;
+                }
+
+                if (CurrentDrawer.Status != "Open")
+                {
+                    StatusMessage = $"Drawer status is '{CurrentDrawer.Status}', not 'Open'.";
+                    Console.WriteLine($"Cannot close drawer with status: {CurrentDrawer.Status}");
                     return;
                 }
 
                 // Log the drawer we're about to close
                 Console.WriteLine($"About to close drawer #{CurrentDrawer.DrawerId}, Current status: {CurrentDrawer.Status}");
+                Console.WriteLine($"Current balance: ${CurrentDrawer.CurrentBalance:F2}");
 
-                // Create and show the dialog
-                var dialog = new CloseDrawerDialog(CurrentDrawer);
-                dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
-                dialog.Owner = Application.Current.MainWindow;
-                dialog.Topmost = true;  // Force dialog to stay on top
-
-                // Show the dialog
-                bool? result = dialog.ShowDialog();
-                Console.WriteLine($"Dialog result: {result}");
-
-                // Give database operations time to complete
-                await Task.Delay(1000);
-
-                // Explicitly refresh drawer status after dialog closes
-                await RefreshDrawerStatusAsync();
-
-                // Force UI to update for drawer status changes
-                OnPropertyChanged(nameof(IsDrawerOpen));
-                OnPropertyChanged(nameof(CurrentDrawer));
-                CommandManager.InvalidateRequerySuggested();
-
-                // If drawer was successfully closed
-                if (result == true)
+                try
                 {
-                    StatusMessage = "Drawer closed successfully.";
-                    Console.WriteLine("Drawer closed successfully according to dialog result");
+                    // Create and show the dialog
+                    var dialog = new CloseDrawerDialog(CurrentDrawer);
+                    dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    dialog.Owner = Application.Current.MainWindow;
+                    dialog.Topmost = true;  // Force dialog to stay on top
+
+                    // Show the dialog
+                    Console.WriteLine("Showing CloseDrawerDialog");
+                    bool? result = dialog.ShowDialog();
+                    Console.WriteLine($"Dialog ShowDialog returned result: {result}");
+
+                    // Give database operations time to complete
+                    Console.WriteLine("Waiting for database operations to complete");
+                    await Task.Delay(1000);
+
+                    // Explicitly refresh drawer status after dialog closes
+                    Console.WriteLine("Refreshing drawer status after dialog close");
+                    await RefreshDrawerStatusAsync();
+
+                    // Force UI to update for drawer status changes
+                    OnPropertyChanged(nameof(IsDrawerOpen));
+                    OnPropertyChanged(nameof(CurrentDrawer));
+                    CommandManager.InvalidateRequerySuggested();
+
+                    // If drawer was successfully closed
+                    if (result == true)
+                    {
+                        StatusMessage = "Drawer closed successfully.";
+                        Console.WriteLine("Drawer closed successfully according to dialog result");
+
+                        // Double-check the actual status
+                        if (CurrentDrawer != null && CurrentDrawer.Status != "Closed")
+                        {
+                            Console.WriteLine($"WARNING: Drawer status is still '{CurrentDrawer.Status}' after reported successful closure");
+
+                            // Force another refresh to be sure
+                            await Task.Delay(500);
+                            await RefreshDrawerStatusAsync();
+
+                            if (CurrentDrawer != null && CurrentDrawer.Status != "Closed")
+                            {
+                                Console.WriteLine("ERROR: Drawer status still not 'Closed' after second refresh");
+                                StatusMessage = "Drawer might not have closed properly. Please check status.";
+                            }
+                            else
+                            {
+                                Console.WriteLine("Drawer status confirmed as 'Closed' after second refresh");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        StatusMessage = "Drawer closing was cancelled or unsuccessful.";
+                        Console.WriteLine("Drawer closing was cancelled or unsuccessful");
+                    }
                 }
-                else
+                catch (Exception dialogEx)
                 {
-                    StatusMessage = "Drawer closing was cancelled or unsuccessful.";
-                    Console.WriteLine("Drawer closing was cancelled or unsuccessful");
+                    StatusMessage = $"Error showing close drawer dialog: {dialogEx.Message}";
+                    Console.WriteLine($"Dialog creation/show error: {dialogEx.Message}");
+                    MessageBox.Show($"Error showing close drawer dialog: {dialogEx.Message}",
+                        "Dialog Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
             }
             catch (Exception ex)
@@ -690,6 +781,14 @@ namespace QuickTechPOS.ViewModels
                 {
                     Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
                 }
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
+
+                MessageBox.Show($"Error closing drawer: {ex.Message}",
+                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                Console.WriteLine("CloseDrawerDialogAsync completed");
             }
         }
         private async void LoadInitialProductsAsync()

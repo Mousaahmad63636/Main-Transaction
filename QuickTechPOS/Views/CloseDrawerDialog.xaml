@@ -240,16 +240,15 @@
                          Margin="0,5,0,0"
                          Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"/>
         </Grid>
-        <CheckBox Grid.Row="7" 
-          Content="Print drawer report after closing" 
-          IsChecked="{Binding PrintReportAfterClosing}"
-          Margin="0,10,0,5"
-          FontWeight="Medium"/>
+
         <!-- Buttons -->
         <StackPanel Grid.Row="2" 
                     Orientation="Horizontal" 
-                    HorizontalAlignment="Right" 
+                    HorizontalAlignment="Center" 
                     Margin="0,15,0,0">
+            <CheckBox Content="Print after closing" 
+          IsChecked="{Binding PrintReportAfterClosing}"
+          FontWeight="Medium" Width="159"/>
             <Button Content="Cancel" 
                     Command="{Binding CancelCommand}"
                     Width="80" 
@@ -257,12 +256,18 @@
                     Margin="0,0,10,0"/>
             <Button Content="Close Drawer" 
                     Command="{Binding CloseDrawerCommand}"
-                    Width="150" 
+                    Width="110" 
                     Height="40"
                     Background="#E74C3C" 
                     Foreground="White"
                     FontWeight="Bold"
-                    FontSize="14"/>
+                    FontSize="14" Click="Button_Click"/>
+            <!-- In CloseDrawerDialog.xaml, near the bottom buttons -->
+            <Button Content="Print Report" 
+        Command="{Binding PrintReportCommand}"
+        Width="100" 
+        Height="32"
+        Margin="0,0,10,0"/>
         </StackPanel>
     </Grid>
 </Window>

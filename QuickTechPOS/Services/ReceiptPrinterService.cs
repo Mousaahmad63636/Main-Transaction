@@ -785,19 +785,45 @@ namespace QuickTechPOS.Services
                 string reportContent = await GenerateDrawerReportAsync(drawer);
                 Console.WriteLine("Report generated successfully");
 
-                // Print report
-                Console.WriteLine("Sending report to printer...");
-                bool printed = await PrintReceiptAsync(reportContent);
-                Console.WriteLine($"Print result: {(printed ? "Success" : "Failed")}");
+                // First save the report to a file as backup
+                string filePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    $"DrawerReport_{drawer.DrawerId}_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
 
-                // Return appropriate message
-                if (printed)
+                await File.WriteAllTextAsync(filePath, reportContent);
+                Console.WriteLine($"Report saved to file: {filePath}");
+
+                // Try to print using WPF printing
+                try
                 {
-                    return $"Drawer report #{drawer.DrawerId} printed successfully.";
+                    // Create a FlowDocument for printing
+                    var printResult = await PrintDrawerReportWpfAsync(drawer);
+                    Console.WriteLine($"WPF Print result: {printResult}");
+
+                    if (printResult.Contains("successful"))
+                    {
+                        return $"Drawer report #{drawer.DrawerId} printed successfully.";
+                    }
+                    else
+                    {
+                        return $"Note: {printResult}. Report saved to: {filePath}";
+                    }
                 }
-                else
+                catch (Exception wpfEx)
                 {
-                    return $"Failed to print drawer report #{drawer.DrawerId}.";
+                    Console.WriteLine($"WPF printing error: {wpfEx.Message}");
+
+                    // Fall back to direct printing if WPF fails
+                    bool printed = await PrintReceiptAsync(reportContent);
+
+                    if (printed)
+                    {
+                        return $"Drawer report #{drawer.DrawerId} printed successfully.";
+                    }
+                    else
+                    {
+                        return $"Could not print drawer report. A copy has been saved to: {filePath}";
+                    }
                 }
             }
             catch (Exception ex)
@@ -807,7 +833,52 @@ namespace QuickTechPOS.Services
                 {
                     Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
                 }
-                return $"Error printing drawer report: {ex.Message}";
+                return $"Error printing drawer report: {ex.Message}. Please check printer settings.";
+            }
+        }
+
+        // Add this new method for WPF-based printing
+        public async Task<string> PrintDrawerReportWpfAsync(Drawer drawer)
+        {
+            try
+            {
+                Console.WriteLine("Setting up WPF printing for drawer report");
+
+                // Create print dialog
+                var printDialog = new PrintDialog();
+
+                // Let user choose whether to proceed with printing
+                bool? dialogResult = printDialog.ShowDialog();
+                if (dialogResult != true)
+                {
+                    return "Printing was cancelled by user.";
+                }
+
+                // Create a flowdocument for the report
+                var document = new FlowDocument();
+                document.PageWidth = printDialog.PrintableAreaWidth;
+                document.PageHeight = printDialog.PrintableAreaHeight;
+                document.FontFamily = new FontFamily("Consolas, Courier New, Courier");
+                document.FontSize = 10;
+
+                // Generate the report content
+                string reportContent = await GenerateDrawerReportAsync(drawer);
+
+                // Create paragraphs for the document
+                var paragraph = new Paragraph(new Run(reportContent));
+                document.Blocks.Add(paragraph);
+
+                // Print the document
+                printDialog.PrintDocument(
+                    ((IDocumentPaginatorSource)document).DocumentPaginator,
+                    $"Drawer Report #{drawer.DrawerId}");
+
+                return "Drawer report printed successfully.";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"WPF printing error: {ex.Message}");
+                throw; // Let the caller handle this
             }
         }
     }

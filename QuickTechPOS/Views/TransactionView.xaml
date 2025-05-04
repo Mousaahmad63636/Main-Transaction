@@ -521,17 +521,19 @@
                                 <GridViewColumn Header="TYPE" Width="80">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>
-                                            <StackPanel Orientation="Horizontal">
-                                                <CheckBox IsChecked="{Binding IsBox, Mode=TwoWay}" 
-                                      Content="Box" 
-                                      VerticalAlignment="Center"
-                                      Visibility="{Binding Product.ItemsPerBox, Converter={StaticResource PositiveIntToVisibilityConverter}}"
-                                      Margin="0,0,5,0"/>
-                                                <CheckBox IsChecked="{Binding IsWholesale, Mode=TwoWay}" 
-                                      Content="WS" 
-                                      VerticalAlignment="Center"
-                                      ToolTip="Wholesale Price"/>
-                                            </StackPanel>
+                                            <CheckBox IsChecked="{Binding IsWholesale, Mode=TwoWay}" 
+                      Content="WS" 
+                      VerticalAlignment="Center"
+                      ToolTip="Wholesale Price"/>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
+                                <GridViewColumn Header="PRODUCT" Width="220">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding DisplayName}" 
+                       TextWrapping="Wrap" 
+                       FontWeight="SemiBold"/>
                                         </DataTemplate>
                                     </GridViewColumn.CellTemplate>
                                 </GridViewColumn>

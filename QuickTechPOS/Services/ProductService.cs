@@ -70,6 +70,58 @@ namespace QuickTechPOS.Services
                 return new List<Product>();
             }
         }
+
+        public async Task<ProductSearchResult> FindByAnyBarcodeAsync(string barcode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(barcode))
+                    return null;
+
+                // First check if it matches a box barcode
+                var boxProduct = await _dbContext.Products
+                    .FirstOrDefaultAsync(p => p.IsActive && p.BoxBarcode == barcode);
+
+                if (boxProduct != null)
+                {
+                    return new ProductSearchResult
+                    {
+                        Product = boxProduct,
+                        IsBoxBarcode = true
+                    };
+                }
+
+                // Then check if it matches a regular barcode
+                var regularProduct = await _dbContext.Products
+                    .FirstOrDefaultAsync(p => p.IsActive && p.Barcode == barcode);
+
+                if (regularProduct != null)
+                {
+                    return new ProductSearchResult
+                    {
+                        Product = regularProduct,
+                        IsBoxBarcode = false
+                    };
+                }
+
+                return null;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindByAnyBarcodeAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return null;
+            }
+        }
+
+        public class ProductSearchResult
+        {
+            public Product Product { get; set; }
+            public bool IsBoxBarcode { get; set; }
+        }
         /// <summary>
         /// Updates the box stock of a product
         /// </summary>

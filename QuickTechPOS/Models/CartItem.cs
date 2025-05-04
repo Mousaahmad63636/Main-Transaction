@@ -168,7 +168,7 @@ namespace QuickTechPOS.Models
         /// Gets a display name that indicates if this is a box
         /// </summary>
         [NotMapped]
-        public string DisplayName => IsBox ? $"{Product?.Name} (Box)" : Product?.Name;
+        public string DisplayName => IsBox ? $"BOX-{Product?.Name}" : Product?.Name;
 
         /// <summary>
         /// Discount value (amount or percentage)

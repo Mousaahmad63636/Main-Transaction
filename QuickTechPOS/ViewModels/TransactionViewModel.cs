@@ -1058,12 +1058,16 @@ namespace QuickTechPOS.ViewModels
 
                 StatusMessage = "Searching by barcode...";
 
-                var product = await _productService.GetByBarcodeAsync(BarcodeQuery);
+                var searchResult = await _productService.FindByAnyBarcodeAsync(BarcodeQuery);
 
-                if (product != null)
+                if (searchResult != null)
                 {
-                    AddToCart(product);
+                    // When adding to cart, set isBox automatically based on barcode type
+                    AddToCart(searchResult.Product, searchResult.IsBoxBarcode, false);
                     BarcodeQuery = string.Empty;
+                    StatusMessage = searchResult.IsBoxBarcode ?
+    $"Added BOX-{searchResult.Product.Name} to cart." :
+    $"Added {searchResult.Product.Name} to cart.";
                 }
                 else
                 {
@@ -1338,7 +1342,7 @@ namespace QuickTechPOS.ViewModels
                 CartItems.RemoveAt(existingItemIndex);
                 CartItems.Insert(existingItemIndex, updatedItem);
 
-                StatusMessage = $"Updated {(isBox ? $"{product.Name} (Box)" : product.Name)} quantity to {updatedItem.Quantity}";
+                StatusMessage = $"Updated {(isBox ? $"BOX-{product.Name}" : product.Name)} quantity to {updatedItem.Quantity}";
             }
             else
             {
@@ -1355,7 +1359,7 @@ namespace QuickTechPOS.ViewModels
                 };
 
                 CartItems.Add(newItem);
-                StatusMessage = $"Added {(isBox ? $"{product.Name} (Box)" : product.Name)} to cart.";
+                StatusMessage = $"Added {(isBox ? $"BOX-{product.Name}" : product.Name)} to cart.";
             }
 
             UpdateTotals();

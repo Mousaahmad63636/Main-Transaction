@@ -139,10 +139,34 @@ namespace QuickTechPOS.Models
         public int MinimumBoxStock { get; set; }
 
         /// <summary>
+        /// Wholesale price for individual items
+        /// </summary>
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal WholesalePrice { get; set; }
+
+        /// <summary>
+        /// Wholesale price per box
+        /// </summary>
+        [Column(TypeName = "decimal(18, 2)")]
+        public decimal BoxWholesalePrice { get; set; }
+
+        /// <summary>
         /// Gets the formatted sale price with currency symbol
         /// </summary>
         [NotMapped]
         public string FormattedSalePrice => $"${SalePrice:F2}";
+
+        /// <summary>
+        /// Gets the formatted wholesale price with currency symbol
+        /// </summary>
+        [NotMapped]
+        public string FormattedWholesalePrice => $"${WholesalePrice:F2}";
+
+        /// <summary>
+        /// Gets the formatted box wholesale price with currency symbol
+        /// </summary>
+        [NotMapped]
+        public string FormattedBoxWholesalePrice => $"${BoxWholesalePrice:F2}";
 
         /// <summary>
         /// Gets the stock status description

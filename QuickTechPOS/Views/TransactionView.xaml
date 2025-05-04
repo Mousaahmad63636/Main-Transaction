@@ -344,17 +344,18 @@
                         </Border>
 
                         <Grid Grid.Row="1" Margin="16">
+                            <!-- This is your ComboBox with the corrected ItemTemplate -->
                             <ComboBox x:Name="ProductSearchComboBox"
-                                      ItemsSource="{Binding SearchedProducts}"
-                                      IsEditable="True"
-                                      IsTextSearchEnabled="False"
-                                      Text="{Binding NameQuery, UpdateSourceTrigger=PropertyChanged}"
-                                      SelectedItem="{Binding SelectedProduct}"
-                                      Height="36"
-                                      Padding="8,5"
-                                      StaysOpenOnEdit="True"
-                                      TextBoxBase.TextChanged="ProductSearch_TextChanged"
-                                      SelectionChanged="ProductSearch_SelectionChanged">
+          ItemsSource="{Binding SearchedProducts}"
+          IsEditable="True"
+          IsTextSearchEnabled="False"
+          Text="{Binding NameQuery, UpdateSourceTrigger=PropertyChanged}"
+          SelectedItem="{Binding SelectedProduct}"
+          Height="36"
+          Padding="8,5"
+          StaysOpenOnEdit="True"
+          TextBoxBase.TextChanged="ProductSearch_TextChanged"
+          SelectionChanged="ProductSearch_SelectionChanged">
                                 <ComboBox.ItemTemplate>
                                     <DataTemplate>
                                         <Grid Margin="0,8">
@@ -365,22 +366,40 @@
                                             <Grid.RowDefinitions>
                                                 <RowDefinition Height="Auto"/>
                                                 <RowDefinition Height="Auto"/>
+                                                <RowDefinition Height="Auto"/>
                                             </Grid.RowDefinitions>
 
                                             <TextBlock Grid.Row="0" Grid.Column="0" 
-                                                       Text="{Binding Name}" 
-                                                       FontWeight="SemiBold"/>
+                           Text="{Binding Name}" 
+                           FontWeight="SemiBold"/>
 
                                             <StackPanel Grid.Row="1" Grid.Column="0" 
-                                                        Orientation="Horizontal" 
-                                                        Margin="0,4,0,0">
+                            Orientation="Horizontal" 
+                            Margin="0,4,0,0">
                                                 <TextBlock Text="{Binding FormattedSalePrice}" 
-                                                           FontWeight="Bold" 
-                                                           Foreground="#2563EB" 
-                                                           Margin="0,0,10,0"/>
+                               FontWeight="Bold" 
+                               Foreground="#2563EB" 
+                               Margin="0,0,10,0"/>
                                                 <TextBlock Text="{Binding StockStatus}" 
-                                                           Foreground="#64748B" 
-                                                           FontSize="12"/>
+                               Foreground="#64748B" 
+                               FontSize="12"/>
+                                            </StackPanel>
+
+                                            <!-- Add the box information if available -->
+                                            <StackPanel Grid.Row="2" Grid.Column="0" 
+                            Orientation="Vertical" 
+                            Margin="0,4,0,0"
+                            Visibility="{Binding ItemsPerBox, Converter={StaticResource PositiveIntToVisibilityConverter}}">
+                                                <TextBlock>
+    <Run Text="Box Price:" FontSize="12"/>
+    <Run Text="{Binding FormattedBoxSalePrice, Mode=OneWay}" FontWeight="Bold" Foreground="#2563EB"/>
+    <Run Text="(" FontSize="12"/>
+    <Run Text="{Binding ItemsPerBox, Mode=OneWay}" FontSize="12"/>
+    <Run Text="items/box)" FontSize="12"/>
+                                                </TextBlock>
+                                                <TextBlock Text="{Binding BoxStockStatus}" 
+                               Foreground="#64748B" 
+                               FontSize="12"/>
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
@@ -491,13 +510,31 @@
                     </Border>
 
                     <ListView Grid.Row="1" 
-                              ItemsSource="{Binding CartItems}"
-                              SelectedItem="{Binding SelectedCartItem}"
-                              BorderThickness="0"
-                              Background="Transparent"
-                              Margin="0,1,0,0">
+          ItemsSource="{Binding CartItems}"
+          SelectedItem="{Binding SelectedCartItem}"
+          BorderThickness="0"
+          Background="Transparent"
+          Margin="0,1,0,0">
                         <ListView.View>
                             <GridView>
+
+                                <GridViewColumn Header="TYPE" Width="80">
+                                    <GridViewColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal">
+                                                <CheckBox IsChecked="{Binding IsBox, Mode=TwoWay}" 
+                                      Content="Box" 
+                                      VerticalAlignment="Center"
+                                      Visibility="{Binding Product.ItemsPerBox, Converter={StaticResource PositiveIntToVisibilityConverter}}"
+                                      Margin="0,0,5,0"/>
+                                                <CheckBox IsChecked="{Binding IsWholesale, Mode=TwoWay}" 
+                                      Content="WS" 
+                                      VerticalAlignment="Center"
+                                      ToolTip="Wholesale Price"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </GridViewColumn.CellTemplate>
+                                </GridViewColumn>
                                 <GridViewColumn Header="PRODUCT" Width="220">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>

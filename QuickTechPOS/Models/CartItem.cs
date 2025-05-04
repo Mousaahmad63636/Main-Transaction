@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Runtime.CompilerServices;
 
@@ -15,6 +14,8 @@ namespace QuickTechPOS.Models
         private decimal _unitPrice;
         private decimal _discount;
         private int _discountType = 0;
+        private bool _isBox = false;
+        private bool _isWholesale = false;
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -107,6 +108,69 @@ namespace QuickTechPOS.Models
         }
 
         /// <summary>
+        /// Indicates whether this cart item represents a box instead of individual items
+        /// </summary>
+        [NotMapped]
+        public bool IsBox
+        {
+            get => _isBox;
+            set
+            {
+                if (_isBox != value)
+                {
+                    _isBox = value;
+
+                    // When changing between box and individual item, update the price accordingly
+                    if (Product != null)
+                    {
+                        UnitPrice = _isBox ?
+                            (_isWholesale ? Product.BoxWholesalePrice : Product.BoxSalePrice) :
+                            (_isWholesale ? Product.WholesalePrice : Product.SalePrice);
+                    }
+
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DisplayName));
+                    OnPropertyChanged(nameof(Subtotal));
+                    OnPropertyChanged(nameof(Total));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Indicates whether this cart item uses wholesale pricing
+        /// </summary>
+        [NotMapped]
+        public bool IsWholesale
+        {
+            get => _isWholesale;
+            set
+            {
+                if (_isWholesale != value)
+                {
+                    _isWholesale = value;
+
+                    // When changing between retail and wholesale, update the price accordingly
+                    if (Product != null)
+                    {
+                        UnitPrice = _isBox ?
+                            (_isWholesale ? Product.BoxWholesalePrice : Product.BoxSalePrice) :
+                            (_isWholesale ? Product.WholesalePrice : Product.SalePrice);
+                    }
+
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(Subtotal));
+                    OnPropertyChanged(nameof(Total));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Gets a display name that indicates if this is a box
+        /// </summary>
+        [NotMapped]
+        public string DisplayName => IsBox ? $"{Product?.Name} (Box)" : Product?.Name;
+
+        /// <summary>
         /// Discount value (amount or percentage)
         /// </summary>
         [NotMapped]
@@ -141,6 +205,12 @@ namespace QuickTechPOS.Models
         /// </summary>
         [NotMapped]
         public decimal Total => Subtotal - Discount;
+
+        /// <summary>
+        /// Gets the number of individual items this cart item represents
+        /// </summary>
+        [NotMapped]
+        public decimal TotalItemQuantity => IsBox ? Quantity * Product.ItemsPerBox : Quantity;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {

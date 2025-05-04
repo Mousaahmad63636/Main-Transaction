@@ -70,7 +70,56 @@ namespace QuickTechPOS.Services
                 return new List<Product>();
             }
         }
+        /// <summary>
+        /// Updates the box stock of a product
+        /// </summary>
+        /// <param name="productId">The product ID</param>
+        /// <param name="boxQuantitySold">The quantity of boxes sold</param>
+        /// <returns>True if the update was successful, otherwise false</returns>
+        public async Task<bool> UpdateBoxStockAsync(int productId, decimal boxQuantitySold)
+        {
+            try
+            {
+                var product = await _dbContext.Products.FindAsync(productId);
+                if (product == null)
+                {
+                    Console.WriteLine($"Product with ID {productId} not found during box stock update");
+                    return false;
+                }
 
+                // Check if we have enough box stock before updating
+                if (product.NumberOfBoxes < boxQuantitySold)
+                {
+                    Console.WriteLine($"Warning: Insufficient box stock for product {productId}. Available: {product.NumberOfBoxes}, Requested: {boxQuantitySold}");
+
+                    // Depending on your business logic, you might want to:
+                    // 1. Allow negative stock (remove this check)
+                    // 2. Set stock to 0 instead of going negative
+                    // 3. Fail the update (return false)
+
+                    // For now, we'll set it to 0 if it would go negative
+                    product.NumberOfBoxes = 0;
+                }
+                else
+                {
+                    product.NumberOfBoxes -= (int)boxQuantitySold;
+                }
+
+                product.UpdatedAt = DateTime.Now;
+
+                await _dbContext.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in UpdateBoxStockAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return false;
+            }
+        }
         /// <summary>
         /// Gets a product by its barcode
         /// </summary>

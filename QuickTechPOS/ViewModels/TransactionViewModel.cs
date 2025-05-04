@@ -289,7 +289,9 @@ namespace QuickTechPOS.ViewModels
         public ICommand LogoutCommand { get; }
         public ICommand ClearCartCommand { get; }
         public ICommand CheckoutCommand { get; }
-
+        public ICommand AddToCartAsBoxCommand { get; }
+        public ICommand AddToCartAsWholesaleCommand { get; }
+        public ICommand AddToCartAsWholesaleBoxCommand { get; }
         public ICommand AddCustomerCommand { get; }
         public ICommand LookupTransactionCommand { get; }
         public ICommand EditTransactionCommand { get; }
@@ -363,6 +365,11 @@ namespace QuickTechPOS.ViewModels
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(),
     param => CanCheckout && IsDrawerOpen);
 
+            AddToCartAsBoxCommand = new RelayCommand(param => AddToCart(param as Product, true, false));
+            AddToCartAsWholesaleCommand = new RelayCommand(param => AddToCart(param as Product, false, true));
+            AddToCartAsWholesaleBoxCommand = new RelayCommand(param => AddToCart(param as Product, true, true));
+
+
             PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportAsync(), param => IsDrawerOpen);
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout);
             AddCustomerCommand = new RelayCommand(param => OpenAddCustomerDialog());
@@ -408,7 +415,43 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        private async Task UpdateStockAfterSaleAsync(IEnumerable<CartItem> items)
+        {
+            foreach (var item in items)
+            {
+                if (item.Product == null)
+                    continue;
 
+                try
+                {
+                    decimal quantityToDeduct;
+
+                    if (item.IsBox)
+                    {
+                        // Update box inventory
+                        await _productService.UpdateBoxStockAsync(item.Product.ProductId, item.Quantity);
+
+                        // No need to update individual stock as that's handled by the UpdateBoxStockAsync method
+                        continue;
+                    }
+                    else
+                    {
+                        // For individual items, just deduct from current stock
+                        quantityToDeduct = item.Quantity;
+                    }
+
+                    bool stockUpdated = await _productService.UpdateStockAsync(item.Product.ProductId, quantityToDeduct);
+                    if (!stockUpdated)
+                    {
+                        Console.WriteLine($"Warning: Failed to update stock for product {item.Product.ProductId}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error updating stock for product {item.Product.Name}: {ex.Message}");
+                }
+            }
+        }
         private void CalculateExchangeAmount()
         {
             // Always calculate exchange amount if we have a valid exchange rate
@@ -1240,13 +1283,24 @@ namespace QuickTechPOS.ViewModels
             NameQuery = string.Empty;
         }
 
-        private async void AddToCart(Product product)
+        private async void AddToCart(Product product, bool isBox = false, bool isWholesale = false)
         {
             if (product == null)
                 return;
 
-            decimal unitPrice = product.SalePrice;
-            if (CustomerId > 0)
+            // Determine the appropriate price based on the selection
+            decimal unitPrice;
+            if (isBox)
+            {
+                unitPrice = isWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
+            }
+            else
+            {
+                unitPrice = isWholesale ? product.WholesalePrice : product.SalePrice;
+            }
+
+            // Check for customer-specific pricing if not using wholesale pricing
+            if (!isWholesale && CustomerId > 0)
             {
                 var specialPrice = await _customerPriceService.GetCustomerProductPriceAsync(CustomerId, product.ProductId);
                 if (specialPrice.HasValue)
@@ -1256,8 +1310,11 @@ namespace QuickTechPOS.ViewModels
                 }
             }
 
-            // Check if the product already exists in the cart
-            var existingItemIndex = CartItems.ToList().FindIndex(i => i.Product.ProductId == product.ProductId);
+            // Check if the product already exists in the cart with the same options
+            var existingItemIndex = CartItems.ToList().FindIndex(i =>
+                i.Product.ProductId == product.ProductId &&
+                i.IsBox == isBox &&
+                i.IsWholesale == isWholesale);
 
             if (existingItemIndex >= 0)
             {
@@ -1281,7 +1338,7 @@ namespace QuickTechPOS.ViewModels
                 CartItems.RemoveAt(existingItemIndex);
                 CartItems.Insert(existingItemIndex, updatedItem);
 
-                StatusMessage = $"Updated {product.Name} quantity to {updatedItem.Quantity}";
+                StatusMessage = $"Updated {(isBox ? $"{product.Name} (Box)" : product.Name)} quantity to {updatedItem.Quantity}";
             }
             else
             {
@@ -1292,16 +1349,17 @@ namespace QuickTechPOS.ViewModels
                     Quantity = 1,
                     UnitPrice = unitPrice,
                     Discount = 0,
-                    DiscountType = 0
+                    DiscountType = 0,
+                    IsBox = isBox,
+                    IsWholesale = isWholesale
                 };
 
                 CartItems.Add(newItem);
-                StatusMessage = $"Added {product.Name} to cart.";
+                StatusMessage = $"Added {(isBox ? $"{product.Name} (Box)" : product.Name)} to cart.";
             }
 
             UpdateTotals();
         }
-
         public void UpdateCartItemQuantity(CartItem cartItem)
         {
             if (cartItem == null)

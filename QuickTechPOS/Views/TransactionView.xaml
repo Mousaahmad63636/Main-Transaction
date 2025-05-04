@@ -151,65 +151,74 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" 
-                       Text="QuickTech POS" 
-                       FontSize="22" 
-                       FontWeight="Bold" 
-                       Foreground="White" 
-                       VerticalAlignment="Center"/>
+                Text="QuickTech POS" 
+                FontSize="22" 
+                FontWeight="Bold" 
+                Foreground="White" 
+                VerticalAlignment="Center"/>
 
                 <StackPanel Grid.Column="1" 
-                            Orientation="Horizontal" 
-                            HorizontalAlignment="Center" 
-                            VerticalAlignment="Center">
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Center" 
+                    VerticalAlignment="Center">
                     <TextBlock Text="DRAWER: " 
-                           Foreground="#94A3B8" 
-                           FontWeight="Bold" 
-                           VerticalAlignment="Center"
-                           Margin="0,0,5,0"/>
+                    Foreground="#94A3B8" 
+                    FontWeight="Bold" 
+                    VerticalAlignment="Center"
+                    Margin="0,0,5,0"/>
 
                     <Border Background="#059669" 
-                            Padding="8,4"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    Padding="8,4"
+                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="OPEN" 
-                               Foreground="White" 
-                               FontWeight="Bold" 
-                               VerticalAlignment="Center"/>
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        VerticalAlignment="Center"/>
                     </Border>
 
                     <Border Background="#DC2626" 
-                            Padding="8,4"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    Padding="8,4"
+                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <TextBlock Text="CLOSED" 
-                               Foreground="White" 
-                               FontWeight="Bold" 
-                               VerticalAlignment="Center"/>
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        VerticalAlignment="Center"/>
                     </Border>
                 </StackPanel>
 
-                <!-- Cash Out button - Only visible when drawer is open -->
+                <!-- Open Drawer button - Only visible when drawer is closed -->
                 <Button Grid.Column="2" 
-                    Content="Cash Out" 
-                    Command="{Binding CashOutCommand}"
-                    Style="{StaticResource WarningButton}"
-                    Margin="0,0,10,0"
-                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                Content="Open Drawer" 
+                Command="{Binding OpenDrawerCommand}"
+                Style="{StaticResource SuccessButton}"
+                Margin="0,0,10,0"
+                Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+                <!-- Cash Out button - Only visible when drawer is open -->
+                <Button Grid.Column="3" 
+                Content="Cash Out" 
+                Command="{Binding CashOutCommand}"
+                Style="{StaticResource WarningButton}"
+                Margin="0,0,10,0"
+                Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <!-- Close Drawer button - Only visible when drawer is open -->
-                <Button Grid.Column="3" 
-                    Content="Close Drawer" 
-                    Command="{Binding CloseDrawerCommand}"
-                    Style="{StaticResource DangerButton}"
-                    Margin="0,0,10,0"
-                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Grid.Column="4" 
+                Content="Close Drawer" 
+                Command="{Binding CloseDrawerCommand}"
+                Style="{StaticResource DangerButton}"
+                Margin="0,0,10,0"
+                Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <!-- Logout button always on the far right -->
-                <Button Grid.Column="4" 
-                    Content="Logout" 
-                    Command="{Binding LogoutCommand}"
-                    Style="{StaticResource SecondaryButton}"/>
+                <Button Grid.Column="5" 
+                Content="Logout" 
+                Command="{Binding LogoutCommand}"
+                Style="{StaticResource SecondaryButton}"/>
             </Grid>
         </Border>
 
@@ -726,16 +735,17 @@
                                 <Grid Grid.Row="6" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,10,0,0">
                                     <!-- When no transaction is loaded (normal checkout mode) -->
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Center"
-                                                Visibility="{Binding IsTransactionLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            Visibility="{Binding IsTransactionLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                                         <Button Content="COMPLETE SALE" 
-                                                Command="{Binding CheckoutCommand}"
-                                                Style="{StaticResource SuccessButton}"
-                                                Height="48"
-                                                Width="220"
-                                                FontSize="16"
-                                                FontWeight="Bold">
+            Command="{Binding CheckoutCommand}"
+            Style="{StaticResource SuccessButton}"
+            Height="48"
+            Width="220"
+            FontSize="16"
+            FontWeight="Bold"
+            IsEnabled="{Binding IsDrawerOpen}">
                                             <Button.ToolTip>
-                                                <ToolTip Content="Process payment and complete the transaction"/>
+                                                <ToolTip Content="{Binding DrawerStatusToolTip}"/>
                                             </Button.ToolTip>
                                         </Button>
                                     </StackPanel>

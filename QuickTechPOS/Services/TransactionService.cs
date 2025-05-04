@@ -180,14 +180,35 @@ namespace QuickTechPOS.Services
         {
             try
             {
-                var transaction = await _dbContext.Transactions.FindAsync(transactionId);
-                if (transaction == null)
-                    return null;
+                Console.WriteLine($"Retrieving transaction #{transactionId} with details...");
 
+                // First, get the transaction entity
+                var transaction = await _dbContext.Transactions.FindAsync(transactionId);
+
+                if (transaction == null)
+                {
+                    Console.WriteLine($"Transaction #{transactionId} not found");
+                    return null;
+                }
+
+                Console.WriteLine($"Transaction found. Status: {transaction.Status}, Type: {transaction.TransactionType}");
+
+                // Ensure the Status property is correctly handled
+                if (transaction.Status == null)
+                {
+                    // Handle null status
+                    Console.WriteLine("Transaction has null status, setting to Completed");
+                    transaction.Status = TransactionStatus.Completed;
+                }
+
+                // Get associated transaction details
                 var details = await _dbContext.TransactionDetails
                     .Where(d => d.TransactionId == transactionId)
                     .ToListAsync();
 
+                Console.WriteLine($"Found {details.Count} detail records for transaction #{transactionId}");
+
+                // Assign the details to the transaction
                 transaction.Details = details;
 
                 return transaction;
@@ -195,6 +216,11 @@ namespace QuickTechPOS.Services
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetTransactionWithDetailsAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 throw;
             }
         }
@@ -264,16 +290,39 @@ namespace QuickTechPOS.Services
         {
             try
             {
+                // Validate input
+                if (currentTransactionId <= 0)
+                {
+                    Console.WriteLine("GetNextTransactionIdAsync called with invalid ID: " + currentTransactionId);
+                    return null;
+                }
+
+                Console.WriteLine($"Looking for next transaction after ID: {currentTransactionId}");
+
+                // Find transaction with ID greater than current, ordered by ID (ascending)
                 var nextTransaction = await _dbContext.Transactions
                     .Where(t => t.TransactionId > currentTransactionId)
                     .OrderBy(t => t.TransactionId)
                     .FirstOrDefaultAsync();
 
-                return nextTransaction?.TransactionId;
+                if (nextTransaction != null)
+                {
+                    Console.WriteLine($"Found next transaction ID: {nextTransaction.TransactionId}");
+                    return nextTransaction.TransactionId;
+                }
+                else
+                {
+                    Console.WriteLine("No next transaction found");
+                    return null;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetNextTransactionIdAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 return null;
             }
         }
@@ -282,16 +331,39 @@ namespace QuickTechPOS.Services
         {
             try
             {
+                // Validate input
+                if (currentTransactionId <= 0)
+                {
+                    Console.WriteLine("GetPreviousTransactionIdAsync called with invalid ID: " + currentTransactionId);
+                    return null;
+                }
+
+                Console.WriteLine($"Looking for previous transaction before ID: {currentTransactionId}");
+
+                // Find transaction with ID less than current, ordered by ID (descending)
                 var previousTransaction = await _dbContext.Transactions
                     .Where(t => t.TransactionId < currentTransactionId)
                     .OrderByDescending(t => t.TransactionId)
                     .FirstOrDefaultAsync();
 
-                return previousTransaction?.TransactionId;
+                if (previousTransaction != null)
+                {
+                    Console.WriteLine($"Found previous transaction ID: {previousTransaction.TransactionId}");
+                    return previousTransaction.TransactionId;
+                }
+                else
+                {
+                    Console.WriteLine("No previous transaction found");
+                    return null;
+                }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in GetPreviousTransactionIdAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
                 return null;
             }
         }

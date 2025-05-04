@@ -53,7 +53,26 @@ namespace QuickTechPOS.Models
         /// <summary>
         /// Status of the transaction (e.g., Completed, Pending)
         /// </summary>
+        [Column(TypeName = "nvarchar(50)")]
         public TransactionStatus Status { get; set; }
+
+        // Add a string property to help with conversion if needed
+        [NotMapped]
+        public string StatusString
+        {
+            get => Status.ToString();
+            set
+            {
+                if (Enum.TryParse<TransactionStatus>(value, true, out var result))
+                {
+                    Status = result;
+                }
+                else
+                {
+                    Status = TransactionStatus.Completed; // Default value
+                }
+            }
+        }
 
         /// <summary>
         /// Method of payment (e.g., Cash, Credit Card)
@@ -98,11 +117,5 @@ namespace QuickTechPOS.Models
         /// </summary>
         [NotMapped]
         public string TransactionTypeString => TransactionType.ToString();
-
-        /// <summary>
-        /// Gets the status as a string
-        /// </summary>
-        [NotMapped]
-        public string StatusString => Status.ToString();
     }
 }

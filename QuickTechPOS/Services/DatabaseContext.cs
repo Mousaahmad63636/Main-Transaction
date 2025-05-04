@@ -125,15 +125,22 @@ namespace QuickTechPOS.Services
                 entity.Property(e => e.BoxSalePrice).HasColumnType("decimal(18,2)");
             });
 
-            // Configure Transaction entity
             modelBuilder.Entity<Transaction>(entity =>
             {
                 entity.HasKey(e => e.TransactionId);
                 entity.Property(e => e.TotalAmount).HasColumnType("decimal(18,2)");
                 entity.Property(e => e.PaidAmount).HasColumnType("decimal(18,2)");
-                // Map enum properties to database
-                entity.Property(e => e.TransactionType).HasConversion<int>();
-                entity.Property(e => e.Status).HasConversion<int>();
+
+                // Convert TransactionStatus enum to string in the database
+                entity.Property(e => e.Status)
+              .HasConversion<string>()
+              .HasMaxLength(50);
+
+                // Convert TransactionType enum to string in the database
+                entity.Property(e => e.TransactionType)
+                      .HasConversion<string>()
+                      .HasMaxLength(50);
+
                 entity.Property(e => e.PaymentMethod).HasMaxLength(50);
                 entity.Property(e => e.CashierId).HasMaxLength(50);
                 entity.Property(e => e.CashierName).HasMaxLength(100);

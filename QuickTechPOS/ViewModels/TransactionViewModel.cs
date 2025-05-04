@@ -20,6 +20,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Collections.Generic;
 using System.IO;
+using Microsoft.EntityFrameworkCore;
 
 namespace QuickTechPOS.ViewModels
 {
@@ -63,6 +64,8 @@ namespace QuickTechPOS.ViewModels
         private decimal _amountToDebt;
         private Drawer _currentDrawer;
         private bool _useExchangeRate;
+        public bool CanCheckout => CartItems.Count > 0 && IsDrawerOpen;
+
         private decimal _exchangeRate;
         private decimal _exchangeAmount;
 
@@ -82,6 +85,10 @@ namespace QuickTechPOS.ViewModels
         {
             get => _nameQuery;
             set => SetProperty(ref _nameQuery, value);
+        }
+        public string DrawerStatusToolTip
+        {
+            get => IsDrawerOpen ? "Process payment and complete the transaction" : "Drawer must be open to complete a sale";
         }
 
         public string CustomerQuery
@@ -156,6 +163,7 @@ namespace QuickTechPOS.ViewModels
             get => _searchedProducts;
             set => SetProperty(ref _searchedProducts, value);
         }
+
 
         public ObservableCollection<Customer> SearchedCustomers
         {
@@ -265,12 +273,13 @@ namespace QuickTechPOS.ViewModels
             private set => SetProperty(ref _exchangeAmount, value);
         }
 
-        public bool CanCheckout => CartItems.Count > 0;
 
         public bool CanRemoveItem => SelectedCartItem != null;
 
-        public bool IsDrawerOpen => CurrentDrawer != null && CurrentDrawer.Status == "Open";
-
+        public bool IsDrawerOpen
+        {
+            get => CurrentDrawer != null && CurrentDrawer.Status == "Open";
+        }
         public ICommand SearchBarcodeCommand { get; }
         public ICommand SearchNameCommand { get; }
         public ICommand SelectCustomerCommand { get; }
@@ -306,6 +315,13 @@ namespace QuickTechPOS.ViewModels
             _businessSettingsService = new BusinessSettingsService();
             _exchangeRate = 90000; // Default value until loaded from DB
             LogoutCommand = new RelayCommand(param => Logout());
+            NextTransactionCommand = new RelayCommand(
+            async param => await NavigateToNextTransactionAsync(),
+            param => IsTransactionLoaded && CanNavigateNext);
+
+            PreviousTransactionCommand = new RelayCommand(
+            async param => await NavigateToPreviousTransactionAsync(),
+            param => IsTransactionLoaded && CanNavigatePrevious);
             SearchedProducts = new ObservableCollection<Product>();
             SearchedCustomers = new ObservableCollection<Customer>();
             CartItems = new ObservableCollection<CartItem>();
@@ -343,6 +359,10 @@ namespace QuickTechPOS.ViewModels
             AddToCartCommand = new RelayCommand(param => AddToCart(param as Product));
             RemoveFromCartCommand = new RelayCommand(param => RemoveFromCart(param as CartItem), param => param != null);
             ClearCartCommand = new RelayCommand(param => ClearCart());
+
+            CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(),
+    param => CanCheckout && IsDrawerOpen);
+
             PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportAsync(), param => IsDrawerOpen);
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout);
             AddCustomerCommand = new RelayCommand(param => OpenAddCustomerDialog());
@@ -607,7 +627,10 @@ namespace QuickTechPOS.ViewModels
                 // Ensure all drawer-related properties are updated
                 OnPropertyChanged(nameof(CurrentDrawer));
                 OnPropertyChanged(nameof(IsDrawerOpen));
-
+                OnPropertyChanged(nameof(IsDrawerOpen));
+                OnPropertyChanged(nameof(CanCheckout));
+                OnPropertyChanged(nameof(DrawerStatusToolTip));
+                CommandManager.InvalidateRequerySuggested();
                 // Force UI refresh through dispatcher
                 Application.Current.Dispatcher.Invoke(() => {
                     CommandManager.InvalidateRequerySuggested();
@@ -1295,8 +1318,6 @@ namespace QuickTechPOS.ViewModels
             // Always calculate exchange amount whenever totals change
             CalculateExchangeAmount();
             CalculateAmountToDebt();
-
-            OnPropertyChanged(nameof(CanCheckout));
             // Ensure ExchangeAmount property change is notified
             OnPropertyChanged(nameof(ExchangeAmount));
         }
@@ -1304,6 +1325,12 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
+                if (!IsDrawerOpen)
+                {
+                    StatusMessage = "Cannot checkout: Drawer is closed. Please open a drawer first.";
+                    return;
+                }
+
                 if (CartItems.Count == 0)
                 {
                     StatusMessage = "Cart is empty. Cannot checkout.";
@@ -1535,9 +1562,14 @@ namespace QuickTechPOS.ViewModels
 
             try
             {
-                if (string.IsNullOrWhiteSpace(TransactionLookupId) || !int.TryParse(TransactionLookupId, out int transactionId))
+                if (string.IsNullOrWhiteSpace(TransactionLookupId) || !int.TryParse(TransactionLookupId, out int transactionId) || transactionId <= 0)
                 {
                     StatusMessage = "Please enter a valid transaction ID.";
+                    LoadedTransaction = null;
+                    IsTransactionLoaded = false;
+                    CanNavigateNext = false;
+                    CanNavigatePrevious = false;
+                    CommandManager.InvalidateRequerySuggested();
                     return;
                 }
 
@@ -1546,7 +1578,17 @@ namespace QuickTechPOS.ViewModels
 
                 CartItems.Clear();
 
-                var transaction = await _transactionService.GetTransactionWithDetailsAsync(transactionId);
+                Transaction transaction = null;
+                try
+                {
+                    transaction = await _transactionService.GetTransactionWithDetailsAsync(transactionId);
+                }
+                catch (InvalidCastException ex)
+                {
+                    Console.WriteLine($"Type conversion error loading transaction: {ex.Message}");
+                    // Use direct database access with manual conversion as a fallback
+                    transaction = await LoadTransactionWithDirectQueryAsync(transactionId);
+                }
 
                 if (transaction == null)
                 {
@@ -1555,6 +1597,7 @@ namespace QuickTechPOS.ViewModels
                     IsTransactionLoaded = false;
                     CanNavigateNext = false;
                     CanNavigatePrevious = false;
+                    CommandManager.InvalidateRequerySuggested();
                     return;
                 }
 
@@ -1582,6 +1625,8 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 await CheckNavigationAvailabilityAsync(transactionId);
+                CommandManager.InvalidateRequerySuggested();
+
                 CalculateExchangeAmount();
                 OnPropertyChanged(nameof(ExchangeAmount));
 
@@ -1595,10 +1640,66 @@ namespace QuickTechPOS.ViewModels
                 IsTransactionLoaded = false;
                 CanNavigateNext = false;
                 CanNavigatePrevious = false;
+                CommandManager.InvalidateRequerySuggested();
             }
             finally
             {
                 IsProcessing = false;
+            }
+        }
+
+        // Add this helper method to manually load a transaction with direct query
+        private async Task<Transaction> LoadTransactionWithDirectQueryAsync(int transactionId)
+        {
+            try
+            {
+                Console.WriteLine($"Using direct query fallback for transaction #{transactionId}");
+
+                // Create a new database context for this operation
+                using var dbContext = new DatabaseContext(ConfigurationService.ConnectionString);
+
+                // Use raw SQL to fetch the transaction
+                var transaction = await dbContext.Transactions
+                    .FromSqlRaw("SELECT * FROM Transactions WHERE TransactionId = {0}", transactionId)
+                    .FirstOrDefaultAsync();
+
+                if (transaction == null)
+                {
+                    Console.WriteLine($"Transaction #{transactionId} not found using direct query");
+                    return null;
+                }
+
+                // Manually handle the enum conversions
+                if (transaction.Status == default && !string.IsNullOrEmpty(transaction.StatusString))
+                {
+                    transaction.Status = Helpers.EnumConverter.StringToTransactionStatus(transaction.StatusString);
+                    Console.WriteLine($"Converted status from string '{transaction.StatusString}' to enum '{transaction.Status}'");
+                }
+
+                if (transaction.TransactionType == default && !string.IsNullOrEmpty(transaction.TransactionTypeString))
+                {
+                    transaction.TransactionType = Helpers.EnumConverter.StringToTransactionType(transaction.TransactionTypeString);
+                    Console.WriteLine($"Converted type from string '{transaction.TransactionTypeString}' to enum '{transaction.TransactionType}'");
+                }
+
+                // Load details
+                var details = await dbContext.TransactionDetails
+                    .Where(d => d.TransactionId == transactionId)
+                    .ToListAsync();
+
+                transaction.Details = details;
+                Console.WriteLine($"Loaded {details.Count} details for transaction #{transactionId} using direct query");
+
+                return transaction;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in direct query transaction loading: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                return null;
             }
         }
         private async Task LoadTransactionToCartAsync(Transaction transaction)
@@ -1723,15 +1824,20 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+
         private async Task CheckNavigationAvailabilityAsync(int currentTransactionId)
         {
             try
             {
+                // Check for next transaction
                 var nextId = await _transactionService.GetNextTransactionIdAsync(currentTransactionId);
-                CanNavigateNext = nextId.HasValue;
+                CanNavigateNext = nextId.HasValue && nextId.Value > 0;
 
+                // Check for previous transaction
                 var prevId = await _transactionService.GetPreviousTransactionIdAsync(currentTransactionId);
-                CanNavigatePrevious = prevId.HasValue;
+                CanNavigatePrevious = prevId.HasValue && prevId.Value > 0;
+
+                Console.WriteLine($"Navigation availability updated: Previous={CanNavigatePrevious}, Next={CanNavigateNext}");
             }
             catch (Exception ex)
             {
@@ -1804,10 +1910,16 @@ namespace QuickTechPOS.ViewModels
                 int currentId = LoadedTransaction.TransactionId;
                 var nextId = await _transactionService.GetNextTransactionIdAsync(currentId);
 
-                if (nextId.HasValue)
+                if (nextId.HasValue && nextId.Value > 0)
                 {
+                    Console.WriteLine($"Navigating to next transaction: {nextId.Value}");
                     TransactionLookupId = nextId.Value.ToString();
                     await LookupTransactionAsync();
+                }
+                else
+                {
+                    StatusMessage = "No more transactions available.";
+                    Console.WriteLine("No next transaction found");
                 }
             }
             catch (Exception ex)
@@ -1816,7 +1928,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"Next transaction navigation error: {ex}");
             }
         }
-       
+
         private async Task NavigateToPreviousTransactionAsync()
         {
             try
@@ -1827,10 +1939,16 @@ namespace QuickTechPOS.ViewModels
                 int currentId = LoadedTransaction.TransactionId;
                 var prevId = await _transactionService.GetPreviousTransactionIdAsync(currentId);
 
-                if (prevId.HasValue)
+                if (prevId.HasValue && prevId.Value > 0)
                 {
+                    Console.WriteLine($"Navigating to previous transaction: {prevId.Value}");
                     TransactionLookupId = prevId.Value.ToString();
                     await LookupTransactionAsync();
+                }
+                else
+                {
+                    StatusMessage = "No previous transactions available.";
+                    Console.WriteLine("No previous transaction found");
                 }
             }
             catch (Exception ex)

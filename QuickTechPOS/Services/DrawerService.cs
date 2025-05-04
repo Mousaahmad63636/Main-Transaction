@@ -614,7 +614,43 @@ namespace QuickTechPOS.Services
                 return new List<DrawerTransaction>();
             }
         }
+        public async Task<Drawer> GetDrawerByIdAsync(int drawerId)
+        {
+            try
+            {
+                Console.WriteLine($"Getting drawer by ID: {drawerId}");
 
+                // Create a new context to ensure we get fresh data
+                using var freshContext = new DatabaseContext(ConfigurationService.ConnectionString);
+
+                var drawer = await freshContext.Drawers.FindAsync(drawerId);
+
+                if (drawer == null)
+                {
+                    Console.WriteLine($"No drawer found with ID: {drawerId}");
+                    return null;
+                }
+
+                Console.WriteLine($"Found drawer #{drawerId}, Status: {drawer.Status}");
+
+                // Ensure Notes isn't null to avoid binding errors
+                if (drawer.Notes == null)
+                {
+                    drawer.Notes = string.Empty;
+                }
+
+                return drawer;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetDrawerByIdAsync: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"Inner exception: {ex.InnerException.Message}");
+                }
+                throw;
+            }
+        }
         public async Task<List<DrawerHistoryEntry>> GetDrawerHistoryAsync(string cashierId)
         {
             try

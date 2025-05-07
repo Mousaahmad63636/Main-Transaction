@@ -33,7 +33,7 @@ namespace QuickTechPOS.ViewModels
         private readonly DrawerService _drawerService;
         private readonly ReceiptPrinterService _receiptPrinterService;
         private readonly BusinessSettingsService _businessSettingsService;
-
+        private bool _wholesaleMode;
         private string _lastSearchQuery;
         private System.Timers.Timer _searchTimer;
         private System.Timers.Timer _customerSearchTimer;
@@ -477,7 +477,39 @@ namespace QuickTechPOS.ViewModels
                 AmountToDebt = 0;
             }
         }
+        public bool WholesaleMode
+        {
+            get => _wholesaleMode;
+            set
+            {
+                if (SetProperty(ref _wholesaleMode, value))
+                {
+                    // When wholesale mode changes, update all existing cart items
+                    UpdateCartWholesaleMode();
 
+                    // Update the status message
+                    StatusMessage = value ?
+                        "Switched to Wholesale mode. All items will use wholesale pricing." :
+                        "Switched to Retail mode. All items will use regular pricing.";
+                }
+            }
+        }
+
+        private void UpdateCartWholesaleMode()
+        {
+            foreach (var item in CartItems)
+            {
+                // Only update if the current wholesale setting doesn't match the global setting
+                if (item.IsWholesale != WholesaleMode)
+                {
+                    item.IsWholesale = WholesaleMode;
+                    // Note: The IsWholesale setter in CartItem already updates the price
+                }
+            }
+
+            // Recalculate totals after updating all items
+            UpdateTotals();
+        }
         private async Task GetCurrentDrawerAsync()
         {
             try
@@ -1287,24 +1319,27 @@ namespace QuickTechPOS.ViewModels
             NameQuery = string.Empty;
         }
 
-        private async void AddToCart(Product product, bool isBox = false, bool isWholesale = false)
+        private async void AddToCart(Product product, bool isBox = false, bool? isWholesale = null)
         {
             if (product == null)
                 return;
+
+            // Use the global WholesaleMode if isWholesale is not specifically provided
+            bool useWholesale = isWholesale ?? WholesaleMode;
 
             // Determine the appropriate price based on the selection
             decimal unitPrice;
             if (isBox)
             {
-                unitPrice = isWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
+                unitPrice = useWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
             }
             else
             {
-                unitPrice = isWholesale ? product.WholesalePrice : product.SalePrice;
+                unitPrice = useWholesale ? product.WholesalePrice : product.SalePrice;
             }
 
             // Check for customer-specific pricing if not using wholesale pricing
-            if (!isWholesale && CustomerId > 0)
+            if (!useWholesale && CustomerId > 0)
             {
                 var specialPrice = await _customerPriceService.GetCustomerProductPriceAsync(CustomerId, product.ProductId);
                 if (specialPrice.HasValue)
@@ -1318,7 +1353,7 @@ namespace QuickTechPOS.ViewModels
             var existingItemIndex = CartItems.ToList().FindIndex(i =>
                 i.Product.ProductId == product.ProductId &&
                 i.IsBox == isBox &&
-                i.IsWholesale == isWholesale);
+                i.IsWholesale == useWholesale);
 
             if (existingItemIndex >= 0)
             {
@@ -1355,7 +1390,7 @@ namespace QuickTechPOS.ViewModels
                     Discount = 0,
                     DiscountType = 0,
                     IsBox = isBox,
-                    IsWholesale = isWholesale
+                    IsWholesale = useWholesale
                 };
 
                 CartItems.Add(newItem);

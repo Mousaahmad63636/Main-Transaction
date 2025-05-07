@@ -3,10 +3,14 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:QuickTechPOS"
              mc:Ignorable="d" 
              d:DesignHeight="700" d:DesignWidth="1200">
 
     <UserControl.Resources>
+
+        <local:BooleanToIndexConverter x:Key="BooleanToIndexConverter"/>
+        <local:BooleanToWholesaleTextConverter x:Key="BooleanToWholesaleTextConverter"/>
         <Style x:Key="HeaderText" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="14"/>
@@ -152,73 +156,91 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <TextBlock Grid.Column="0" 
-                Text="QuickTech POS" 
-                FontSize="22" 
-                FontWeight="Bold" 
-                Foreground="White" 
-                VerticalAlignment="Center"/>
+        Text="QuickTech POS" 
+        FontSize="22" 
+        FontWeight="Bold" 
+        Foreground="White" 
+        VerticalAlignment="Center"/>
 
                 <StackPanel Grid.Column="1" 
-                    Orientation="Horizontal" 
-                    HorizontalAlignment="Center" 
-                    VerticalAlignment="Center">
+            Orientation="Horizontal" 
+            HorizontalAlignment="Center" 
+            VerticalAlignment="Center">
                     <TextBlock Text="DRAWER: " 
-                    Foreground="#94A3B8" 
-                    FontWeight="Bold" 
-                    VerticalAlignment="Center"
-                    Margin="0,0,5,0"/>
+            Foreground="#94A3B8" 
+            FontWeight="Bold" 
+            VerticalAlignment="Center"
+            Margin="0,0,5,0"/>
 
                     <Border Background="#059669" 
-                    Padding="8,4"
-                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            Padding="8,4"
+            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Text="OPEN" 
-                        Foreground="White" 
-                        FontWeight="Bold" 
-                        VerticalAlignment="Center"/>
+                Foreground="White" 
+                FontWeight="Bold" 
+                VerticalAlignment="Center"/>
                     </Border>
 
                     <Border Background="#DC2626" 
-                    Padding="8,4"
-                    Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+            Padding="8,4"
+            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
                         <TextBlock Text="CLOSED" 
-                        Foreground="White" 
-                        FontWeight="Bold" 
-                        VerticalAlignment="Center"/>
+                Foreground="White" 
+                FontWeight="Bold" 
+                VerticalAlignment="Center"/>
                     </Border>
                 </StackPanel>
 
+                <!-- Wholesale Mode Combo Box -->
+                <StackPanel Grid.Column="2" 
+                   Orientation="Horizontal" 
+                   Margin="0,0,10,0"
+                   VerticalAlignment="Center">
+                    <TextBlock Text="Price Mode:" 
+                      Foreground="White" 
+                      VerticalAlignment="Center"
+                      Margin="0,0,8,0"/>
+                    <ComboBox Width="120" 
+                     Height="30"
+                     SelectedIndex="{Binding WholesaleMode, Converter={StaticResource BooleanToIndexConverter}}">
+                        <ComboBoxItem Content="Retail"/>
+                        <ComboBoxItem Content="Wholesale"/>
+                    </ComboBox>
+                </StackPanel>
+
                 <!-- Open Drawer button - Only visible when drawer is closed -->
-                <Button Grid.Column="2" 
-                Content="Open Drawer" 
-                Command="{Binding OpenDrawerCommand}"
-                Style="{StaticResource SuccessButton}"
-                Margin="0,0,10,0"
-                Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+                <Button Grid.Column="3" 
+        Content="Open Drawer" 
+        Command="{Binding OpenDrawerCommand}"
+        Style="{StaticResource SuccessButton}"
+        Margin="0,0,10,0"
+        Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 
                 <!-- Cash Out button - Only visible when drawer is open -->
-                <Button Grid.Column="3" 
-                Content="Cash Out" 
-                Command="{Binding CashOutCommand}"
-                Style="{StaticResource WarningButton}"
-                Margin="0,0,10,0"
-                Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Grid.Column="4" 
+        Content="Cash Out" 
+        Command="{Binding CashOutCommand}"
+        Style="{StaticResource WarningButton}"
+        Margin="0,0,10,0"
+        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <!-- Close Drawer button - Only visible when drawer is open -->
-                <Button Grid.Column="4" 
-                Content="Close Drawer" 
-                Command="{Binding CloseDrawerCommand}"
-                Style="{StaticResource DangerButton}"
-                Margin="0,0,10,0"
-                Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <Button Grid.Column="5" 
+        Content="Close Drawer" 
+        Command="{Binding CloseDrawerCommand}"
+        Style="{StaticResource DangerButton}"
+        Margin="0,0,10,0"
+        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
                 <!-- Logout button always on the far right -->
-                <Button Grid.Column="5" 
-                Content="Logout" 
-                Command="{Binding LogoutCommand}"
-                Style="{StaticResource SecondaryButton}"/>
+                <Button Grid.Column="6" 
+        Content="Logout" 
+        Command="{Binding LogoutCommand}"
+        Style="{StaticResource SecondaryButton}"/>
             </Grid>
         </Border>
 
@@ -517,17 +539,6 @@
           Margin="0,1,0,0">
                         <ListView.View>
                             <GridView>
-
-                                <GridViewColumn Header="TYPE" Width="80">
-                                    <GridViewColumn.CellTemplate>
-                                        <DataTemplate>
-                                            <CheckBox IsChecked="{Binding IsWholesale, Mode=TwoWay}" 
-                      Content="WS" 
-                      VerticalAlignment="Center"
-                      ToolTip="Wholesale Price"/>
-                                        </DataTemplate>
-                                    </GridViewColumn.CellTemplate>
-                                </GridViewColumn>
                                 <GridViewColumn Header="PRODUCT" Width="220">
                                     <GridViewColumn.CellTemplate>
                                         <DataTemplate>

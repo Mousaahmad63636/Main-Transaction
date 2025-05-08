@@ -21,6 +21,8 @@ namespace QuickTechPOS.Services
             _productService = new ProductService();
         }
 
+        // File: QuickTechPOS/Services/TransactionService.cs - Update the CreateTransactionAsync method
+
         public async Task<Transaction> CreateTransactionAsync(
             List<CartItem> items,
             decimal paidAmount,
@@ -82,10 +84,28 @@ namespace QuickTechPOS.Services
 
                     try
                     {
-                        bool stockUpdated = await _productService.UpdateStockAsync(item.Product.ProductId, item.Quantity);
-                        if (!stockUpdated)
+                        // Check if the item is a box and update inventory accordingly
+                        if (item.IsBox)
                         {
-                            Console.WriteLine($"Warning: Failed to update stock for product {item.Product.ProductId}");
+                            // If it's a box, update box inventory
+                            bool boxStockUpdated = await _productService.UpdateBoxStockAsync(item.Product.ProductId, item.Quantity);
+                            if (!boxStockUpdated)
+                            {
+                                Console.WriteLine($"Warning: Failed to update box stock for product {item.Product.ProductId}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Updated box inventory for product {item.Product.ProductId}, reduced {item.Quantity} boxes");
+                            }
+                        }
+                        else
+                        {
+                            // If it's an individual item, update regular stock
+                            bool stockUpdated = await _productService.UpdateStockAsync(item.Product.ProductId, item.Quantity);
+                            if (!stockUpdated)
+                            {
+                                Console.WriteLine($"Warning: Failed to update stock for product {item.Product.ProductId}");
+                            }
                         }
                     }
                     catch (Exception stockEx)

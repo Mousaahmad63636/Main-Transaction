@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/Views/AddCustomerDialog.xaml.cs
 
+using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using System;
@@ -25,6 +26,10 @@ namespace QuickTechPOS.Views
         public AddCustomerDialog()
         {
             InitializeComponent();
+
+            // Apply current flow direction
+            this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
             _customerService = new CustomerService();
         }
 
@@ -37,14 +42,20 @@ namespace QuickTechPOS.Views
             {
                 if (string.IsNullOrWhiteSpace(NameTextBox.Text))
                 {
-                    MessageBox.Show("Customer name is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string validationError = TryFindResource("ValidationError") as string ?? "Validation Error";
+                    string nameRequired = TryFindResource("CustomerNameRequired") as string ?? "Customer name is required.";
+
+                    MessageBox.Show(nameRequired, validationError, MessageBoxButton.OK, MessageBoxImage.Warning);
                     NameTextBox.Focus();
                     return;
                 }
 
                 if (string.IsNullOrWhiteSpace(PhoneTextBox.Text))
                 {
-                    MessageBox.Show("Phone number is required.", "Validation Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    string validationError = TryFindResource("ValidationError") as string ?? "Validation Error";
+                    string phoneRequired = TryFindResource("CustomerPhoneRequired") as string ?? "Phone number is required.";
+
+                    MessageBox.Show(phoneRequired, validationError, MessageBoxButton.OK, MessageBoxImage.Warning);
                     PhoneTextBox.Focus();
                     return;
                 }
@@ -67,7 +78,10 @@ namespace QuickTechPOS.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error adding customer: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorTitle = TryFindResource("ErrorTitle") as string ?? "Error";
+                string errorMsg = TryFindResource("ErrorAddingCustomer") as string ?? "Error adding customer:";
+
+                MessageBox.Show($"{errorMsg} {ex.Message}", errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

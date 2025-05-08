@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.Models;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using QuickTechPOS.ViewModels;
 using System;
@@ -16,6 +17,10 @@ namespace QuickTechPOS.Views
         public TransactionView(TransactionViewModel viewModel)
         {
             InitializeComponent();
+
+            // Apply current flow direction
+            this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
             _viewModel = viewModel;
             DataContext = _viewModel;
 
@@ -102,7 +107,7 @@ namespace QuickTechPOS.Views
             }
         }
 
-        private void Quantity_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+        private void Quantity_LostFocus(object sender, RoutedEventArgs e)
         {
             if (sender is TextBox textBox && textBox.DataContext is CartItem cartItem)
             {
@@ -110,7 +115,7 @@ namespace QuickTechPOS.Views
             }
         }
 
-        private void Discount_LostFocus(object sender, System.Windows.RoutedEventArgs e)
+        private void Discount_LostFocus(object sender, RoutedEventArgs e)
         {
             if (sender is TextBox textBox && textBox.DataContext is CartItem cartItem)
             {

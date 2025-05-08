@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.ViewModels;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.ViewModels;
 using System.Windows;
 
 namespace QuickTechPOS.Views
@@ -10,6 +11,10 @@ namespace QuickTechPOS.Views
         public OpenDrawerDialog(OpenDrawerViewModel viewModel)
         {
             InitializeComponent();
+
+            // Apply current flow direction
+            this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
             _viewModel = viewModel;
             DataContext = _viewModel;
 

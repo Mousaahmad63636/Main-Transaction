@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.Models;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.Models;
 using QuickTechPOS.ViewModels;
 using System.Windows;
 
@@ -18,6 +19,10 @@ namespace QuickTechPOS.Views
         public CashOutDialog(Drawer drawer)
         {
             InitializeComponent();
+
+            // Apply current flow direction
+            this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
             _viewModel = new CashOutViewModel(drawer);
             DataContext = _viewModel;
 
@@ -33,10 +38,10 @@ namespace QuickTechPOS.Views
                     if (_viewModel.DialogResult == true)
                     {
                         // Log the updated drawer values without assigning to UpdatedDrawer
-                        Console.WriteLine($"CashOutDialog: Updated drawer values before closing:");
-                        Console.WriteLine($"  - DrawerID: {_viewModel.Drawer.DrawerId}");
-                        Console.WriteLine($"  - CashOut: ${_viewModel.Drawer.CashOut:F2}");
-                        Console.WriteLine($"  - CurrentBalance: ${_viewModel.Drawer.CurrentBalance:F2}");
+                        System.Console.WriteLine($"CashOutDialog: Updated drawer values before closing:");
+                        System.Console.WriteLine($"  - DrawerID: {_viewModel.Drawer.DrawerId}");
+                        System.Console.WriteLine($"  - CashOut: ${_viewModel.Drawer.CashOut:F2}");
+                        System.Console.WriteLine($"  - CurrentBalance: ${_viewModel.Drawer.CurrentBalance:F2}");
 
                         // Ensure all UI updates are processed
                         System.Windows.Application.Current.Dispatcher.Invoke(() => { });

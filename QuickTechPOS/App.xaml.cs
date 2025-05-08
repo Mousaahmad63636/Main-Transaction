@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Configuration;
+using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using QuickTechPOS.ViewModels;
@@ -23,8 +24,15 @@ namespace QuickTechPOS
         {
             base.OnStartup(e);
 
+            // Initialize language settings first (loads saved language)
+            LanguageManager.Initialize();
+
             // Create the main window and navigation frame
             _mainWindow = new MainWindow();
+
+            // Apply the current flow direction to the main window
+            LanguageManager.ApplyFlowDirectionToWindow(_mainWindow);
+
             _mainFrame = new Frame();
             _mainWindow.Content = _mainFrame;
 
@@ -64,6 +72,10 @@ namespace QuickTechPOS
                     // Show the open drawer dialog
                     var viewModel = new OpenDrawerViewModel(authService);
                     var dialog = new OpenDrawerDialog(viewModel);
+
+                    // Apply flow direction to dialog
+                    LanguageManager.ApplyFlowDirectionToWindow(dialog);
+
                     dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
                     dialog.Topmost = true;
                     dialog.Owner = _mainWindow;
@@ -81,8 +93,10 @@ namespace QuickTechPOS
                     else
                     {
                         // If user cancels opening a drawer, show message
-                        MessageBox.Show("You must open a drawer to continue using the system.",
-                            "Drawer Required", MessageBoxButton.OK, MessageBoxImage.Warning);
+                        string message = TryFindResource("DrawerRequiredMessage") as string ?? "You must open a drawer to continue using the system.";
+                        string title = TryFindResource("WarningTitle") as string ?? "Warning";
+
+                        MessageBox.Show(message, title, MessageBoxButton.OK, MessageBoxImage.Warning);
 
                         // Try again or exit
                         if (!await RetryOpenDrawerAsync(authService))
@@ -95,8 +109,10 @@ namespace QuickTechPOS
             catch (Exception ex)
             {
                 Console.WriteLine($"Error checking for open drawer: {ex.Message}");
+                string title = TryFindResource("ErrorTitle") as string ?? "Error";
+
                 MessageBox.Show($"Error checking for open drawer: {ex.Message}",
-                    "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    title, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -104,6 +120,10 @@ namespace QuickTechPOS
         {
             var viewModel = new OpenDrawerViewModel(authService);
             var dialog = new OpenDrawerDialog(viewModel);
+
+            // Apply flow direction to dialog
+            LanguageManager.ApplyFlowDirectionToWindow(dialog);
+
             dialog.WindowStartupLocation = WindowStartupLocation.CenterScreen;
             dialog.Topmost = true;
             dialog.Owner = _mainWindow;

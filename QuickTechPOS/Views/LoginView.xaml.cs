@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.ViewModels;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.ViewModels;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -25,6 +26,9 @@ namespace QuickTechPOS.Views
             // Handle password changes
             PasswordBox.PasswordChanged += PasswordBox_PasswordChanged;
 
+            // Initialize language selector
+            InitializeLanguageSelector();
+
             // Set focus to username field
             Loaded += (s, e) =>
             {
@@ -47,6 +51,31 @@ namespace QuickTechPOS.Views
             if (DataContext is LoginViewModel viewModel)
             {
                 viewModel.Password = PasswordBox.Password;
+            }
+        }
+
+        private void InitializeLanguageSelector()
+        {
+            if (LanguageSelector != null)
+            {
+                // Set languages
+                LanguageSelector.ItemsSource = LanguageManager.AvailableLanguages;
+
+                // Select current language
+                var currentLanguage = LanguageManager.GetCurrentLanguage();
+                LanguageSelector.SelectedItem = currentLanguage;
+            }
+        }
+
+        private void LanguageSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (LanguageSelector.SelectedItem is LanguageOption selectedLanguage)
+            {
+                string selectedCode = selectedLanguage.Code;
+                if (selectedCode != LanguageManager.CurrentLanguageCode)
+                {
+                    LanguageManager.ChangeLanguage(selectedCode);
+                }
             }
         }
     }

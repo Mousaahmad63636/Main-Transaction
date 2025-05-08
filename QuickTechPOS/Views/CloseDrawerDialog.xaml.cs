@@ -1,4 +1,5 @@
-﻿using QuickTechPOS.Models;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.Models;
 using QuickTechPOS.ViewModels;
 using System;
 using System.Windows;
@@ -20,11 +21,16 @@ namespace QuickTechPOS.Views
                 Console.WriteLine("Initializing CloseDrawerDialog");
                 InitializeComponent();
 
+                // Apply current flow direction
+                this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
                 if (drawer == null)
                 {
                     Console.WriteLine("ERROR: Drawer is null in CloseDrawerDialog constructor");
-                    MessageBox.Show("Cannot close drawer: No drawer information provided.",
-                        "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    string errorMessage = TryFindResource("ErrorDrawerNull") as string ?? "Cannot close drawer: No drawer information provided.";
+                    string errorTitle = TryFindResource("ErrorTitle") as string ?? "Error";
+
+                    MessageBox.Show(errorMessage, errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
                     this.DialogResult = false;
                     this.Close();
                     return;
@@ -100,8 +106,10 @@ namespace QuickTechPOS.Views
             catch (Exception ex)
             {
                 Console.WriteLine($"ERROR in CloseDrawerDialog constructor: {ex.Message}");
-                MessageBox.Show($"Error initializing Close Drawer dialog: {ex.Message}",
-                    "Dialog Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorMessage = TryFindResource("DialogInitError") as string ?? $"Error initializing Close Drawer dialog: {ex.Message}";
+                string errorTitle = TryFindResource("DialogErrorTitle") as string ?? "Dialog Error";
+
+                MessageBox.Show(errorMessage, errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
                 this.DialogResult = false;
                 this.Close();
             }

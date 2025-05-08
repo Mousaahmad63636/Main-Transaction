@@ -19,6 +19,9 @@
     <Compile Update="Views\CustomerSelectionDialog.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\LanguageSettingsDialog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="Views\LoginView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
@@ -28,5 +31,19 @@
     <Compile Update="Views\TransactionView.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Resources\StringResources.ar.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Resources\StringResources.fr.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Resources\StringResources.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\LanguageSettingsDialog.xaml">
+      <SubType>Designer</SubType>
+    </Page>
   </ItemGroup>
 </Project>

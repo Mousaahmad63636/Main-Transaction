@@ -25,7 +25,7 @@
                         CornerRadius="8,8,0,0"
                         Padding="0,20">
                     <StackPanel HorizontalAlignment="Center">
-                        <TextBlock Text="QuickTech POS" 
+                        <TextBlock Text="{DynamicResource ApplicationTitle}" 
                                    FontSize="28" 
                                    FontWeight="Bold" 
                                    Foreground="White"
@@ -40,7 +40,7 @@
 
                 <StackPanel Grid.Row="1" Margin="40,30">
                     <!-- Username -->
-                    <TextBlock Text="Username" 
+                    <TextBlock Text="{DynamicResource Username}" 
                                Margin="0,0,0,6" 
                                FontSize="14" 
                                FontWeight="SemiBold"
@@ -58,7 +58,7 @@
                     </Border>
 
                     <!-- Password -->
-                    <TextBlock Text="Password" 
+                    <TextBlock Text="{DynamicResource Password}" 
                                Margin="0,0,0,6" 
                                FontSize="14" 
                                FontWeight="SemiBold"
@@ -84,7 +84,7 @@
                                FontWeight="Medium"/>
 
                     <!-- Login Button -->
-                    <Button Content="Sign In" 
+                    <Button Content="{DynamicResource SignInButton}" 
                             Command="{Binding LoginCommand}"
                             Background="#2563EB" 
                             Foreground="White" 
@@ -120,6 +120,16 @@
                                FontSize="12"
                                HorizontalAlignment="Center"
                                Margin="0,30,0,0"/>
+
+                    <!-- Language Selection -->
+                    <StackPanel Orientation="Horizontal" 
+                                HorizontalAlignment="Center" 
+                                Margin="0,15,0,0">
+                        <ComboBox x:Name="LanguageSelector" 
+                                  Width="150" 
+                                  Height="30"
+                                  SelectionChanged="LanguageSelector_SelectionChanged"/>
+                    </StackPanel>
 
                     <!-- Loading Indicator -->
                     <Grid Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"

@@ -1,4 +1,6 @@
-﻿using QuickTechPOS.ViewModels;
+﻿using QuickTechPOS.Helpers;
+using QuickTechPOS.ViewModels;
+using QuickTechPOS.Views;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -20,6 +22,12 @@ namespace QuickTechPOS.Views
             InitializeComponent();
             _viewModel = viewModel;
             DataContext = _viewModel;
+
+            // Add language settings button event handler
+            if (LanguageButton != null)
+            {
+                LanguageButton.Click += LanguageButton_Click;
+            }
         }
 
         /// <summary>
@@ -29,6 +37,13 @@ namespace QuickTechPOS.Views
         public void SetContent(UIElement content)
         {
             MainContent.Content = content;
+        }
+
+        private void LanguageButton_Click(object sender, RoutedEventArgs e)
+        {
+            var languageDialog = new LanguageSettingsDialog();
+            languageDialog.Owner = Application.Current.MainWindow;
+            languageDialog.ShowDialog();
         }
     }
 }

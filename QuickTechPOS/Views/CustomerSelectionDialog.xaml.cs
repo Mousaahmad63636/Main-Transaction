@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/Views/CustomerSelectionDialog.xaml.cs
 
+using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using System;
@@ -28,6 +29,10 @@ namespace QuickTechPOS.Views
         public CustomerSelectionDialog()
         {
             InitializeComponent();
+
+            // Apply current flow direction
+            this.FlowDirection = LanguageManager.CurrentFlowDirection;
+
             _customerService = new CustomerService();
 
             // Load customers when dialog opens
@@ -46,7 +51,10 @@ namespace QuickTechPOS.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading customers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorTitle = TryFindResource("ErrorTitle") as string ?? "Error";
+                string errorMsg = TryFindResource("ErrorLoadingCustomers") as string ?? "Error loading customers:";
+
+                MessageBox.Show($"{errorMsg} {ex.Message}", errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -79,7 +87,10 @@ namespace QuickTechPOS.Views
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error searching customers: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                string errorTitle = TryFindResource("ErrorTitle") as string ?? "Error";
+                string errorMsg = TryFindResource("ErrorSearchingCustomers") as string ?? "Error searching customers:";
+
+                MessageBox.Show($"{errorMsg} {ex.Message}", errorTitle, MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -109,7 +120,10 @@ namespace QuickTechPOS.Views
             }
             else
             {
-                MessageBox.Show("Please select a customer from the list.", "No Selection", MessageBoxButton.OK, MessageBoxImage.Information);
+                string infoTitle = TryFindResource("InfoTitle") as string ?? "Information";
+                string selectCustomerMsg = TryFindResource("PleaseSelectCustomer") as string ?? "Please select a customer from the list.";
+
+                MessageBox.Show(selectCustomerMsg, infoTitle, MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 

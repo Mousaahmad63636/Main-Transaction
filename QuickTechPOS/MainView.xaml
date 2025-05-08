@@ -18,10 +18,11 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
 
             <!-- Application Title -->
-            <TextBlock Text="QuickTech POS" 
+            <TextBlock Text="{DynamicResource ApplicationTitle}" 
                      Grid.Column="0"
                      FontSize="20" 
                      FontWeight="Bold"
@@ -36,9 +37,32 @@
                      VerticalAlignment="Center"
                      HorizontalAlignment="Center"/>
 
-            <!-- Logout Button -->
-            <Button Content="Logout" 
+            <!-- Language Button -->
+            <Button x:Name="LanguageButton"
                     Grid.Column="2"
+                    Content="{DynamicResource LanguageMenu}" 
+                    Background="Transparent"
+                    Foreground="White"
+                    FontSize="14"
+                    BorderThickness="0"
+                    Margin="15,0"
+                    Padding="10,5"
+                    Cursor="Hand">
+                <Button.Style>
+                    <Style TargetType="Button">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#1976D2"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Button.Style>
+            </Button>
+
+            <!-- Logout Button -->
+            <Button Content="{DynamicResource LogoutButton}" 
+                    Grid.Column="3"
                     Command="{Binding LogoutCommand}"
                     Background="Transparent"
                     Foreground="White"

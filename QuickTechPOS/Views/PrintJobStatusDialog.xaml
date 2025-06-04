@@ -1,0 +1,77 @@
+﻿<Window x:Class="QuickTechPOS.Views.PrintJobStatusDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="{DynamicResource PrintJobsStatus}" Height="450" Width="700"
+        WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="{DynamicResource PrintQueueManager}" 
+                   FontSize="18" FontWeight="Bold" 
+                   Margin="0,0,0,10"/>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding PrintJobs}"
+                  SelectedItem="{Binding SelectedJob}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  Margin="0,0,0,10"
+                  AlternatingRowBackground="#F5F5F5">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="{DynamicResource Created}" 
+                                    Binding="{Binding CreatedAt, StringFormat={}{0:MM/dd/yyyy HH:mm:ss}}" 
+                                    Width="140"/>
+                <DataGridTextColumn Header="{DynamicResource Status}" 
+                                    Binding="{Binding StatusMessage}" 
+                                    Width="*"/>
+                <DataGridTextColumn Header="{DynamicResource Attempts}" 
+                                    Binding="{Binding RetryCount}" 
+                                    Width="70"/>
+                <DataGridTextColumn Header="{DynamicResource LastAttempt}" 
+                                    Binding="{Binding LastAttempt, StringFormat={}{0:HH:mm:ss}}" 
+                                    Width="90"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <TextBlock Grid.Row="2" 
+                   Text="{Binding StatusMessage}" 
+                   Margin="0,0,0,10"
+                   Foreground="#333333"/>
+
+        <StackPanel Grid.Row="3" 
+                    Orientation="Horizontal" 
+                    HorizontalAlignment="Right">
+            <Button Content="{DynamicResource Retry}" 
+                    Command="{Binding RetryJobCommand}" 
+                    IsEnabled="{Binding CanRetryJob}"
+                    Width="80" 
+                    Margin="0,0,10,0"/>
+            <Button Content="{DynamicResource CancelButton}" 
+                    Command="{Binding CancelJobCommand}" 
+                    IsEnabled="{Binding CanCancelJob}"
+                    Width="80" 
+                    Margin="0,0,10,0"/>
+            <Button Content="{DynamicResource Remove}" 
+                    Command="{Binding RemoveJobCommand}" 
+                    IsEnabled="{Binding CanRemoveJob}"
+                    Width="80" 
+                    Margin="0,0,10,0"/>
+            <Button Content="{DynamicResource Refresh}" 
+                    Command="{Binding RefreshCommand}" 
+                    Width="80" 
+                    Margin="0,0,10,0"/>
+            <Button Content="{DynamicResource CloseButton}" 
+                    Command="{Binding CloseCommand}" 
+                    Width="80"/>
+        </StackPanel>
+    </Grid>
+</Window>

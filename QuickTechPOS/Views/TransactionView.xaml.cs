@@ -1,4 +1,7 @@
-﻿using QuickTechPOS.Helpers;
+﻿// File: QuickTechPOS/Views/TransactionView.xaml.cs
+// OPTIMIZED FOR 14-INCH POS SCREENS
+
+using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using QuickTechPOS.ViewModels;
@@ -12,8 +15,9 @@ using System.Windows.Media;
 namespace QuickTechPOS.Views
 {
     /// <summary>
-    /// Enhanced TransactionView with category-based product filtering for improved POS workflow efficiency
-    /// Implements modern category dropdown selection replacing traditional name-based search interface
+    /// Optimized TransactionView for 14-inch POS screens with enhanced space efficiency
+    /// Maintains all functionality while maximizing use of limited screen real estate
+    /// Target resolutions: 1366x768, 1280x800, 1440x900
     /// </summary>
     public partial class TransactionView : UserControl
     {
@@ -26,13 +30,13 @@ namespace QuickTechPOS.Views
         #region Constructor
 
         /// <summary>
-        /// Initializes the TransactionView with enhanced category-based product filtering functionality
+        /// Initializes the optimized TransactionView for compact POS displays
         /// </summary>
         /// <param name="viewModel">The transaction view model containing business logic and data binding</param>
         /// <exception cref="ArgumentNullException">Thrown when viewModel is null</exception>
         public TransactionView(TransactionViewModel viewModel)
         {
-            Console.WriteLine("[TransactionView] Initializing TransactionView with category filtering...");
+            Console.WriteLine("[TransactionView] Initializing optimized TransactionView for 14-inch screens...");
 
             InitializeComponent();
 
@@ -51,7 +55,79 @@ namespace QuickTechPOS.Views
             // Subscribe to critical view model property changes for UI state management
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
 
-            Console.WriteLine("[TransactionView] TransactionView initialization completed");
+            // Configure optimized input handling for compact screens
+            ConfigureOptimizedInputHandling();
+
+            Console.WriteLine("[TransactionView] Optimized TransactionView initialization completed");
+        }
+
+        #endregion
+
+        #region Optimized Configuration Methods
+
+        /// <summary>
+        /// Configures input handling optimized for 14-inch touch screens and compact keyboards
+        /// </summary>
+        private void ConfigureOptimizedInputHandling()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionView] Configuring optimized input handling...");
+
+                // Enhanced keyboard shortcuts for compact screens
+                var quickScanBinding = new KeyBinding(
+                    new RelayCommand(param => FocusBarcodeInput()),
+                    Key.F1, ModifierKeys.None);
+                this.InputBindings.Add(quickScanBinding);
+
+                var categoryFilterBinding = new KeyBinding(
+                    new RelayCommand(param => FocusCategoryFilter()),
+                    Key.F2, ModifierKeys.None);
+                this.InputBindings.Add(categoryFilterBinding);
+
+                var clearCartBinding = new KeyBinding(
+                    new RelayCommand(param => {
+                        if (_viewModel.ClearCartCommand?.CanExecute(null) == true)
+                            _viewModel.ClearCartCommand.Execute(null);
+                    }),
+                    Key.F3, ModifierKeys.None);
+                this.InputBindings.Add(clearCartBinding);
+
+                var checkoutBinding = new KeyBinding(
+                    new RelayCommand(param => {
+                        if (_viewModel.CheckoutCommand?.CanExecute(null) == true)
+                            _viewModel.CheckoutCommand.Execute(null);
+                    }),
+                    Key.F4, ModifierKeys.None);
+                this.InputBindings.Add(checkoutBinding);
+
+                // Optimized touch handling
+                this.TouchDown += OnTouchInput;
+                this.TouchUp += OnTouchInput;
+
+                Console.WriteLine("[TransactionView] Optimized input handling configured successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error configuring optimized input handling: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles touch input for enhanced mobile/tablet POS experience
+        /// </summary>
+        private void OnTouchInput(object sender, TouchEventArgs e)
+        {
+            try
+            {
+                // Ensure touch events are properly handled for POS terminals
+                // This can be extended for gesture recognition if needed
+                Console.WriteLine($"[TransactionView] Touch input detected at: {e.GetTouchPoint(this).Position}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error handling touch input: {ex.Message}");
+            }
         }
 
         #endregion
@@ -60,7 +136,7 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Handles view model property changes to maintain UI consistency
-        /// Specifically monitors drawer state, command availability, and category changes
+        /// Optimized for compact screen updates and performance
         /// </summary>
         /// <param name="sender">The source view model</param>
         /// <param name="e">Property change event arguments</param>
@@ -70,7 +146,9 @@ namespace QuickTechPOS.Views
             if (e.PropertyName == nameof(TransactionViewModel.IsDrawerOpen) ||
                 e.PropertyName == nameof(TransactionViewModel.CurrentDrawer) ||
                 e.PropertyName == nameof(TransactionViewModel.SelectedCategory) ||
-                e.PropertyName == nameof(TransactionViewModel.SelectedCategoryId))
+                e.PropertyName == nameof(TransactionViewModel.SelectedCategoryId) ||
+                e.PropertyName == nameof(TransactionViewModel.CartItems) ||
+                e.PropertyName == nameof(TransactionViewModel.TotalAmount))
             {
                 Console.WriteLine($"[TransactionView] Property changed: {e.PropertyName}");
 
@@ -83,6 +161,7 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Performs initialization tasks when the view is fully loaded
+        /// Optimized for fast startup on resource-constrained POS systems
         /// </summary>
         /// <param name="sender">The source control</param>
         /// <param name="e">Event arguments</param>
@@ -90,24 +169,26 @@ namespace QuickTechPOS.Views
         {
             try
             {
-                Console.WriteLine("[TransactionView] View loaded, refreshing drawer status...");
+                Console.WriteLine("[TransactionView] Optimized view loaded, performing quick initialization...");
 
-                // Refresh drawer status to ensure accurate initial state
+                // Fast drawer status refresh for immediate responsiveness
                 await _viewModel.RefreshDrawerStatusAsync();
 
-                Console.WriteLine("[TransactionView] View loaded initialization completed");
+                // Set initial focus to barcode input for immediate scanning capability
+                FocusBarcodeInput();
+
+                Console.WriteLine("[TransactionView] Optimized view loaded initialization completed");
             }
             catch (Exception ex)
             {
-                // Log initialization errors without breaking the UI
-                Console.WriteLine($"[TransactionView] Error during view initialization: {ex.Message}");
+                Console.WriteLine($"[TransactionView] Error during optimized view initialization: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error during view initialization: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Handles barcode input with Enter key submission for rapid product scanning
-        /// Provides immediate feedback and prevents event bubbling
+        /// Handles barcode input with optimized Enter key submission for rapid scanning workflows
+        /// Enhanced for high-frequency scanning operations common in retail POS
         /// </summary>
         /// <param name="sender">The barcode TextBox control</param>
         /// <param name="e">Key event arguments</param>
@@ -123,29 +204,33 @@ namespace QuickTechPOS.Views
                     if (_viewModel.SearchBarcodeCommand?.CanExecute(null) == true)
                     {
                         _viewModel.SearchBarcodeCommand.Execute(null);
+
+                        // Clear input for next scan (optimized workflow)
+                        if (sender is TextBox textBox)
+                        {
+                            textBox.SelectAll();
+                        }
                     }
                     else
                     {
-                        Console.WriteLine("[TransactionView] Barcode search command not available or cannot execute");
+                        Console.WriteLine("[TransactionView] Barcode search command not available");
                     }
                 }
                 catch (Exception ex)
                 {
-                    // Handle search errors gracefully
                     Console.WriteLine($"[TransactionView] Barcode search error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Barcode search error: {ex.Message}");
                 }
                 finally
                 {
-                    // Prevent further event processing
                     e.Handled = true;
                 }
             }
         }
 
         /// <summary>
-        /// Handles customer search ComboBox text changes for real-time filtering
-        /// Implements debounced search with dropdown visibility management
+        /// Handles customer search ComboBox text changes with optimized debouncing
+        /// Optimized for responsive search on compact displays
         /// </summary>
         /// <param name="sender">The customer search ComboBox</param>
         /// <param name="e">Text change event arguments</param>
@@ -155,17 +240,16 @@ namespace QuickTechPOS.Views
             {
                 try
                 {
-                    Console.WriteLine($"[TransactionView] Customer search text changed: {comboBox.Text}");
+                    Console.WriteLine($"[TransactionView] Customer search: {comboBox.Text}");
 
                     // Update the search query in the view model
                     _viewModel.UpdateCustomerQuery(comboBox.Text);
 
-                    // Manage dropdown visibility based on input content
-                    comboBox.IsDropDownOpen = !string.IsNullOrWhiteSpace(comboBox.Text);
+                    // Optimized dropdown management for compact screens
+                    comboBox.IsDropDownOpen = !string.IsNullOrWhiteSpace(comboBox.Text) && comboBox.Text.Length >= 2;
                 }
                 catch (Exception ex)
                 {
-                    // Handle customer search errors without breaking UI flow
                     Console.WriteLine($"[TransactionView] Customer search error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Customer search error: {ex.Message}");
                 }
@@ -173,8 +257,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles customer selection from the search ComboBox
-        /// Automatically clears search input and resets selection state
+        /// Handles customer selection from the search ComboBox with optimized UX
         /// </summary>
         /// <param name="sender">The customer search ComboBox</param>
         /// <param name="e">Selection change event arguments</param>
@@ -191,10 +274,14 @@ namespace QuickTechPOS.Views
 
                     // Update the display text and reset selection state
                     _viewModel.CustomerQuery = customer.Name;
+
+                    // Auto-focus back to barcode for continued scanning workflow
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                        FocusBarcodeInput();
+                    }), System.Windows.Threading.DispatcherPriority.Input);
                 }
                 catch (Exception ex)
                 {
-                    // Handle customer selection errors
                     Console.WriteLine($"[TransactionView] Customer selection error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Customer selection error: {ex.Message}");
                 }
@@ -202,8 +289,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles customer search text input for cursor positioning optimization
-        /// Ensures cursor remains at end of text during rapid typing
+        /// Handles customer search text input with optimized cursor positioning
         /// </summary>
         /// <param name="sender">The customer search ComboBox</param>
         /// <param name="e">Text composition event arguments</param>
@@ -212,7 +298,7 @@ namespace QuickTechPOS.Views
             if (sender is ComboBox comboBox &&
                 comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox textBox)
             {
-                // Defer cursor positioning to maintain text input flow
+                // Optimized cursor positioning for fast typing
                 comboBox.Dispatcher.BeginInvoke(new Action(() =>
                 {
                     textBox.CaretIndex = textBox.Text.Length;
@@ -223,7 +309,6 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Handles customer item double-click for rapid selection
-        /// Provides alternative selection method for mouse-centric workflows
         /// </summary>
         /// <param name="sender">The customer list item</param>
         /// <param name="e">Mouse button event arguments</param>
@@ -237,14 +322,18 @@ namespace QuickTechPOS.Views
                 {
                     Console.WriteLine($"[TransactionView] Customer double-clicked: {customer.Name}");
 
-                    // Set customer and populate search field
+                    // Set customer and return focus to scanning workflow
                     _viewModel.SetSelectedCustomerAndFillSearch(customer);
+
+                    // Return focus to barcode input for optimized workflow
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() => {
+                        FocusBarcodeInput();
+                    }), System.Windows.Threading.DispatcherPriority.Input);
                 }
                 catch (Exception ex)
                 {
-                    // Handle double-click selection errors
-                    Console.WriteLine($"[TransactionView] Customer double-click selection error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Customer double-click selection error: {ex.Message}");
+                    Console.WriteLine($"[TransactionView] Customer double-click error: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"Customer double-click error: {ex.Message}");
                 }
                 finally
                 {
@@ -254,8 +343,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles cart item quantity updates when focus leaves the quantity TextBox
-        /// Validates input and triggers recalculation of totals
+        /// Handles cart item quantity updates with optimized validation
         /// </summary>
         /// <param name="sender">The quantity TextBox control</param>
         /// <param name="e">Focus event arguments</param>
@@ -272,7 +360,6 @@ namespace QuickTechPOS.Views
                 }
                 catch (Exception ex)
                 {
-                    // Handle quantity update errors with user feedback
                     Console.WriteLine($"[TransactionView] Quantity update error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Quantity update error: {ex.Message}");
 
@@ -283,8 +370,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles cart item discount updates when focus leaves the discount TextBox
-        /// Supports both percentage and fixed amount discount types
+        /// Handles cart item discount updates with enhanced validation
         /// </summary>
         /// <param name="sender">The discount TextBox control</param>
         /// <param name="e">Focus event arguments</param>
@@ -301,7 +387,6 @@ namespace QuickTechPOS.Views
                 }
                 catch (Exception ex)
                 {
-                    // Handle discount update errors gracefully
                     Console.WriteLine($"[TransactionView] Discount update error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Discount update error: {ex.Message}");
 
@@ -312,8 +397,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles discount type selection changes (percentage vs fixed amount)
-        /// Immediately recalculates discount values when type changes
+        /// Handles discount type selection changes with immediate recalculation
         /// </summary>
         /// <param name="sender">The discount type ComboBox</param>
         /// <param name="e">Selection change event arguments</param>
@@ -330,7 +414,6 @@ namespace QuickTechPOS.Views
                 }
                 catch (Exception ex)
                 {
-                    // Handle discount type change errors
                     Console.WriteLine($"[TransactionView] Discount type change error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Discount type change error: {ex.Message}");
                 }
@@ -339,30 +422,27 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Generic button click handler for extensibility
-        /// Placeholder for future button functionality that doesn't require specific handling
         /// </summary>
         /// <param name="sender">The clicked button</param>
         /// <param name="e">Event arguments</param>
         private void Button_Click(object sender, RoutedEventArgs e)
         {
-            // Reserved for future button implementations
-            // Current implementation intentionally empty for forward compatibility
             Console.WriteLine("[TransactionView] Generic button click handled");
         }
 
         #endregion
 
-        #region Public Methods
+        #region Optimized Focus Management
 
         /// <summary>
         /// Focuses the barcode input for rapid scanning workflows
-        /// Optimizes for high-frequency barcode scanning operations
+        /// Optimized for high-frequency scanning operations
         /// </summary>
         public void FocusBarcodeInput()
         {
             try
             {
-                Console.WriteLine("[TransactionView] Focusing barcode input...");
+                Console.WriteLine("[TransactionView] Focusing barcode input for optimized scanning...");
 
                 // Find the barcode TextBox by name
                 if (FindName("BarcodeInputTextBox") is TextBox barcodeBox)
@@ -384,8 +464,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Sets focus to the category filter for keyboard-driven workflows
-        /// Provides programmatic access for category selection via keyboard
+        /// Sets focus to the category filter for optimized keyboard navigation
         /// </summary>
         public void FocusCategoryFilter()
         {
@@ -393,7 +472,7 @@ namespace QuickTechPOS.Views
             {
                 Console.WriteLine("[TransactionView] Focusing category filter...");
 
-                // The category ComboBox doesn't have a specific name, but we can find it by type
+                // Find the category ComboBox through visual tree traversal
                 if (this.Content is Grid mainGrid)
                 {
                     var categoryComboBox = FindVisualChild<ComboBox>(mainGrid);
@@ -418,25 +497,33 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Helper method to find visual children of a specific type
+        /// Optimized for the compact layout structure
         /// </summary>
         /// <typeparam name="T">The type of visual child to find</typeparam>
         /// <param name="parent">The parent visual element</param>
         /// <returns>The first child of the specified type, or null if not found</returns>
         private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
         {
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            try
             {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T result)
+                for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
                 {
-                    return result;
-                }
+                    var child = VisualTreeHelper.GetChild(parent, i);
+                    if (child is T result)
+                    {
+                        return result;
+                    }
 
-                var childOfChild = FindVisualChild<T>(child);
-                if (childOfChild != null)
-                {
-                    return childOfChild;
+                    var childOfChild = FindVisualChild<T>(child);
+                    if (childOfChild != null)
+                    {
+                        return childOfChild;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error finding visual child: {ex.Message}");
             }
             return null;
         }
@@ -446,69 +533,139 @@ namespace QuickTechPOS.Views
         #region Resource Cleanup
 
         /// <summary>
-        /// Handles the Unloaded event for proper resource cleanup and memory management
-        /// Implements enterprise-grade disposal pattern to prevent memory leaks in long-running POS applications
+        /// Handles the Unloaded event for optimized resource cleanup
+        /// Essential for memory management in long-running POS applications
         /// </summary>
         /// <param name="sender">The source UserControl instance</param>
-        /// <param name="e">Routed event arguments containing event lifecycle information</param>
+        /// <param name="e">Routed event arguments</param>
         private void OnViewUnloaded(object sender, RoutedEventArgs e)
         {
             try
             {
-                Console.WriteLine("[TransactionView] Starting view unload cleanup...");
+                Console.WriteLine("[TransactionView] Starting optimized view unload cleanup...");
 
-                // Unsubscribe from view model events to prevent memory leaks
-                // Critical for long-running POS applications with frequent view transitions
+                // Unsubscribe from view model events
                 if (_viewModel != null)
                 {
                     _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-                    Console.WriteLine("[TransactionView] Unsubscribed from view model property changes");
+                    Console.WriteLine("[TransactionView] Unsubscribed from view model events");
                 }
+
+                // Clean up optimized input handling
+                this.TouchDown -= OnTouchInput;
+                this.TouchUp -= OnTouchInput;
 
                 // Additional cleanup for any subscribed events or resources
                 this.Loaded -= OnViewLoaded;
                 this.Unloaded -= OnViewUnloaded;
 
-                // Log successful cleanup for diagnostic purposes
-                Console.WriteLine("[TransactionView] Resource cleanup completed successfully");
-                System.Diagnostics.Debug.WriteLine("TransactionView: Resource cleanup completed successfully");
+                Console.WriteLine("[TransactionView] Optimized resource cleanup completed successfully");
+                System.Diagnostics.Debug.WriteLine("TransactionView: Optimized cleanup completed");
             }
             catch (Exception ex)
             {
-                // Log cleanup errors but don't throw during disposal to maintain application stability
-                // Essential for production POS systems where view lifecycle errors shouldn't crash the application
                 Console.WriteLine($"[TransactionView] Cleanup error: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"TransactionView cleanup error: {ex.Message}");
-
-                // In production, consider logging to a centralized logging system
-                // Logger.Error($"View cleanup failed: {ex}");
             }
         }
 
         /// <summary>
-        /// Initializes event subscriptions and prepares the view for resource tracking
-        /// Called during constructor execution to establish proper lifecycle management
+        /// Initializes event subscriptions for optimized lifecycle management
         /// </summary>
         private void InitializeEventSubscriptions()
         {
             try
             {
-                Console.WriteLine("[TransactionView] Initializing event subscriptions...");
+                Console.WriteLine("[TransactionView] Initializing optimized event subscriptions...");
 
-                // Subscribe to the Unloaded event for resource cleanup
+                // Subscribe to lifecycle events
                 this.Unloaded += OnViewUnloaded;
-
-                // Ensure Loaded event subscription is properly established
                 this.Loaded += OnViewLoaded;
 
-                Console.WriteLine("[TransactionView] Event subscriptions initialized successfully");
-                System.Diagnostics.Debug.WriteLine("TransactionView: Event subscriptions initialized successfully");
+                Console.WriteLine("[TransactionView] Optimized event subscriptions initialized");
+                System.Diagnostics.Debug.WriteLine("TransactionView: Optimized subscriptions initialized");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[TransactionView] Event subscription error: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"TransactionView event subscription error: {ex.Message}");
-                throw; // Re-throw during initialization as this indicates a critical setup failure
+                System.Diagnostics.Debug.WriteLine($"TransactionView subscription error: {ex.Message}");
+                throw;
+            }
+        }
+
+        #endregion
+
+        #region Performance Optimization Methods
+
+        /// <summary>
+        /// Optimizes the view for better performance on resource-constrained POS systems
+        /// </summary>
+        public void OptimizeForPerformance()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionView] Applying performance optimizations...");
+
+                // Enable bitmap caching for better scrolling performance
+                if (this.Content is FrameworkElement content)
+                {
+                    RenderOptions.SetBitmapScalingMode(content, BitmapScalingMode.LowQuality);
+                    RenderOptions.SetCachingHint(content, CachingHint.Cache);
+                }
+
+                // Optimize for touch input
+                this.IsManipulationEnabled = true;
+
+                Console.WriteLine("[TransactionView] Performance optimizations applied");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Performance optimization error: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Updates the layout for specific screen sizes dynamically
+        /// </summary>
+        /// <param name="screenWidth">Available screen width</param>
+        /// <param name="screenHeight">Available screen height</param>
+        public void UpdateLayoutForScreenSize(double screenWidth, double screenHeight)
+        {
+            try
+            {
+                Console.WriteLine($"[TransactionView] Updating layout for {screenWidth}x{screenHeight}");
+
+                // Adjust column widths based on actual screen size
+                if (this.Content is Grid mainGrid && mainGrid.ColumnDefinitions.Count >= 3)
+                {
+                    var leftColumn = mainGrid.ColumnDefinitions[0];
+                    var rightColumn = mainGrid.ColumnDefinitions[2];
+
+                    if (screenWidth < 1280)
+                    {
+                        // Extra compact for very small screens
+                        leftColumn.Width = new GridLength(260);
+                        rightColumn.Width = new GridLength(280);
+                    }
+                    else if (screenWidth < 1366)
+                    {
+                        // Standard compact
+                        leftColumn.Width = new GridLength(280);
+                        rightColumn.Width = new GridLength(300);
+                    }
+                    else
+                    {
+                        // Slightly more spacious for larger 14" screens
+                        leftColumn.Width = new GridLength(300);
+                        rightColumn.Width = new GridLength(320);
+                    }
+                }
+
+                Console.WriteLine("[TransactionView] Layout updated for screen size");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Layout update error: {ex.Message}");
             }
         }
 

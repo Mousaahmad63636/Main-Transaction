@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/ViewModels/TransactionViewModel.cs
 // COMPLETE FILE: Enhanced with table navigation and multi-table support
+// UPDATED: Customer selection UI functionality removed
 
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
@@ -200,7 +201,6 @@ namespace QuickTechPOS.ViewModels
                 }
             }
         }
-
 
         public string TableDisplayText
         {
@@ -503,10 +503,10 @@ namespace QuickTechPOS.ViewModels
         public ICommand ShowTableNavigationCommand { get; }
         public ICommand CloseCurrentTableCommand { get; }
 
-        // Existing Commands
+        // Core Transaction Commands (Customer UI commands removed)
         public ICommand SearchBarcodeCommand { get; }
         public ICommand SelectCategoryCommand { get; }
-        public ICommand SelectCustomerCommand { get; }
+        // REMOVED: SelectCustomerCommand
         public ICommand SearchCustomersCommand { get; }
         public ICommand AddToCartCommand { get; }
         public ICommand RemoveFromCartCommand { get; }
@@ -518,7 +518,7 @@ namespace QuickTechPOS.ViewModels
         public ICommand AddToCartAsWholesaleBoxCommand { get; }
         public ICommand HoldCartCommand { get; }
         public ICommand RestoreCartCommand { get; }
-        public ICommand AddCustomerCommand { get; }
+        // REMOVED: AddCustomerCommand
         public ICommand SelectTableCommand { get; }
         public ICommand LookupTransactionCommand { get; }
         public ICommand EditTransactionCommand { get; }
@@ -540,7 +540,7 @@ namespace QuickTechPOS.ViewModels
 
         public TransactionViewModel(AuthenticationService authService, Customer walkInCustomer = null)
         {
-            Console.WriteLine("[TransactionViewModel] Initializing enhanced TransactionViewModel with table navigation...");
+            Console.WriteLine("[TransactionViewModel] Initializing enhanced TransactionViewModel with table navigation (Customer UI removed)...");
 
             // Initialize table-specific data storage
             _tableTransactionData = new Dictionary<int, TableTransactionData>();
@@ -576,7 +576,7 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine("[TransactionViewModel] Collections initialized");
 
-            // Initialize customer information
+            // Initialize customer information (default to walk-in)
             CustomerName = "Walk-in Customer";
             if (_walkInCustomer != null)
             {
@@ -589,7 +589,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine("[TransactionViewModel] No walk-in customer provided. Customer ID set to 0.");
             }
 
-            // Initialize customer search timer
+            // Initialize customer search timer (kept for programmatic customer search)
             _customerSearchTimer = new System.Timers.Timer(300);
             _customerSearchTimer.Elapsed += OnCustomerSearchTimerElapsed;
             _customerSearchTimer.AutoReset = false;
@@ -618,7 +618,7 @@ namespace QuickTechPOS.ViewModels
                 param => CloseCurrentTable(),
                 param => SelectedTable != null);
 
-            // Initialize existing commands
+            // Initialize core transaction commands
             LogoutCommand = new RelayCommand(param => Logout());
             SelectTableCommand = new RelayCommand(param => OpenTableSelectionDialog());
 
@@ -674,14 +674,10 @@ namespace QuickTechPOS.ViewModels
             // Recovery command
             OpenRecoveryDialogCommand = new RelayCommand(param => OpenRecoveryDialog());
 
-            // Customer commands
-            AddCustomerCommand = new RelayCommand(param => OpenAddCustomerDialog());
-            SelectCustomerCommand = new RelayCommand(param => OpenCustomerSelectionDialog());
-
             // Print queue commands
             ViewPrintQueueCommand = new RelayCommand(param => ViewPrintQueue(), param => _printQueueManager != null);
 
-            Console.WriteLine("[TransactionViewModel] All commands initialized");
+            Console.WriteLine("[TransactionViewModel] All commands initialized (Customer UI commands excluded)");
 
             // Initial data loading
             LoadInitialDataAsync();
@@ -719,6 +715,7 @@ namespace QuickTechPOS.ViewModels
 
             return _tableTransactionData[table.Id];
         }
+
         #region FIXED: Auto-Save Table State Methods
         /// <summary>
         /// Automatically saves current table state when cart or customer data changes
@@ -798,8 +795,6 @@ namespace QuickTechPOS.ViewModels
                             // Product variant flags
                             IsBox = originalItem.IsBox,
                             IsWholesale = originalItem.IsWholesale,
-
-                           
 
                             // Ensure calculated properties are preserved
                             // Note: Total property will be recalculated automatically via CartItem.Total getter
@@ -895,6 +890,7 @@ namespace QuickTechPOS.ViewModels
             }
         }
         #endregion
+
         private void SaveCurrentTableState()
         {
             if (SelectedTable == null) return;
@@ -943,7 +939,6 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error saving table state: {ex.Message}";
             }
         }
-
 
         private void LoadCurrentTableState()
         {
@@ -1416,10 +1411,9 @@ namespace QuickTechPOS.ViewModels
             }), System.Windows.Threading.DispatcherPriority.Background);
         }
 
-
         #endregion
 
-        #region Existing Methods (All Original Functionality)
+        #region Core Transaction Methods (Customer UI Methods Removed)
 
         private void OpenTableSelectionDialog()
         {
@@ -1878,6 +1872,220 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        // Core Customer Methods (Programmatic Use - UI Methods Removed)
+        private async void LoadInitialCustomersAsync()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionViewModel] Loading initial customers...");
+
+                var customers = await _customerService.SearchCustomersAsync("");
+                SearchedCustomers.Clear();
+
+                foreach (var customer in customers)
+                {
+                    SearchedCustomers.Add(customer);
+                }
+
+                Console.WriteLine($"[TransactionViewModel] Loaded {customers.Count} customers");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error loading customers: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Error loading initial customers: {ex}");
+            }
+        }
+
+        private async void OnCustomerSearchTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            try
+            {
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
+                {
+                    await SearchCustomersAsync();
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error in customer search timer: {ex}");
+                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    StatusMessage = $"Customer search error: {ex.Message}";
+                });
+            }
+        }
+
+        public void UpdateCustomerQuery(string query)
+        {
+            Console.WriteLine($"[TransactionViewModel] Updating customer query to: '{query}'");
+
+            CustomerQuery = query;
+
+            _customerSearchTimer.Stop();
+            _customerSearchTimer.Start();
+        }
+
+        private async Task SearchByBarcodeAsync()
+        {
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Starting barcode search for: '{BarcodeQuery}'");
+
+                if (string.IsNullOrWhiteSpace(BarcodeQuery))
+                {
+                    await LoadProductsByCategoryAsync();
+                    return;
+                }
+
+                StatusMessage = "Searching by barcode...";
+
+                var searchResult = await _productService.FindByAnyBarcodeAsync(BarcodeQuery);
+
+                if (searchResult != null)
+                {
+                    AddToCart(searchResult.Product, searchResult.IsBoxBarcode, false);
+                    BarcodeQuery = string.Empty;
+                    StatusMessage = searchResult.IsBoxBarcode ?
+        $"Added BOX-{searchResult.Product.Name} to cart." :
+        $"Added {searchResult.Product.Name} to cart.";
+
+                    Console.WriteLine($"[TransactionViewModel] Barcode search successful: {searchResult.Product.Name} (IsBox: {searchResult.IsBoxBarcode})");
+                }
+                else
+                {
+                    StatusMessage = "No product found with this barcode.";
+                    Console.WriteLine($"[TransactionViewModel] No product found for barcode: '{BarcodeQuery}'");
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Barcode search error: {ex}");
+            }
+        }
+
+        private async Task SearchCustomersAsync()
+        {
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Searching customers for: '{CustomerQuery}'");
+
+                var customers = await _customerService.SearchCustomersAsync(CustomerQuery);
+
+                System.Windows.Application.Current.Dispatcher.Invoke(() => {
+                    SearchedCustomers.Clear();
+
+                    foreach (var customer in customers)
+                    {
+                        SearchedCustomers.Add(customer);
+                    }
+                });
+
+                Console.WriteLine($"[TransactionViewModel] Found {customers.Count} customers");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error searching customers: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Customer search error: {ex}");
+            }
+        }
+
+        // Core customer methods kept for programmatic use
+        public async void SetSelectedCustomer(Customer customer)
+        {
+            if (customer == null)
+                return;
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Setting selected customer: {customer.Name} (ID: {customer.CustomerId})");
+
+                SelectedCustomer = customer;
+                CustomerId = customer.CustomerId;
+                CustomerName = customer.Name;
+
+                OnPropertyChanged(nameof(SelectedCustomer));
+                OnPropertyChanged(nameof(CustomerId));
+                OnPropertyChanged(nameof(CustomerName));
+
+                if (CartItems.Count > 0)
+                {
+                    await ApplyCustomerPricingToCartAsync();
+                }
+
+                StatusMessage = $"Selected customer: {customer.Name}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error setting customer: {ex.Message}");
+                StatusMessage = $"Error selecting customer: {ex.Message}";
+            }
+        }
+
+        private async Task ApplyCustomerPricingToCartAsync()
+        {
+            if (CustomerId <= 0 || CartItems.Count == 0)
+                return;
+
+            Console.WriteLine($"[TransactionViewModel] Applying customer pricing for customer ID: {CustomerId}");
+
+            var customerPrices = await _customerPriceService.GetAllPricesForCustomerAsync(CustomerId);
+
+            if (customerPrices.Count == 0)
+            {
+                Console.WriteLine("[TransactionViewModel] No customer-specific prices found");
+                return;
+            }
+
+            foreach (var item in CartItems)
+            {
+                if (customerPrices.TryGetValue(item.Product.ProductId, out decimal specialPrice))
+                {
+                    if (item.UnitPrice != specialPrice)
+                    {
+                        item.UnitPrice = specialPrice;
+                        Console.WriteLine($"[TransactionViewModel] Updated price for {item.Product.Name}: ${specialPrice}");
+                    }
+                }
+            }
+
+            UpdateTotals();
+            StatusMessage = "Updated prices based on customer-specific pricing.";
+        }
+
+        public void SetSelectedCustomerAndFillSearch(Customer customer)
+        {
+            if (customer == null)
+                return;
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Setting selected customer and filling search: {customer.Name} (ID: {customer.CustomerId})");
+
+                SelectedCustomer = customer;
+                CustomerId = customer.CustomerId;
+                CustomerName = customer.Name;
+                CustomerQuery = customer.Name;
+
+                OnPropertyChanged(nameof(SelectedCustomer));
+                OnPropertyChanged(nameof(CustomerId));
+                OnPropertyChanged(nameof(CustomerName));
+                OnPropertyChanged(nameof(CustomerQuery));
+
+                StatusMessage = $"Selected customer: {customer.Name}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error setting customer: {ex.Message}");
+                StatusMessage = $"Error selecting customer: {ex.Message}";
+            }
+        }
+
+        // Rest of the existing methods remain unchanged...
+        // [The rest of the file continues with all the existing transaction, cart, checkout, navigation, etc. methods]
+
+        #region Checkout and Transaction Methods
+
         private async Task CheckoutAsync()
         {
             try
@@ -2127,6 +2335,10 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        #endregion
+
+        #region Calculation Methods
+
         private void CalculateExchangeAmount()
         {
             if (ExchangeRate > 0)
@@ -2169,6 +2381,10 @@ namespace QuickTechPOS.ViewModels
 
             UpdateTotals();
         }
+
+        #endregion
+
+        #region Drawer Management Methods
 
         private async Task GetCurrentDrawerAsync()
         {
@@ -2571,283 +2787,9 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        private void OpenCustomerSelectionDialog()
-        {
-            Console.WriteLine("[TransactionViewModel] Opening customer selection dialog...");
+        #endregion
 
-            var customerDialog = new Views.CustomerSelectionDialog();
-            if (customerDialog.ShowDialog() == true)
-            {
-                var selectedCustomer = customerDialog.SelectedCustomer;
-                if (selectedCustomer != null)
-                {
-                    SetSelectedCustomer(selectedCustomer);
-                    StatusMessage = $"Selected customer: {selectedCustomer.Name}";
-                }
-            }
-        }
-
-        private async void LoadInitialCustomersAsync()
-        {
-            try
-            {
-                Console.WriteLine("[TransactionViewModel] Loading initial customers...");
-
-                var customers = await _customerService.SearchCustomersAsync("");
-                SearchedCustomers.Clear();
-
-                foreach (var customer in customers)
-                {
-                    SearchedCustomers.Add(customer);
-                }
-
-                Console.WriteLine($"[TransactionViewModel] Loaded {customers.Count} customers");
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error loading customers: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Error loading initial customers: {ex}");
-            }
-        }
-
-        private async void OnCustomerSearchTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
-                {
-                    await SearchCustomersAsync();
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error in customer search timer: {ex}");
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    StatusMessage = $"Customer search error: {ex.Message}";
-                });
-            }
-        }
-
-        public void UpdateCustomerQuery(string query)
-        {
-            Console.WriteLine($"[TransactionViewModel] Updating customer query to: '{query}'");
-
-            CustomerQuery = query;
-
-            _customerSearchTimer.Stop();
-            _customerSearchTimer.Start();
-        }
-
-        private async Task SearchByBarcodeAsync()
-        {
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Starting barcode search for: '{BarcodeQuery}'");
-
-                if (string.IsNullOrWhiteSpace(BarcodeQuery))
-                {
-                    await LoadProductsByCategoryAsync();
-                    return;
-                }
-
-                StatusMessage = "Searching by barcode...";
-
-                var searchResult = await _productService.FindByAnyBarcodeAsync(BarcodeQuery);
-
-                if (searchResult != null)
-                {
-                    AddToCart(searchResult.Product, searchResult.IsBoxBarcode, false);
-                    BarcodeQuery = string.Empty;
-                    StatusMessage = searchResult.IsBoxBarcode ?
-        $"Added BOX-{searchResult.Product.Name} to cart." :
-        $"Added {searchResult.Product.Name} to cart.";
-
-                    Console.WriteLine($"[TransactionViewModel] Barcode search successful: {searchResult.Product.Name} (IsBox: {searchResult.IsBoxBarcode})");
-                }
-                else
-                {
-                    StatusMessage = "No product found with this barcode.";
-                    Console.WriteLine($"[TransactionViewModel] No product found for barcode: '{BarcodeQuery}'");
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Barcode search error: {ex}");
-            }
-        }
-
-        private async Task SearchCustomersAsync()
-        {
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Searching customers for: '{CustomerQuery}'");
-
-                var customers = await _customerService.SearchCustomersAsync(CustomerQuery);
-
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    SearchedCustomers.Clear();
-
-                    foreach (var customer in customers)
-                    {
-                        SearchedCustomers.Add(customer);
-                    }
-                });
-
-                Console.WriteLine($"[TransactionViewModel] Found {customers.Count} customers");
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error searching customers: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Customer search error: {ex}");
-            }
-        }
-
-        public async void SetSelectedCustomer(Customer customer)
-        {
-            if (customer == null)
-                return;
-
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Setting selected customer: {customer.Name} (ID: {customer.CustomerId})");
-
-                SelectedCustomer = customer;
-                CustomerId = customer.CustomerId;
-                CustomerName = customer.Name;
-
-                OnPropertyChanged(nameof(SelectedCustomer));
-                OnPropertyChanged(nameof(CustomerId));
-                OnPropertyChanged(nameof(CustomerName));
-
-                if (CartItems.Count > 0)
-                {
-                    await ApplyCustomerPricingToCartAsync();
-                }
-
-                StatusMessage = $"Selected customer: {customer.Name}";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error setting customer: {ex.Message}");
-                StatusMessage = $"Error selecting customer: {ex.Message}";
-            }
-        }
-
-        private async Task ApplyCustomerPricingToCartAsync()
-        {
-            if (CustomerId <= 0 || CartItems.Count == 0)
-                return;
-
-            Console.WriteLine($"[TransactionViewModel] Applying customer pricing for customer ID: {CustomerId}");
-
-            var customerPrices = await _customerPriceService.GetAllPricesForCustomerAsync(CustomerId);
-
-            if (customerPrices.Count == 0)
-            {
-                Console.WriteLine("[TransactionViewModel] No customer-specific prices found");
-                return;
-            }
-
-            foreach (var item in CartItems)
-            {
-                if (customerPrices.TryGetValue(item.Product.ProductId, out decimal specialPrice))
-                {
-                    if (item.UnitPrice != specialPrice)
-                    {
-                        item.UnitPrice = specialPrice;
-                        Console.WriteLine($"[TransactionViewModel] Updated price for {item.Product.Name}: ${specialPrice}");
-                    }
-                }
-            }
-
-            UpdateTotals();
-            StatusMessage = "Updated prices based on customer-specific pricing.";
-        }
-
-        public void SetSelectedCustomerAndFillSearch(Customer customer)
-        {
-            if (customer == null)
-                return;
-
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Setting selected customer and filling search: {customer.Name} (ID: {customer.CustomerId})");
-
-                SelectedCustomer = customer;
-                CustomerId = customer.CustomerId;
-                CustomerName = customer.Name;
-                CustomerQuery = customer.Name;
-
-                OnPropertyChanged(nameof(SelectedCustomer));
-                OnPropertyChanged(nameof(CustomerId));
-                OnPropertyChanged(nameof(CustomerName));
-                OnPropertyChanged(nameof(CustomerQuery));
-
-                StatusMessage = $"Selected customer: {customer.Name}";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error setting customer: {ex.Message}");
-                StatusMessage = $"Error selecting customer: {ex.Message}";
-            }
-        }
-
-        private async Task PrintDrawerReportAsync()
-        {
-            try
-            {
-                Console.WriteLine("[TransactionViewModel] Starting PrintDrawerReportAsync...");
-
-                if (CurrentDrawer == null)
-                {
-                    StatusMessage = "No drawer available to print report.";
-                    return;
-                }
-
-                IsProcessing = true;
-                StatusMessage = $"Preparing drawer report for drawer #{CurrentDrawer.DrawerId}...";
-
-                if (_printQueueManager != null)
-                {
-                    string jobId = _printQueueManager.EnqueueDrawerReport(CurrentDrawer);
-                    StatusMessage = $"Drawer report #{CurrentDrawer.DrawerId} queued for printing (Job ID: {jobId}).";
-                }
-                else
-                {
-                    string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
-                    StatusMessage = result;
-                }
-
-                Console.WriteLine("[TransactionViewModel] PrintDrawerReportAsync completed");
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error printing drawer report: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Drawer report print error: {ex}");
-            }
-            finally
-            {
-                IsProcessing = false;
-            }
-        }
-
-        private void OpenAddCustomerDialog()
-        {
-            Console.WriteLine("[TransactionViewModel] Opening add customer dialog...");
-
-            var newCustomerDialog = new Views.AddCustomerDialog();
-            if (newCustomerDialog.ShowDialog() == true)
-            {
-                var newCustomer = newCustomerDialog.Customer;
-                if (newCustomer != null)
-                {
-                    SetSelectedCustomer(newCustomer);
-                    StatusMessage = $"Added new customer: {newCustomer.Name}";
-                }
-            }
-        }
+        #region Cart Management Methods
 
         public void AddSelectedProductToCart(Product product)
         {
@@ -2985,6 +2927,7 @@ namespace QuickTechPOS.ViewModels
             // FIXED: Auto-save table state after quantity update
             AutoSaveCurrentTableState();
         }
+
         public void UpdateCartItemDiscount(CartItem cartItem)
         {
             if (cartItem == null)
@@ -3026,6 +2969,7 @@ namespace QuickTechPOS.ViewModels
             // FIXED: Auto-save table state after discount update
             AutoSaveCurrentTableState();
         }
+
         private void RemoveFromCart(CartItem cartItem = null)
         {
             var itemToRemove = cartItem ?? SelectedCartItem;
@@ -3073,82 +3017,9 @@ namespace QuickTechPOS.ViewModels
             OnPropertyChanged(nameof(ExchangeAmount));
         }
 
-        private void ShowErrorPopup(string title, string message)
-        {
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Showing error popup: {title} - {message}");
+        #endregion
 
-                Application.Current.Dispatcher.Invoke(() =>
-                {
-                    string formattedTitle = title.Contains("Error") ? title : $"{title} Error";
-
-                    MessageBox.Show(
-                        message,
-                        formattedTitle,
-                        MessageBoxButton.OK,
-                        MessageBoxImage.Error);
-                });
-
-                Console.WriteLine($"[TransactionViewModel] [ERROR POPUP] {title}: {message}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Failed to show error popup: {ex.Message}");
-            }
-        }
-
-        private void ResetTransactionState()
-        {
-            Console.WriteLine("[TransactionViewModel] Resetting transaction state...");
-
-            CartItems.Clear();
-
-            UpdateTotals();
-
-            if (CustomerId > 0 && CustomerName != "Walk-in Customer")
-            {
-                if (_walkInCustomer != null)
-                {
-                    CustomerId = _walkInCustomer.CustomerId;
-                }
-                else
-                {
-                    CustomerId = 0;
-                }
-
-                CustomerName = "Walk-in Customer";
-                SelectedCustomer = null;
-                OnPropertyChanged(nameof(CustomerName));
-                OnPropertyChanged(nameof(CustomerId));
-            }
-
-            PaidAmount = 0;
-            AddToCustomerDebt = false;
-            AmountToDebt = 0;
-            ChangeDueAmount = 0;
-            UseExchangeRate = true;
-
-            LoadedTransaction = null;
-            IsTransactionLoaded = false;
-            IsEditMode = false;
-            CanNavigateNext = false;
-            CanNavigatePrevious = false;
-
-            OnPropertyChanged(nameof(IsTransactionLoaded));
-            OnPropertyChanged(nameof(LoadedTransaction));
-            OnPropertyChanged(nameof(CanCheckout));
-
-            CommandManager.InvalidateRequerySuggested();
-
-            Console.WriteLine("[TransactionViewModel] Transaction state reset completed");
-        }
-
-        private void Logout()
-        {
-            Console.WriteLine("[TransactionViewModel] Logout requested");
-            Application.Current.MainWindow.Close();
-        }
+        #region Transaction Lookup and Navigation Methods
 
         private async Task LookupTransactionAsync()
         {
@@ -3592,6 +3463,132 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Previous transaction navigation error: {ex}");
             }
         }
+
+        #endregion
+
+        #region Print and Report Methods
+
+        private async Task PrintDrawerReportAsync()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionViewModel] Starting PrintDrawerReportAsync...");
+
+                if (CurrentDrawer == null)
+                {
+                    StatusMessage = "No drawer available to print report.";
+                    return;
+                }
+
+                IsProcessing = true;
+                StatusMessage = $"Preparing drawer report for drawer #{CurrentDrawer.DrawerId}...";
+
+                if (_printQueueManager != null)
+                {
+                    string jobId = _printQueueManager.EnqueueDrawerReport(CurrentDrawer);
+                    StatusMessage = $"Drawer report #{CurrentDrawer.DrawerId} queued for printing (Job ID: {jobId}).";
+                }
+                else
+                {
+                    string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
+                    StatusMessage = result;
+                }
+
+                Console.WriteLine("[TransactionViewModel] PrintDrawerReportAsync completed");
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error printing drawer report: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Drawer report print error: {ex}");
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
+
+        #endregion
+
+        #region Utility Methods
+
+        private void ShowErrorPopup(string title, string message)
+        {
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Showing error popup: {title} - {message}");
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    string formattedTitle = title.Contains("Error") ? title : $"{title} Error";
+
+                    MessageBox.Show(
+                        message,
+                        formattedTitle,
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Error);
+                });
+
+                Console.WriteLine($"[TransactionViewModel] [ERROR POPUP] {title}: {message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Failed to show error popup: {ex.Message}");
+            }
+        }
+
+        private void ResetTransactionState()
+        {
+            Console.WriteLine("[TransactionViewModel] Resetting transaction state...");
+
+            CartItems.Clear();
+
+            UpdateTotals();
+
+            if (CustomerId > 0 && CustomerName != "Walk-in Customer")
+            {
+                if (_walkInCustomer != null)
+                {
+                    CustomerId = _walkInCustomer.CustomerId;
+                }
+                else
+                {
+                    CustomerId = 0;
+                }
+
+                CustomerName = "Walk-in Customer";
+                SelectedCustomer = null;
+                OnPropertyChanged(nameof(CustomerName));
+                OnPropertyChanged(nameof(CustomerId));
+            }
+
+            PaidAmount = 0;
+            AddToCustomerDebt = false;
+            AmountToDebt = 0;
+            ChangeDueAmount = 0;
+            UseExchangeRate = true;
+
+            LoadedTransaction = null;
+            IsTransactionLoaded = false;
+            IsEditMode = false;
+            CanNavigateNext = false;
+            CanNavigatePrevious = false;
+
+            OnPropertyChanged(nameof(IsTransactionLoaded));
+            OnPropertyChanged(nameof(LoadedTransaction));
+            OnPropertyChanged(nameof(CanCheckout));
+
+            CommandManager.InvalidateRequerySuggested();
+
+            Console.WriteLine("[TransactionViewModel] Transaction state reset completed");
+        }
+
+        private void Logout()
+        {
+            Console.WriteLine("[TransactionViewModel] Logout requested");
+            Application.Current.MainWindow.Close();
+        }
+
+        #endregion
 
         #endregion
     }

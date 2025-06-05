@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/Views/TransactionView.xaml.cs
 // OPTIMIZED FOR 14-INCH POS SCREENS
+// UPDATED: Customer selection dialog references removed
 
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
@@ -18,6 +19,7 @@ namespace QuickTechPOS.Views
     /// Optimized TransactionView for 14-inch POS screens with enhanced space efficiency
     /// Maintains all functionality while maximizing use of limited screen real estate
     /// Target resolutions: 1366x768, 1280x800, 1440x900
+    /// Customer selection UI functionality removed
     /// </summary>
     public partial class TransactionView : UserControl
     {
@@ -36,7 +38,7 @@ namespace QuickTechPOS.Views
         /// <exception cref="ArgumentNullException">Thrown when viewModel is null</exception>
         public TransactionView(TransactionViewModel viewModel)
         {
-            Console.WriteLine("[TransactionView] Initializing optimized TransactionView for 14-inch screens...");
+            Console.WriteLine("[TransactionView] Initializing optimized TransactionView for 14-inch screens (Customer UI removed)...");
 
             InitializeComponent();
 
@@ -138,7 +140,9 @@ namespace QuickTechPOS.Views
                 e.PropertyName == nameof(TransactionViewModel.SelectedCategory) ||
                 e.PropertyName == nameof(TransactionViewModel.SelectedCategoryId) ||
                 e.PropertyName == nameof(TransactionViewModel.CartItems) ||
-                e.PropertyName == nameof(TransactionViewModel.TotalAmount))
+                e.PropertyName == nameof(TransactionViewModel.TotalAmount) ||
+                e.PropertyName == nameof(TransactionViewModel.CustomerName) ||
+                e.PropertyName == nameof(TransactionViewModel.SelectedTable))
             {
                 Console.WriteLine($"[TransactionView] Property changed: {e.PropertyName}");
 

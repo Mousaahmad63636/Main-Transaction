@@ -485,47 +485,57 @@
                 <ColumnDefinition Width="300"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel - Compact Customer & Controls -->
+            <!-- Left Panel - Compact Controls (Customer Section Removed) -->
             <Border Grid.Column="0" Style="{StaticResource CompactCardPanel}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Compact Customer Selection -->
-                    <StackPanel Grid.Row="0" Margin="12,12,12,8">
-                        <TextBlock Text="{Binding CustomerName}" 
-                                   FontWeight="Bold"
-                                   FontSize="13"
-                                   Margin="0,0,0,8"/>
+                    <!-- Current Customer Display (Read-Only) -->
+                    <Border Grid.Row="0" 
+                            Background="#F8FAFC" 
+                            BorderBrush="#E2E8F0" 
+                            BorderThickness="0,0,0,1"
+                            Padding="12,12,12,8">
+                        <StackPanel>
+                            <TextBlock Text="Current Customer" 
+                                       Style="{StaticResource HeaderText}"/>
 
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
+                            <Border Background="White" 
+                                    BorderBrush="#CBD5E1" 
+                                    BorderThickness="1"
+                                    CornerRadius="4"
+                                    Padding="8,6">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                    </Grid.ColumnDefinitions>
 
-                            <Button Grid.Column="0"
-                                    Content="{DynamicResource SelectCustomer}" 
-                                    Command="{Binding SelectCustomerCommand}"
-                                    Style="{StaticResource CompactButton}"
-                                    Margin="0,0,4,0"/>
+                                    <TextBlock Grid.Column="0" 
+                                               Text="👤" 
+                                               FontSize="14"
+                                               VerticalAlignment="Center"
+                                               Margin="0,0,6,0"/>
 
-                            <Button Grid.Column="1"
-                                    Content="{DynamicResource AddNewCustomer}" 
-                                    Command="{Binding AddCustomerCommand}"
-                                    Style="{StaticResource CompactSecondaryButton}"
-                                    Margin="4,0,0,0"/>
-                        </Grid>
-                    </StackPanel>
+                                    <TextBlock Grid.Column="1"
+                                               Text="{Binding CustomerName}" 
+                                               FontWeight="SemiBold"
+                                               FontSize="12"
+                                               Foreground="#1E293B"
+                                               VerticalAlignment="Center"/>
+                                </Grid>
+                            </Border>
+                        </StackPanel>
+                    </Border>
 
                     <!-- Compact Table Navigation -->
                     <Border Grid.Row="1" 
                             BorderBrush="#E2E8F0"
-                            BorderThickness="0,1,0,0">
+                            BorderThickness="0,0,0,1">
                         <StackPanel Margin="12,8,12,8">
                             <Grid Margin="0,0,0,6">
                                 <Grid.ColumnDefinitions>
@@ -622,7 +632,7 @@
                     <Border Grid.Row="2" 
                             BorderBrush="#E2E8F0"
                             BorderThickness="0,1,0,0">
-                        <StackPanel Margin="12,8,12,8">
+                        <StackPanel Margin="12,8,12,8" VerticalAlignment="Bottom">
                             <!-- Compact Drawer Controls -->
                             <Grid>
                                 <Grid.ColumnDefinitions>

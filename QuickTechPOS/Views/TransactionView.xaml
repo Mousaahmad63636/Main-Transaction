@@ -542,23 +542,7 @@
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
 
-                            <!-- Price Mode in Category Bar -->
-                            <TextBlock Grid.Column="2"
-                                       Text="Mode:"
-                                       FontWeight="SemiBold"
-                                       FontSize="11"
-                                       Foreground="#374151"
-                                       VerticalAlignment="Center"
-                                       Margin="16,0,4,0"/>
-
-                            <ComboBox Grid.Column="3" 
-                                      Height="26"
-                                      MinWidth="80"
-                                      FontSize="10"
-                                      SelectedIndex="{Binding WholesaleMode, Converter={StaticResource BooleanToIndexConverter}}">
-                                <ComboBoxItem Content="Retail"/>
-                                <ComboBoxItem Content="Wholesale"/>
-                            </ComboBox>
+    
                         </Grid>
                     </Border>
 
@@ -721,20 +705,6 @@
                             Orientation="Horizontal" 
                             VerticalAlignment="Center"
                             Margin="12,0,0,0">
-                    <Button Content="◀ Prev"
-                            Command="{Binding NavigateToPreviousTableCommand}"
-                            Style="{StaticResource CompactButton}"
-                            FontSize="9"
-                            Padding="8,4"
-                            Margin="0,0,4,0"
-                            IsEnabled="{Binding CanNavigateToPreviousTable}"/>
-
-                    <Button Content="Next ▶"
-                            Command="{Binding NavigateToNextTableCommand}"
-                            Style="{StaticResource CompactButton}"
-                            FontSize="9"
-                            Padding="8,4"
-                            IsEnabled="{Binding CanNavigateToNextTable}"/>
                 </StackPanel>
 
                 <!-- Table Actions -->
@@ -749,12 +719,6 @@
                             Padding="8,4"
                             Margin="0,0,4,0"/>
 
-                    <Button Content="✕ Close"
-                            Command="{Binding CloseCurrentTableCommand}"
-                            Style="{StaticResource CompactDangerButton}"
-                            FontSize="9"
-                            Padding="8,4"
-                            Visibility="{Binding SelectedTable, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -774,99 +738,6 @@
                     <!-- Complete Sale Button -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Payment Input -->
-                <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                    <TextBlock Text="Payment Amount" 
-                               FontWeight="Bold"
-                               FontSize="12"
-                               Foreground="#1E293B"
-                               Margin="0,0,0,4"/>
-
-                    <Border Background="White" 
-                            BorderBrush="#CBD5E1" 
-                            BorderThickness="1"
-                            CornerRadius="4"
-                            Height="30">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBlock Grid.Column="0" 
-                                       Text="$" 
-                                       Margin="8,0,0,0"
-                                       VerticalAlignment="Center"
-                                       FontWeight="SemiBold"/>
-
-                            <TextBox Grid.Column="1"
-                                     Text="{Binding PaidAmount, StringFormat=N2, UpdateSourceTrigger=PropertyChanged}" 
-                                     BorderThickness="0"
-                                     Background="Transparent"
-                                     Padding="0,0,8,0"
-                                     VerticalContentAlignment="Center"
-                                     HorizontalContentAlignment="Right"
-                                     FontSize="12"/>
-                        </Grid>
-                    </Border>
-                </StackPanel>
-
-                <!-- Drawer Controls & Logout -->
-                <StackPanel Grid.Column="1" 
-                            Orientation="Horizontal" 
-                            HorizontalAlignment="Center"
-                            VerticalAlignment="Center"
-                            Margin="12,0">
-
-                    <!-- Drawer Status -->
-                    <Border Background="#059669" 
-                            CornerRadius="4"
-                            Padding="8,6"
-                            Margin="0,0,8,0"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock Text="Drawer Open" 
-                                   Foreground="White" 
-                                   FontWeight="Bold" 
-                                   FontSize="10"
-                                   HorizontalAlignment="Center"/>
-                    </Border>
-
-                    <Border Background="#DC2626" 
-                            CornerRadius="4"
-                            Padding="8,6"
-                            Margin="0,0,8,0"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                        <TextBlock Text="Drawer Closed" 
-                                   Foreground="White" 
-                                   FontWeight="Bold"
-                                   FontSize="10"
-                                   HorizontalAlignment="Center"/>
-                    </Border>
-
-                    <!-- Drawer Action Button -->
-                    <Button Content="Open Drawer" 
-                            Command="{Binding OpenDrawerCommand}"
-                            Style="{StaticResource CompactSuccessButton}"
-                            FontSize="10"
-                            Padding="10,6"
-                            Margin="0,0,8,0"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-
-                    <Button Content="Close Drawer" 
-                            Command="{Binding CloseDrawerCommand}"
-                            Style="{StaticResource CompactDangerButton}"
-                            FontSize="10"
-                            Padding="10,6"
-                            Margin="0,0,8,0"
-                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                    <!-- Logout Button -->
-                    <Button Content="Logout" 
-                            Command="{Binding LogoutCommand}"
-                            Style="{StaticResource CompactSecondaryButton}"
-                            FontSize="10"
-                            Padding="10,6"/>
-                </StackPanel>
 
                 <!-- Complete Sale Button -->
                 <Button Grid.Column="2"

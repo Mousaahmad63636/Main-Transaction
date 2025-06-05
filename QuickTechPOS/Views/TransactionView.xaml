@@ -1,4 +1,4 @@
-﻿ ﻿<UserControl x:Class="QuickTechPOS.Views.TransactionView"
+﻿<UserControl x:Class="QuickTechPOS.Views.TransactionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -1002,7 +1002,7 @@
                              Width="100" 
                              Height="3"
                              Foreground="#2563EB"
-                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibility}}" />
+                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
         </Border>
     </Grid>

@@ -3,10 +3,6 @@
   "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\4-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\transactionview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\views\\transactionview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\4-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\transactionview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\views\\transactionview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
@@ -23,26 +19,13 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "TransactionView.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "RelativeToolTip": "QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "ViewState": "AgIAALIBAAAAAAAAAAAswNsBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-05T14:48:33.394Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
               "Title": "TransactionView.xaml",
               "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
               "RelativeDocumentMoniker": "QuickTechPOS\\Views\\TransactionView.xaml",
               "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
               "RelativeToolTip": "QuickTechPOS\\Views\\TransactionView.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-06-05T14:48:20.856Z",
+              "WhenOpened": "2025-06-05T15:16:31.105Z",
               "EditorCaption": ""
             }
           ]

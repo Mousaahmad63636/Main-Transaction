@@ -75,16 +75,6 @@ namespace QuickTechPOS.Views
                 Console.WriteLine("[TransactionView] Configuring optimized input handling...");
 
                 // Enhanced keyboard shortcuts for compact screens
-                var quickScanBinding = new KeyBinding(
-                    new RelayCommand(param => FocusBarcodeInput()),
-                    Key.F1, ModifierKeys.None);
-                this.InputBindings.Add(quickScanBinding);
-
-                var categoryFilterBinding = new KeyBinding(
-                    new RelayCommand(param => FocusCategoryFilter()),
-                    Key.F2, ModifierKeys.None);
-                this.InputBindings.Add(categoryFilterBinding);
-
                 var clearCartBinding = new KeyBinding(
                     new RelayCommand(param => {
                         if (_viewModel.ClearCartCommand?.CanExecute(null) == true)
@@ -174,171 +164,12 @@ namespace QuickTechPOS.Views
                 // Fast drawer status refresh for immediate responsiveness
                 await _viewModel.RefreshDrawerStatusAsync();
 
-                // Set initial focus to barcode input for immediate scanning capability
-                FocusBarcodeInput();
-
                 Console.WriteLine("[TransactionView] Optimized view loaded initialization completed");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[TransactionView] Error during optimized view initialization: {ex.Message}");
                 System.Diagnostics.Debug.WriteLine($"Error during view initialization: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Handles barcode input with optimized Enter key submission for rapid scanning workflows
-        /// Enhanced for high-frequency scanning operations common in retail POS
-        /// </summary>
-        /// <param name="sender">The barcode TextBox control</param>
-        /// <param name="e">Key event arguments</param>
-        private void BarcodeSearch_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.Key == Key.Enter)
-            {
-                try
-                {
-                    Console.WriteLine($"[TransactionView] Barcode search triggered: {_viewModel.BarcodeQuery}");
-
-                    // Execute barcode search command if available
-                    if (_viewModel.SearchBarcodeCommand?.CanExecute(null) == true)
-                    {
-                        _viewModel.SearchBarcodeCommand.Execute(null);
-
-                        // Clear input for next scan (optimized workflow)
-                        if (sender is TextBox textBox)
-                        {
-                            textBox.SelectAll();
-                        }
-                    }
-                    else
-                    {
-                        Console.WriteLine("[TransactionView] Barcode search command not available");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[TransactionView] Barcode search error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Barcode search error: {ex.Message}");
-                }
-                finally
-                {
-                    e.Handled = true;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles customer search ComboBox text changes with optimized debouncing
-        /// Optimized for responsive search on compact displays
-        /// </summary>
-        /// <param name="sender">The customer search ComboBox</param>
-        /// <param name="e">Text change event arguments</param>
-        private void CustomerSearch_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox)
-            {
-                try
-                {
-                    Console.WriteLine($"[TransactionView] Customer search: {comboBox.Text}");
-
-                    // Update the search query in the view model
-                    _viewModel.UpdateCustomerQuery(comboBox.Text);
-
-                    // Optimized dropdown management for compact screens
-                    comboBox.IsDropDownOpen = !string.IsNullOrWhiteSpace(comboBox.Text) && comboBox.Text.Length >= 2;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[TransactionView] Customer search error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Customer search error: {ex.Message}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles customer selection from the search ComboBox with optimized UX
-        /// </summary>
-        /// <param name="sender">The customer search ComboBox</param>
-        /// <param name="e">Selection change event arguments</param>
-        private void CustomerSearch_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox comboBox && comboBox.SelectedItem is Customer customer)
-            {
-                try
-                {
-                    Console.WriteLine($"[TransactionView] Customer selected: {customer.Name} (ID: {customer.CustomerId})");
-
-                    // Set the selected customer in the view model
-                    _viewModel.SetSelectedCustomer(customer);
-
-                    // Update the display text and reset selection state
-                    _viewModel.CustomerQuery = customer.Name;
-
-                    // Auto-focus back to barcode for continued scanning workflow
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                        FocusBarcodeInput();
-                    }), System.Windows.Threading.DispatcherPriority.Input);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[TransactionView] Customer selection error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Customer selection error: {ex.Message}");
-                }
-            }
-        }
-
-        /// <summary>
-        /// Handles customer search text input with optimized cursor positioning
-        /// </summary>
-        /// <param name="sender">The customer search ComboBox</param>
-        /// <param name="e">Text composition event arguments</param>
-        private void CustomerSearch_PreviewTextInput(object sender, TextCompositionEventArgs e)
-        {
-            if (sender is ComboBox comboBox &&
-                comboBox.Template.FindName("PART_EditableTextBox", comboBox) is TextBox textBox)
-            {
-                // Optimized cursor positioning for fast typing
-                comboBox.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    textBox.CaretIndex = textBox.Text.Length;
-                    textBox.SelectionLength = 0;
-                }), System.Windows.Threading.DispatcherPriority.Input);
-            }
-        }
-
-        /// <summary>
-        /// Handles customer item double-click for rapid selection
-        /// </summary>
-        /// <param name="sender">The customer list item</param>
-        /// <param name="e">Mouse button event arguments</param>
-        private void CustomerItem_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ClickCount == 2 &&
-                sender is FrameworkElement element &&
-                element.DataContext is Customer customer)
-            {
-                try
-                {
-                    Console.WriteLine($"[TransactionView] Customer double-clicked: {customer.Name}");
-
-                    // Set customer and return focus to scanning workflow
-                    _viewModel.SetSelectedCustomerAndFillSearch(customer);
-
-                    // Return focus to barcode input for optimized workflow
-                    Application.Current.Dispatcher.BeginInvoke(new Action(() => {
-                        FocusBarcodeInput();
-                    }), System.Windows.Threading.DispatcherPriority.Input);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[TransactionView] Customer double-click error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Customer double-click error: {ex.Message}");
-                }
-                finally
-                {
-                    e.Handled = true;
-                }
             }
         }
 
@@ -433,35 +264,6 @@ namespace QuickTechPOS.Views
         #endregion
 
         #region Optimized Focus Management
-
-        /// <summary>
-        /// Focuses the barcode input for rapid scanning workflows
-        /// Optimized for high-frequency scanning operations
-        /// </summary>
-        public void FocusBarcodeInput()
-        {
-            try
-            {
-                Console.WriteLine("[TransactionView] Focusing barcode input for optimized scanning...");
-
-                // Find the barcode TextBox by name
-                if (FindName("BarcodeInputTextBox") is TextBox barcodeBox)
-                {
-                    barcodeBox.Focus();
-                    barcodeBox.SelectAll();
-                    Console.WriteLine("[TransactionView] Barcode input focused successfully");
-                }
-                else
-                {
-                    Console.WriteLine("[TransactionView] Barcode input TextBox not found");
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionView] Focus barcode input error: {ex.Message}");
-                System.Diagnostics.Debug.WriteLine($"Focus barcode input error: {ex.Message}");
-            }
-        }
 
         /// <summary>
         /// Sets focus to the category filter for optimized keyboard navigation

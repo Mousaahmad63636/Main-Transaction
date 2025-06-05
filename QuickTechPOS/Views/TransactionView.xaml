@@ -1,7 +1,4 @@
-﻿<!-- File: QuickTechPOS/Views/TransactionView.xaml -->
-<!-- OPTIMIZED FOR 14-INCH POS SCREENS (1366x768 / 1280x800) -->
-
-<UserControl x:Class="QuickTechPOS.Views.TransactionView"
+﻿ ﻿<UserControl x:Class="QuickTechPOS.Views.TransactionView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
@@ -495,7 +492,6 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
@@ -622,132 +618,41 @@
                         </StackPanel>
                     </Border>
 
-                    <!-- Compact Barcode Scanner -->
+                    <!-- Compact Controls Section -->
                     <Border Grid.Row="2" 
                             BorderBrush="#E2E8F0"
                             BorderThickness="0,1,0,0">
-                        <Grid Margin="12,8,12,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-
-                            <TextBox Grid.Column="0" 
-                                     Text="{Binding BarcodeQuery, UpdateSourceTrigger=PropertyChanged}" 
-                                     KeyDown="BarcodeSearch_KeyDown"
-                                     x:Name="BarcodeInputTextBox">
-                                <TextBox.Resources>
-                                    <VisualBrush x:Key="HintBrush" TileMode="None" Opacity="0.5" Stretch="None" AlignmentX="Left">
-                                        <VisualBrush.Visual>
-                                            <TextBlock Text="Scan/Enter Barcode" FontStyle="Italic" Margin="8,0,0,0" FontSize="11"/>
-                                        </VisualBrush.Visual>
-                                    </VisualBrush>
-                                </TextBox.Resources>
-                                <TextBox.Style>
-                                    <Style TargetType="TextBox" BasedOn="{StaticResource CompactSearchBox}">
-                                        <Style.Triggers>
-                                            <Trigger Property="Text" Value="{x:Null}">
-                                                <Setter Property="Background" Value="{StaticResource HintBrush}" />
-                                            </Trigger>
-                                            <Trigger Property="Text" Value="">
-                                                <Setter Property="Background" Value="{StaticResource HintBrush}" />
-                                            </Trigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBox.Style>
-                            </TextBox>
-
-                            <Button Grid.Column="1" 
-                                    Content="⌕" 
-                                    Command="{Binding SearchBarcodeCommand}"
-                                    Style="{StaticResource CompactButton}"
-                                    FontSize="14"
-                                    Width="36"
-                                    Margin="6,0,0,0"/>
-                        </Grid>
-                    </Border>
-
-                    <!-- Compact Controls Section -->
-                    <Border Grid.Row="3" 
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="0,1,0,0">
                         <StackPanel Margin="12,8,12,8">
-                            <!-- Transaction Lookup -->
-                            <TextBlock Text="Transaction #" Style="{StaticResource CompactText}" Margin="0,0,0,2"/>
-                            <Grid Margin="0,0,0,6">
+                            <!-- Compact Drawer Controls -->
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <TextBox Grid.Column="0" 
-                                         Text="{Binding TransactionLookupId, UpdateSourceTrigger=PropertyChanged}" 
-                                         Style="{StaticResource CompactSearchBox}"/>
-
-                                <StackPanel Grid.Column="1" 
-                                            Orientation="Horizontal"
-                                            Margin="4,0,0,0">
-                                    <Button Content="◀" 
-                                            Style="{StaticResource CompactIconButton}"
-                                            Command="{Binding PreviousTransactionCommand}"
-                                            Margin="0,0,2,0"/>
-                                    <Button Content="▶" 
-                                            Style="{StaticResource CompactIconButton}"
-                                            Command="{Binding NextTransactionCommand}"/>
-                                </StackPanel>
-                            </Grid>
-
-                            <Button Content="Lookup" 
-                                    Command="{Binding LookupTransactionCommand}"
-                                    Style="{StaticResource CompactButton}"
-                                    Margin="0,0,0,8"/>
-
-                            <!-- Recovery Button -->
-                            <Button Command="{Binding OpenRecoveryDialogCommand}"
-                                    Style="{StaticResource CompactWarningButton}"
-                                    Margin="0,0,0,6">
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="Recovery"/>
-                                    <TextBlock Text="{Binding HasPendingTransactions, Converter={StaticResource BooleanToStringConverter}, ConverterParameter=' (!)| '}"/>
-                                </StackPanel>
-                            </Button>
-
-                            <!-- Compact Drawer Controls -->
-                            <UniformGrid Columns="3" Rows="2">
-                                <Button Content="Open" 
+                                <Button Grid.Column="0"
+                                        Content="Open" 
                                         Command="{Binding OpenDrawerCommand}"
                                         Style="{StaticResource CompactSuccessButton}"
                                         FontSize="9"
-                                        Margin="0,0,1,1"
+                                        Margin="0,0,1,0"
                                         Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
 
-                                <Button Content="Cash In" 
-                                        Command="{Binding CashInCommand}"
-                                        Style="{StaticResource CompactSuccessButton}"
-                                        FontSize="9"
-                                        Margin="1,0,1,1"
-                                        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                                <Button Content="Cash Out" 
-                                        Command="{Binding CashOutCommand}"
-                                        Style="{StaticResource CompactWarningButton}"
-                                        FontSize="9"
-                                        Margin="1,0,0,1"
-                                        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                                <Button Content="Close" 
+                                <Button Grid.Column="0"
+                                        Content="Close" 
                                         Command="{Binding CloseDrawerCommand}"
                                         Style="{StaticResource CompactDangerButton}"
                                         FontSize="9"
-                                        Margin="0,1,1,0"
+                                        Margin="0,0,1,0"
                                         Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
 
-                                <Button Content="Logout" 
+                                <Button Grid.Column="1"
+                                        Content="Logout" 
                                         Command="{Binding LogoutCommand}"
                                         Style="{StaticResource CompactSecondaryButton}"
                                         FontSize="9"
-                                        Margin="1,1,0,0"/>
-                            </UniformGrid>
+                                        Margin="1,0,0,0"/>
+                            </Grid>
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -1055,30 +960,6 @@
                                    FontWeight="Bold"
                                    Foreground="#059669"/>
                     </Grid>
-
-                    <!-- Transaction Info -->
-                    <Border Background="#BFDBFE" 
-                            CornerRadius="3"
-                            Visibility="{Binding IsTransactionLoaded, Converter={StaticResource BooleanToVisibilityConverter}}"
-                            Padding="8,4">
-                        <StackPanel>
-                            <TextBlock Text="Viewing Transaction" 
-                                       Foreground="#1E40AF" 
-                                       FontSize="9"
-                                       FontWeight="SemiBold"
-                                       Visibility="{Binding IsEditMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                            <TextBlock Text="Editing Transaction" 
-                                       Foreground="#DC2626" 
-                                       FontWeight="Bold"
-                                       FontSize="9"
-                                       Visibility="{Binding IsEditMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="#{" Foreground="#1E40AF" FontSize="9"/>
-                                <TextBlock Text="{Binding LoadedTransaction.TransactionId}" FontWeight="Bold" Foreground="#1E40AF" FontSize="9"/>
-                                <TextBlock Text="}" Foreground="#1E40AF" FontSize="9"/>
-                            </StackPanel>
-                        </StackPanel>
-                    </Border>
                 </StackPanel>
 
                 <!-- Action Buttons -->
@@ -1086,7 +967,6 @@
                             Orientation="Horizontal" 
                             HorizontalAlignment="Right"
                             VerticalAlignment="Center">
-
                     <Button Content="Complete Sale" 
                             Command="{Binding CheckoutCommand}"
                             Style="{StaticResource CompactSuccessButton}"
@@ -1094,29 +974,7 @@
                             MinWidth="100"
                             FontSize="12"
                             FontWeight="Bold"
-                            IsEnabled="{Binding IsDrawerOpen}"
-                            Visibility="{Binding IsTransactionLoaded, Converter={StaticResource InverseBooleanToVisibilityConverter}}"
-                            Margin="0,0,6,0"/>
-
-                    <StackPanel Orientation="Horizontal" 
-                                Visibility="{Binding IsTransactionLoaded, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button Content="New Sale" 
-                                Command="{Binding ClearCartCommand}"
-                                Style="{StaticResource CompactButton}"
-                                Height="38"
-                                MinWidth="80"
-                                FontSize="11"
-                                Margin="0,0,6,0"
-                                Visibility="{Binding IsEditMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-
-                        <Button Content="Print" 
-                                Command="{Binding PrintReceiptCommand}"
-                                Style="{StaticResource CompactWarningButton}"
-                                Height="38"
-                                MinWidth="60"
-                                FontSize="11"
-                                Visibility="{Binding IsEditMode, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-                    </StackPanel>
+                            IsEnabled="{Binding IsDrawerOpen}"/>
                 </StackPanel>
             </Grid>
         </Border>
@@ -1144,7 +1002,7 @@
                              Width="100" 
                              Height="3"
                              Foreground="#2563EB"
-                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                             Visibility="{Binding IsProcessing, Converter={StaticResource BooleanToVisibility}}" />
             </Grid>
         </Border>
     </Grid>

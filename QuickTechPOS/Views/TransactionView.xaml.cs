@@ -19,7 +19,7 @@ namespace QuickTechPOS.Views
     /// Optimized TransactionView for 14-inch POS screens with enhanced space efficiency
     /// Maintains all functionality while maximizing use of limited screen real estate
     /// Target resolutions: 1366x768, 1280x800, 1440x900
-    /// Customer selection UI functionality removed
+    /// Customer UI completely removed, table navigation moved to bottom for more product space
     /// </summary>
     public partial class TransactionView : UserControl
     {
@@ -38,7 +38,7 @@ namespace QuickTechPOS.Views
         /// <exception cref="ArgumentNullException">Thrown when viewModel is null</exception>
         public TransactionView(TransactionViewModel viewModel)
         {
-            Console.WriteLine("[TransactionView] Initializing optimized TransactionView for 14-inch screens (Customer UI removed)...");
+            Console.WriteLine("[TransactionView] Initializing optimized TransactionView for 14-inch screens (Customer UI removed, Table navigation moved to bottom)...");
 
             InitializeComponent();
 
@@ -141,8 +141,8 @@ namespace QuickTechPOS.Views
                 e.PropertyName == nameof(TransactionViewModel.SelectedCategoryId) ||
                 e.PropertyName == nameof(TransactionViewModel.CartItems) ||
                 e.PropertyName == nameof(TransactionViewModel.TotalAmount) ||
-                e.PropertyName == nameof(TransactionViewModel.CustomerName) ||
-                e.PropertyName == nameof(TransactionViewModel.SelectedTable))
+                e.PropertyName == nameof(TransactionViewModel.SelectedTable) ||
+                e.PropertyName == nameof(TransactionViewModel.WholesaleMode))
             {
                 Console.WriteLine($"[TransactionView] Property changed: {e.PropertyName}");
 

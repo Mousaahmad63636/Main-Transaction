@@ -473,205 +473,28 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
+            <!-- Main content area -->
             <RowDefinition Height="Auto"/>
+            <!-- Table navigation -->
             <RowDefinition Height="Auto"/>
+            <!-- Payment footer -->
+            <RowDefinition Height="Auto"/>
+            <!-- Status bar -->
         </Grid.RowDefinitions>
 
-        <!-- Main Content Area - Optimized 3-Column Layout -->
+        <!-- Main Content Area - 2-Column Layout (Left Panel Removed) -->
         <Grid Grid.Row="0" Margin="12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="280"/>
                 <ColumnDefinition Width="*"/>
+                <!-- Maximized product area -->
                 <ColumnDefinition Width="300"/>
+                <!-- Cart panel -->
             </Grid.ColumnDefinitions>
 
-            <!-- Left Panel - Compact Controls (Customer Section Removed) -->
-            <Border Grid.Column="0" Style="{StaticResource CompactCardPanel}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <!-- Current Customer Display (Read-Only) -->
-                    <Border Grid.Row="0" 
-                            Background="#F8FAFC" 
-                            BorderBrush="#E2E8F0" 
-                            BorderThickness="0,0,0,1"
-                            Padding="12,12,12,8">
-                        <StackPanel>
-                            <TextBlock Text="Current Customer" 
-                                       Style="{StaticResource HeaderText}"/>
-
-                            <Border Background="White" 
-                                    BorderBrush="#CBD5E1" 
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Padding="8,6">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0" 
-                                               Text="👤" 
-                                               FontSize="14"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,6,0"/>
-
-                                    <TextBlock Grid.Column="1"
-                                               Text="{Binding CustomerName}" 
-                                               FontWeight="SemiBold"
-                                               FontSize="12"
-                                               Foreground="#1E293B"
-                                               VerticalAlignment="Center"/>
-                                </Grid>
-                            </Border>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Compact Table Navigation -->
-                    <Border Grid.Row="1" 
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="0,0,0,1">
-                        <StackPanel Margin="12,8,12,8">
-                            <Grid Margin="0,0,0,6">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <TextBlock Grid.Column="0"
-                                           Text="Table" 
-                                           Style="{StaticResource HeaderText}"/>
-
-                                <Border Grid.Column="1"
-                                        Background="#F0F9FF"
-                                        BorderBrush="#0891B2"
-                                        BorderThickness="1"
-                                        CornerRadius="3"
-                                        Padding="4,2">
-                                    <TextBlock Text="{Binding TableNavigationInfo, Mode=OneWay}"
-                                               FontSize="9"
-                                               Foreground="#0891B2"
-                                               FontWeight="SemiBold"/>
-                                </Border>
-                            </Grid>
-
-                            <!-- Compact Table Info Card -->
-                            <Border Background="#F8FAFC" 
-                                    BorderBrush="#CBD5E1" 
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Padding="8,6"
-                                    Margin="0,0,0,6">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0" 
-                                               Text="🍽️" 
-                                               FontSize="14"
-                                               VerticalAlignment="Center"
-                                               Margin="0,0,6,0"/>
-
-                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                        <TextBlock Text="{Binding CurrentTableInfo, Mode=OneWay, TargetNullValue='No table'}"
-                                                   FontWeight="SemiBold"
-                                                   FontSize="11"
-                                                   Foreground="#0F172A"/>
-                                        <StackPanel Orientation="Horizontal">
-                                            <Border Background="#DBEAFE" CornerRadius="2" Padding="3,1" Margin="0,0,2,0">
-                                                <TextBlock FontSize="8" Foreground="#1E40AF">
-                                                    <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
-                                                    <Run Text="items"/>
-                                                </TextBlock>
-                                            </Border>
-                                            <Border Background="#D1FAE5" CornerRadius="2" Padding="3,1">
-                                                <TextBlock Text="{Binding TotalAmount, Mode=OneWay, StringFormat='${0:F2}'}"
-                                                           FontSize="8" 
-                                                           Foreground="#065F46"/>
-                                            </Border>
-                                        </StackPanel>
-                                    </StackPanel>
-
-                                    <Button Grid.Column="2"
-                                            Content="✕"
-                                            Command="{Binding CloseCurrentTableCommand}"
-                                            Width="20"
-                                            Height="20"
-                                            Background="#EF4444"
-                                            Foreground="White"
-                                            BorderThickness="0"
-                                            FontSize="10"
-                                            Visibility="{Binding SelectedTable, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}">
-                                        <Button.Template>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}" CornerRadius="10">
-                                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Button.Template>
-                                    </Button>
-                                </Grid>
-                            </Border>
-
-                            <Button Content="📍 Select Table"
-                                    Command="{Binding SelectTableCommand}"
-                                    Style="{StaticResource CompactButton}"
-                                    FontSize="10"/>
-                        </StackPanel>
-                    </Border>
-
-                    <!-- Compact Controls Section -->
-                    <Border Grid.Row="2" 
-                            BorderBrush="#E2E8F0"
-                            BorderThickness="0,1,0,0">
-                        <StackPanel Margin="12,8,12,8" VerticalAlignment="Bottom">
-                            <!-- Compact Drawer Controls -->
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="*"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Button Grid.Column="0"
-                                        Content="Open" 
-                                        Command="{Binding OpenDrawerCommand}"
-                                        Style="{StaticResource CompactSuccessButton}"
-                                        FontSize="9"
-                                        Margin="0,0,1,0"
-                                        Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
-
-                                <Button Grid.Column="0"
-                                        Content="Close" 
-                                        Command="{Binding CloseDrawerCommand}"
-                                        Style="{StaticResource CompactDangerButton}"
-                                        FontSize="9"
-                                        Margin="0,0,1,0"
-                                        Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-
-                                <Button Grid.Column="1"
-                                        Content="Logout" 
-                                        Command="{Binding LogoutCommand}"
-                                        Style="{StaticResource CompactSecondaryButton}"
-                                        FontSize="9"
-                                        Margin="1,0,0,0"/>
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </Grid>
-            </Border>
-
-            <!-- Center Panel - Compact Product Grid -->
-            <Border Grid.Column="1" 
+            <!-- Center Panel - Maximized Product Grid -->
+            <Border Grid.Column="0" 
                     Style="{StaticResource CompactCardPanel}" 
-                    Margin="8,0,8,0">
+                    Margin="0,0,8,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -684,7 +507,7 @@
                         <TextBlock Text="Products" Style="{StaticResource SectionTitle}"/>
                     </Border>
 
-                    <!-- Compact Category Filter -->
+                    <!-- Expanded Category Filter -->
                     <Border Grid.Row="1" 
                             Background="#F8FAFC" 
                             BorderBrush="#E2E8F0" 
@@ -694,6 +517,8 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
                             <TextBlock Grid.Column="0"
@@ -716,10 +541,28 @@
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
+
+                            <!-- Price Mode in Category Bar -->
+                            <TextBlock Grid.Column="2"
+                                       Text="Mode:"
+                                       FontWeight="SemiBold"
+                                       FontSize="11"
+                                       Foreground="#374151"
+                                       VerticalAlignment="Center"
+                                       Margin="16,0,4,0"/>
+
+                            <ComboBox Grid.Column="3" 
+                                      Height="26"
+                                      MinWidth="80"
+                                      FontSize="10"
+                                      SelectedIndex="{Binding WholesaleMode, Converter={StaticResource BooleanToIndexConverter}}">
+                                <ComboBoxItem Content="Retail"/>
+                                <ComboBoxItem Content="Wholesale"/>
+                            </ComboBox>
                         </Grid>
                     </Border>
 
-                    <!-- Compact Product Grid -->
+                    <!-- Maximized Product Grid -->
                     <ScrollViewer Grid.Row="2" 
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
@@ -737,8 +580,8 @@
                 </Grid>
             </Border>
 
-            <!-- Right Panel - Compact Cart -->
-            <Border Grid.Column="2" Style="{StaticResource CompactCardPanel}">
+            <!-- Right Panel - Cart -->
+            <Border Grid.Column="1" Style="{StaticResource CompactCardPanel}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -825,102 +668,125 @@
             </Border>
         </Grid>
 
-        <!-- Compact Payment Footer -->
+        <!-- Table Navigation Section (Moved to Bottom) -->
         <Border Grid.Row="1" 
+                Style="{StaticResource CompactCardPanel}" 
+                Margin="12,0,12,8"
+                Background="#FEFEFE">
+            <Grid Margin="12,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Table Info -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="🍽️" 
+                               FontSize="16"
+                               VerticalAlignment="Center"
+                               Margin="0,0,6,0"/>
+
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock Text="{Binding CurrentTableInfo, Mode=OneWay, TargetNullValue='No table selected'}"
+                                   FontWeight="SemiBold"
+                                   FontSize="12"
+                                   Foreground="#0F172A"/>
+
+                        <StackPanel Orientation="Horizontal">
+                            <Border Background="#DBEAFE" CornerRadius="2" Padding="3,1" Margin="0,0,2,0">
+                                <TextBlock FontSize="8" Foreground="#1E40AF">
+                                    <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
+                                    <Run Text="items"/>
+                                </TextBlock>
+                            </Border>
+                            <Border Background="#D1FAE5" CornerRadius="2" Padding="3,1" Margin="0,0,2,0">
+                                <TextBlock Text="{Binding TotalAmount, Mode=OneWay, StringFormat='${0:F2}'}"
+                                           FontSize="8" 
+                                           Foreground="#065F46"/>
+                            </Border>
+                            <Border Background="#F0F9FF" CornerRadius="2" Padding="3,1">
+                                <TextBlock Text="{Binding TableNavigationInfo, Mode=OneWay}"
+                                           FontSize="8"
+                                           Foreground="#0891B2"/>
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- Navigation Buttons -->
+                <StackPanel Grid.Column="2" 
+                            Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            Margin="12,0,0,0">
+                    <Button Content="◀ Prev"
+                            Command="{Binding NavigateToPreviousTableCommand}"
+                            Style="{StaticResource CompactButton}"
+                            FontSize="9"
+                            Padding="8,4"
+                            Margin="0,0,4,0"
+                            IsEnabled="{Binding CanNavigateToPreviousTable}"/>
+
+                    <Button Content="Next ▶"
+                            Command="{Binding NavigateToNextTableCommand}"
+                            Style="{StaticResource CompactButton}"
+                            FontSize="9"
+                            Padding="8,4"
+                            IsEnabled="{Binding CanNavigateToNextTable}"/>
+                </StackPanel>
+
+                <!-- Table Actions -->
+                <StackPanel Grid.Column="3" 
+                            Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            Margin="12,0,0,0">
+                    <Button Content="📍 Select Table"
+                            Command="{Binding SelectTableCommand}"
+                            Style="{StaticResource CompactButton}"
+                            FontSize="9"
+                            Padding="8,4"
+                            Margin="0,0,4,0"/>
+
+                    <Button Content="✕ Close"
+                            Command="{Binding CloseCurrentTableCommand}"
+                            Style="{StaticResource CompactDangerButton}"
+                            FontSize="9"
+                            Padding="8,4"
+                            Visibility="{Binding SelectedTable, Mode=OneWay, Converter={StaticResource StringToVisibilityConverter}}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Payment Footer -->
+        <Border Grid.Row="2" 
                 Style="{StaticResource CompactCardPanel}" 
                 Margin="12,0,12,0"
                 Background="#FEFEFE">
             <Grid Margin="12,10">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="200"/>
                     <ColumnDefinition Width="250"/>
-                    <ColumnDefinition Width="200"/>
+                    <!-- Payment Input -->
                     <ColumnDefinition Width="*"/>
+                    <!-- Drawer Controls & Logout -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Complete Sale Button -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Price Mode & Status -->
-                <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                    <TextBlock Text="Payment" Style="{StaticResource SectionTitle}" Margin="0,0,0,6"/>
-
-                    <Grid Margin="0,0,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0" 
-                                   Text="Mode:" 
-                                   Style="{StaticResource CompactText}"
-                                   VerticalAlignment="Center"
-                                   FontSize="10"/>
-
-                        <ComboBox Grid.Column="1" 
-                                  Height="26"
-                                  HorizontalAlignment="Right"
-                                  MinWidth="80"
-                                  FontSize="10"
-                                  SelectedIndex="{Binding WholesaleMode, Converter={StaticResource BooleanToIndexConverter}}">
-                            <ComboBoxItem Content="Retail"/>
-                            <ComboBoxItem Content="Wholesale"/>
-                        </ComboBox>
-                    </Grid>
-
-                    <!-- Drawer Status -->
-                    <StackPanel>
-                        <Border Background="#059669" 
-                                CornerRadius="3"
-                                Padding="6,3"
-                                Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Text="Drawer Open" 
-                                       Foreground="White" 
-                                       FontWeight="Bold" 
-                                       FontSize="9"
-                                       HorizontalAlignment="Center"/>
-                        </Border>
-                        <Border Background="#DC2626" 
-                                CornerRadius="3"
-                                Padding="6,3"
-                                Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                            <TextBlock Text="Drawer Closed" 
-                                       Foreground="White" 
-                                       FontWeight="Bold"
-                                       FontSize="9"
-                                       HorizontalAlignment="Center"/>
-                        </Border>
-                    </StackPanel>
-                </StackPanel>
-
                 <!-- Payment Input -->
-                <StackPanel Grid.Column="1" Margin="0,0,12,0">
-                    <Grid Margin="0,0,0,4">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0" 
-                                   Text="Amount Due" 
-                                   FontWeight="Bold"
-                                   FontSize="12"
-                                   Foreground="#1E293B"/>
-
-                        <TextBlock Grid.Column="1" 
-                                   Text="{Binding TotalAmount, StringFormat='${0:F2}'}" 
-                                   FontSize="14"
-                                   FontWeight="Bold"
-                                   Foreground="#1E293B"/>
-                    </Grid>
-
-                    <TextBlock Text="Payment" 
-                               Style="{StaticResource CompactText}"
-                               Margin="0,0,0,2"/>
+                <StackPanel Grid.Column="0" Margin="0,0,12,0">
+                    <TextBlock Text="Payment Amount" 
+                               FontWeight="Bold"
+                               FontSize="12"
+                               Foreground="#1E293B"
+                               Margin="0,0,0,4"/>
 
                     <Border Background="White" 
                             BorderBrush="#CBD5E1" 
                             BorderThickness="1"
                             CornerRadius="4"
-                            Height="30"
-                            Margin="0,0,0,4">
+                            Height="30">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -943,54 +809,80 @@
                                      FontSize="12"/>
                         </Grid>
                     </Border>
-
-                    <CheckBox Content="Add to Debt" 
-                              IsChecked="{Binding AddToCustomerDebt}"
-                              Foreground="#1E293B"
-                              FontSize="10"/>
                 </StackPanel>
 
-                <!-- Transaction Info -->
-                <StackPanel Grid.Column="2" Margin="0,0,12,0">
-                    <Grid Margin="0,0,0,8">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Grid.Column="0" 
-                                   Text="Change" 
-                                   FontWeight="Bold"
-                                   FontSize="12"
-                                   Foreground="#1E293B"/>
-
-                        <TextBlock Grid.Column="1" 
-                                   Text="{Binding ChangeDueAmount, StringFormat='${0:F2}'}" 
-                                   FontSize="14"
-                                   FontWeight="Bold"
-                                   Foreground="#059669"/>
-                    </Grid>
-                </StackPanel>
-
-                <!-- Action Buttons -->
-                <StackPanel Grid.Column="3" 
+                <!-- Drawer Controls & Logout -->
+                <StackPanel Grid.Column="1" 
                             Orientation="Horizontal" 
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center">
-                    <Button Content="Complete Sale" 
-                            Command="{Binding CheckoutCommand}"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Margin="12,0">
+
+                    <!-- Drawer Status -->
+                    <Border Background="#059669" 
+                            CornerRadius="4"
+                            Padding="8,6"
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Text="Drawer Open" 
+                                   Foreground="White" 
+                                   FontWeight="Bold" 
+                                   FontSize="10"
+                                   HorizontalAlignment="Center"/>
+                    </Border>
+
+                    <Border Background="#DC2626" 
+                            CornerRadius="4"
+                            Padding="8,6"
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <TextBlock Text="Drawer Closed" 
+                                   Foreground="White" 
+                                   FontWeight="Bold"
+                                   FontSize="10"
+                                   HorizontalAlignment="Center"/>
+                    </Border>
+
+                    <!-- Drawer Action Button -->
+                    <Button Content="Open Drawer" 
+                            Command="{Binding OpenDrawerCommand}"
                             Style="{StaticResource CompactSuccessButton}"
-                            Height="38"
-                            MinWidth="100"
-                            FontSize="12"
-                            FontWeight="Bold"
-                            IsEnabled="{Binding IsDrawerOpen}"/>
+                            FontSize="10"
+                            Padding="10,6"
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource InverseBooleanToVisibilityConverter}}"/>
+
+                    <Button Content="Close Drawer" 
+                            Command="{Binding CloseDrawerCommand}"
+                            Style="{StaticResource CompactDangerButton}"
+                            FontSize="10"
+                            Padding="10,6"
+                            Margin="0,0,8,0"
+                            Visibility="{Binding IsDrawerOpen, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+
+                    <!-- Logout Button -->
+                    <Button Content="Logout" 
+                            Command="{Binding LogoutCommand}"
+                            Style="{StaticResource CompactSecondaryButton}"
+                            FontSize="10"
+                            Padding="10,6"/>
                 </StackPanel>
+
+                <!-- Complete Sale Button -->
+                <Button Grid.Column="2"
+                        Content="Complete Sale" 
+                        Command="{Binding CheckoutCommand}"
+                        Style="{StaticResource CompactSuccessButton}"
+                        Height="38"
+                        MinWidth="120"
+                        FontSize="12"
+                        FontWeight="Bold"
+                        IsEnabled="{Binding IsDrawerOpen}"/>
             </Grid>
         </Border>
 
-        <!-- Compact Status Bar -->
-        <Border Grid.Row="2" 
+        <!-- Status Bar -->
+        <Border Grid.Row="3" 
                 Background="#F1F5F9" 
                 BorderBrush="#E2E8F0" 
                 BorderThickness="0,1,0,0" 

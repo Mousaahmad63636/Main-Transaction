@@ -87,7 +87,6 @@ namespace QuickTechPOS.ViewModels
         private string _barcodeQuery;
         private int _selectedCategoryId;
         private Category _selectedCategory;
-        private string _customerQuery;
         private decimal _totalAmount;
         private ObservableCollection<HeldCart> _heldCarts;
         private int _nextCartId = 1;
@@ -119,7 +118,6 @@ namespace QuickTechPOS.ViewModels
         private decimal _changeDueAmount;
         private RestaurantTable _selectedTable;
         private string _tableDisplayText;
-        private System.Timers.Timer _customerSearchTimer;
 
         #endregion
 
@@ -274,12 +272,6 @@ namespace QuickTechPOS.ViewModels
         {
             get => _heldCarts;
             set => SetProperty(ref _heldCarts, value);
-        }
-
-        public string CustomerQuery
-        {
-            get => _customerQuery;
-            set => SetProperty(ref _customerQuery, value);
         }
 
         public decimal TotalAmount
@@ -503,11 +495,9 @@ namespace QuickTechPOS.ViewModels
         public ICommand ShowTableNavigationCommand { get; }
         public ICommand CloseCurrentTableCommand { get; }
 
-        // Core Transaction Commands (Customer UI commands removed)
+        // Core Transaction Commands (Customer search UI commands removed)
         public ICommand SearchBarcodeCommand { get; }
         public ICommand SelectCategoryCommand { get; }
-        // REMOVED: SelectCustomerCommand
-        public ICommand SearchCustomersCommand { get; }
         public ICommand AddToCartCommand { get; }
         public ICommand RemoveFromCartCommand { get; }
         public ICommand LogoutCommand { get; }
@@ -576,7 +566,7 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine("[TransactionViewModel] Collections initialized");
 
-            // Initialize customer information (default to walk-in)
+            // Initialize customer information (always walk-in, no UI interaction)
             CustomerName = "Walk-in Customer";
             if (_walkInCustomer != null)
             {
@@ -588,13 +578,6 @@ namespace QuickTechPOS.ViewModels
                 CustomerId = 0;
                 Console.WriteLine("[TransactionViewModel] No walk-in customer provided. Customer ID set to 0.");
             }
-
-            // Initialize customer search timer (kept for programmatic customer search)
-            _customerSearchTimer = new System.Timers.Timer(300);
-            _customerSearchTimer.Elapsed += OnCustomerSearchTimerElapsed;
-            _customerSearchTimer.AutoReset = false;
-
-            Console.WriteLine("[TransactionViewModel] Customer search timer initialized");
 
             // Initialize payment properties
             PaidAmount = 0;
@@ -638,7 +621,6 @@ namespace QuickTechPOS.ViewModels
             // Search commands
             SearchBarcodeCommand = new RelayCommand(async param => await SearchByBarcodeAsync());
             SelectCategoryCommand = new RelayCommand(param => SelectCategory(param as Category));
-            SearchCustomersCommand = new RelayCommand(async param => await SearchCustomersAsync());
 
             Console.WriteLine("[TransactionViewModel] Search commands initialized");
 
@@ -1187,11 +1169,10 @@ namespace QuickTechPOS.ViewModels
                     OnPropertyChanged(nameof(SearchedProducts));
                     OnPropertyChanged(nameof(SearchedCustomers));
 
-                    // Refresh customer-related properties
+                    // Refresh customer-related properties (simplified)
                     OnPropertyChanged(nameof(CustomerId));
                     OnPropertyChanged(nameof(CustomerName));
                     OnPropertyChanged(nameof(SelectedCustomer));
-                    OnPropertyChanged(nameof(CustomerQuery));
 
                     // Refresh calculation properties
                     OnPropertyChanged(nameof(TotalAmount));
@@ -1872,12 +1853,12 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // Core Customer Methods (Programmatic Use - UI Methods Removed)
+        // Core Customer Methods (Simplified - No UI Interaction)
         private async void LoadInitialCustomersAsync()
         {
             try
             {
-                Console.WriteLine("[TransactionViewModel] Loading initial customers...");
+                Console.WriteLine("[TransactionViewModel] Loading initial customers for programmatic use...");
 
                 var customers = await _customerService.SearchCustomersAsync("");
                 SearchedCustomers.Clear();
@@ -1887,42 +1868,13 @@ namespace QuickTechPOS.ViewModels
                     SearchedCustomers.Add(customer);
                 }
 
-                Console.WriteLine($"[TransactionViewModel] Loaded {customers.Count} customers");
+                Console.WriteLine($"[TransactionViewModel] Loaded {customers.Count} customers for internal use");
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error loading customers: {ex.Message}";
                 Console.WriteLine($"[TransactionViewModel] Error loading initial customers: {ex}");
             }
-        }
-
-        private async void OnCustomerSearchTimerElapsed(object sender, System.Timers.ElapsedEventArgs e)
-        {
-            try
-            {
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
-                {
-                    await SearchCustomersAsync();
-                });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error in customer search timer: {ex}");
-                await System.Windows.Application.Current.Dispatcher.InvokeAsync(() =>
-                {
-                    StatusMessage = $"Customer search error: {ex.Message}";
-                });
-            }
-        }
-
-        public void UpdateCustomerQuery(string query)
-        {
-            Console.WriteLine($"[TransactionViewModel] Updating customer query to: '{query}'");
-
-            CustomerQuery = query;
-
-            _customerSearchTimer.Stop();
-            _customerSearchTimer.Start();
         }
 
         private async Task SearchByBarcodeAsync()
@@ -1961,32 +1913,6 @@ namespace QuickTechPOS.ViewModels
             {
                 StatusMessage = $"Error: {ex.Message}";
                 Console.WriteLine($"[TransactionViewModel] Barcode search error: {ex}");
-            }
-        }
-
-        private async Task SearchCustomersAsync()
-        {
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Searching customers for: '{CustomerQuery}'");
-
-                var customers = await _customerService.SearchCustomersAsync(CustomerQuery);
-
-                System.Windows.Application.Current.Dispatcher.Invoke(() => {
-                    SearchedCustomers.Clear();
-
-                    foreach (var customer in customers)
-                    {
-                        SearchedCustomers.Add(customer);
-                    }
-                });
-
-                Console.WriteLine($"[TransactionViewModel] Found {customers.Count} customers");
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error searching customers: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Customer search error: {ex}");
             }
         }
 
@@ -2065,12 +1991,12 @@ namespace QuickTechPOS.ViewModels
                 SelectedCustomer = customer;
                 CustomerId = customer.CustomerId;
                 CustomerName = customer.Name;
-                CustomerQuery = customer.Name;
+
 
                 OnPropertyChanged(nameof(SelectedCustomer));
                 OnPropertyChanged(nameof(CustomerId));
                 OnPropertyChanged(nameof(CustomerName));
-                OnPropertyChanged(nameof(CustomerQuery));
+
 
                 StatusMessage = $"Selected customer: {customer.Name}";
             }
@@ -3593,3 +3519,4 @@ namespace QuickTechPOS.ViewModels
         #endregion
     }
 }
+    

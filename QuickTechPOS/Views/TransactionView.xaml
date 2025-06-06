@@ -6,7 +6,7 @@
              xmlns:local="clr-namespace:QuickTechPOS"
              xmlns:helpers="clr-namespace:QuickTechPOS.Helpers"
              mc:Ignorable="d" 
-             d:DesignHeight="768" d:DesignWidth="1366"
+             d:DesignHeight="768" d:DesignWidth="1024"
              Background="#F8FAFC"
              UseLayoutRounding="True">
 
@@ -217,16 +217,18 @@
             <Setter Property="CornerRadius" Value="8,8,0,0"/>
         </Style>
 
-        <!-- Touch-Optimized Product Card -->
+        <!-- Enhanced Touch-Optimized Product Card - Sized for 4 cards per row in 1024x768 -->
         <Style x:Key="TouchProductCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E2E8F0"/>
             <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="120"/>
-            <Setter Property="Width" Value="160"/>
+            <Setter Property="Height" Value="115"/>
+            <!-- Optimized for 1024x768 -->
+            <Setter Property="Width" Value="145"/>
+            <!-- Reduced to fit 4 cards per row -->
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect ShadowDepth="1" Direction="270" 
@@ -250,27 +252,27 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Touch-Optimized Cart Item Template -->
+        <!-- Touch-Optimized Cart Item Template - Optimized for 1024x768 -->
         <DataTemplate x:Key="TouchCartItemTemplate">
-            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="16,12">
+            <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="12,10">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="60"/>
-                        <ColumnDefinition Width="80"/>
-                        <ColumnDefinition Width="35"/>
+                        <ColumnDefinition Width="55"/>
+                        <ColumnDefinition Width="70"/>
+                        <ColumnDefinition Width="30"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- Product Info -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{Binding Product.Name}" 
                                    FontWeight="SemiBold" 
-                                   FontSize="14"
+                                   FontSize="13"
                                    Foreground="#1E293B"
                                    TextTrimming="CharacterEllipsis"
-                                   MaxWidth="200"/>
+                                   MaxWidth="150"/>
                         <TextBlock Text="{Binding UnitPrice, StringFormat='${0:F2}'}" 
-                                   FontSize="12"
+                                   FontSize="11"
                                    Foreground="#64748B"/>
                     </StackPanel>
 
@@ -280,13 +282,13 @@
                             BorderBrush="#CBD5E1" 
                             BorderThickness="2"
                             CornerRadius="6"
-                            Height="35">
+                            Height="32">
                         <TextBox Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged}"
                                  BorderThickness="0"
                                  Background="Transparent"
                                  VerticalContentAlignment="Center"
                                  HorizontalContentAlignment="Center"
-                                 FontSize="14"
+                                 FontSize="13"
                                  FontWeight="SemiBold"
                                  LostFocus="Quantity_LostFocus"/>
                     </Border>
@@ -295,7 +297,7 @@
                     <TextBlock Grid.Column="2" 
                                Text="{Binding Total, StringFormat='${0:F2}'}" 
                                FontWeight="Bold" 
-                               FontSize="14"
+                               FontSize="13"
                                Foreground="#1E293B"
                                VerticalAlignment="Center"
                                HorizontalAlignment="Right"/>
@@ -306,18 +308,18 @@
                             Command="{Binding DataContext.RemoveFromCartCommand, 
                                      RelativeSource={RelativeSource AncestorType=UserControl}}"
                             CommandParameter="{Binding}"
-                            Width="28" 
-                            Height="28"
+                            Width="24" 
+                            Height="24"
                             Background="#EF4444"
                             Foreground="White"
                             FontWeight="Bold"
-                            FontSize="16"
+                            FontSize="14"
                             BorderThickness="0"
                             Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" 
-                                        CornerRadius="6">
+                                        CornerRadius="5">
                                     <ContentPresenter HorizontalAlignment="Center" 
                                                       VerticalAlignment="Center"/>
                                 </Border>
@@ -340,7 +342,7 @@
             </Border>
         </DataTemplate>
 
-        <!-- Touch-Optimized Product Card Template (No Images, No Buttons) -->
+        <!-- Enhanced Touch-Optimized Product Card Template - Optimized for 1024x768 -->
         <DataTemplate x:Key="TouchProductCardTemplate">
             <Border Style="{StaticResource TouchProductCard}">
                 <Border.InputBindings>
@@ -350,10 +352,11 @@
                                   CommandParameter="{Binding}"/>
                 </Border.InputBindings>
 
-                <Grid Margin="12">
+                <Grid Margin="8">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
@@ -361,8 +364,8 @@
                     <Border Grid.Row="0"
                             HorizontalAlignment="Right" 
                             VerticalAlignment="Top"
-                            CornerRadius="4"
-                            Padding="6,2"
+                            CornerRadius="3"
+                            Padding="4,1"
                             Margin="0,0,0,4">
                         <Border.Style>
                             <Style TargetType="Border">
@@ -381,41 +384,52 @@
                         </Border.Style>
                         <TextBlock Text="{Binding StockStatus}" 
                                    Foreground="White" 
-                                   FontSize="10"
+                                   FontSize="9"
                                    FontWeight="Bold"/>
                     </Border>
 
-                    <!-- Product Name (Prominent and Clear) -->
+                    <!-- Product Name - Optimized for 1024x768 -->
                     <StackPanel Grid.Row="1" 
                                 VerticalAlignment="Center" 
                                 HorizontalAlignment="Center"
-                                Margin="4">
+                                Margin="1">
+                        <!-- Product Name with optimized sizing for 4 cards per row -->
                         <TextBlock Text="{Binding Name}" 
                                    FontWeight="Bold"
-                                   FontSize="16"
+                                   FontSize="13"
+                              
                                    Foreground="#1E293B"
                                    TextWrapping="Wrap"
                                    TextAlignment="Center"
-                                   LineHeight="20"
-                                   MaxWidth="140"
-                                   Margin="0,0,0,8"/>
+                                   LineHeight="16"
+                              
+                                   MaxWidth="125"
+                           
+                                   Margin="0,0,0,6"
+                                   MaxHeight="48"/>
+                        <!-- Limit height for smaller card -->
+                    </StackPanel>
 
-                        <!-- Price (Large and Clear) -->
+                    <!-- Price Section - Optimized sizing -->
+                    <StackPanel Grid.Row="2"
+                                HorizontalAlignment="Center"
+                                Margin="0,2,0,6">
                         <TextBlock Text="{Binding FormattedSalePrice}" 
                                    FontWeight="Bold" 
-                                   FontSize="20"
+                                   FontSize="16"
+                                   
                                    Foreground="#2563EB"
                                    TextAlignment="Center"/>
                     </StackPanel>
 
                     <!-- Click to Add Indicator -->
-                    <TextBlock Grid.Row="2"
+                    <TextBlock Grid.Row="3"
                                Text="Tap to Add"
-                               FontSize="11"
+                               FontSize="10"
                                FontStyle="Italic"
                                Foreground="#64748B"
                                HorizontalAlignment="Center"
-                               Margin="0,4,0,0"/>
+                               Margin="0,0,0,1"/>
                 </Grid>
             </Border>
         </DataTemplate>
@@ -424,22 +438,20 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!-- Main content area -->
+            <!-- Main content area - More space since table nav is moved -->
             <RowDefinition Height="Auto"/>
-            <!-- Table navigation -->
-            <RowDefinition Height="Auto"/>
-            <!-- Payment footer -->
+            <!-- Combined payment footer with table selection -->
             <RowDefinition Height="Auto"/>
             <!-- Status bar -->
         </Grid.RowDefinitions>
 
-        <!-- Main Content Area - 2-Column Layout -->
+        <!-- Main Content Area - 2-Column Layout with More Space -->
         <Grid Grid.Row="0" Margin="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <!-- Maximized product area -->
-                <ColumnDefinition Width="380"/>
-                <!-- Cart panel -->
+                <ColumnDefinition Width="300"/>
+                <!-- Cart panel - optimized for 1024x768 -->
             </Grid.ColumnDefinitions>
 
             <!-- Center Panel - Maximized Product Grid -->
@@ -463,7 +475,7 @@
                             Background="#F8FAFC" 
                             BorderBrush="#E2E8F0" 
                             BorderThickness="0,0,0,1" 
-                            Padding="20,12">
+                            Padding="16,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
@@ -473,10 +485,10 @@
                             <TextBlock Grid.Column="0"
                                        Text="Category:"
                                        FontWeight="SemiBold"
-                                       FontSize="16"
+                                       FontSize="15"
                                        Foreground="#374151"
                                        VerticalAlignment="Center"
-                                       Margin="0,0,12,0"/>
+                                       Margin="0,0,10,0"/>
 
                             <ComboBox Grid.Column="1"
                                       ItemsSource="{Binding Categories}"
@@ -486,18 +498,18 @@
                                     <DataTemplate>
                                         <TextBlock Text="{Binding DisplayName}"
                                                    FontSize="14"
-                                                   Padding="8,6"/>
+                                                   Padding="6,4"/>
                                     </DataTemplate>
                                 </ComboBox.ItemTemplate>
                             </ComboBox>
                         </Grid>
                     </Border>
 
-                    <!-- Product Grid -->
+                    <!-- Product Grid with Optimized Spacing for 1024x768 -->
                     <ScrollViewer Grid.Row="2" 
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
-                                  Padding="12">
+                                  Padding="8">
                         <ItemsControl ItemsSource="{Binding SearchedProducts}"
                                       ItemTemplate="{StaticResource TouchProductCardTemplate}">
                             <ItemsControl.ItemsPanel>
@@ -536,8 +548,8 @@
                                     Content="Clear" 
                                     Command="{Binding ClearCartCommand}"
                                     Style="{StaticResource TouchDangerButton}"
-                                    FontSize="12"
-                                    Padding="12,6"/>
+                                    FontSize="11"
+                                    Padding="10,5"/>
                         </Grid>
                     </Border>
 
@@ -554,7 +566,7 @@
                             Background="#F8FAFC" 
                             BorderBrush="#E2E8F0" 
                             BorderThickness="0,1,0,0" 
-                            Padding="20,16">
+                            Padding="16,12">
                         <StackPanel>
                             <Grid Margin="0,0,0,8">
                                 <Grid.ColumnDefinitions>
@@ -599,104 +611,102 @@
             </Border>
         </Grid>
 
-        <!-- Table Navigation Section -->
+        <!-- Single Row Payment Footer with Table Selection - Optimized for 1024x768 -->
         <Border Grid.Row="1" 
                 Style="{StaticResource TouchCardPanel}" 
-                Margin="16,0,16,12"
+                Margin="12,0,12,0"
                 Background="#FEFEFE">
-            <Grid Margin="20,12">
+            <Grid Margin="16,12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="*"/>
+                    <!-- Table info -->
                     <ColumnDefinition Width="Auto"/>
+                    <!-- Table select button -->
+                    <ColumnDefinition Width="*"/>
+                    <!-- Spacer -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Print button -->
+                    <ColumnDefinition Width="Auto"/>
+                    <!-- Complete sale button -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Table Info -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- Table Information -->
+                <StackPanel Grid.Column="0" 
+                            Orientation="Horizontal" 
+                            VerticalAlignment="Center"
+                            Margin="0,0,12,0">
                     <TextBlock Text="🍽️" 
-                               FontSize="20"
+                               FontSize="14"
                                VerticalAlignment="Center"
-                               Margin="0,0,8,0"/>
+                               Margin="0,0,5,0"/>
 
                     <StackPanel VerticalAlignment="Center">
                         <TextBlock Text="{Binding CurrentTableInfo, Mode=OneWay, TargetNullValue='No table selected'}"
                                    FontWeight="SemiBold"
-                                   FontSize="16"
+                                   FontSize="12"
                                    Foreground="#0F172A"/>
 
-                        <StackPanel Orientation="Horizontal">
-                            <Border Background="#DBEAFE" CornerRadius="4" Padding="6,2" Margin="0,0,4,0">
-                                <TextBlock FontSize="12" Foreground="#1E40AF">
+                        <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
+                            <Border Background="#DBEAFE" CornerRadius="3" Padding="3,1" Margin="0,0,2,0">
+                                <TextBlock FontSize="9" Foreground="#1E40AF">
                                     <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
                                     <Run Text="items"/>
                                 </TextBlock>
                             </Border>
-                            <Border Background="#D1FAE5" CornerRadius="4" Padding="6,2" Margin="0,0,4,0">
+                            <Border Background="#D1FAE5" CornerRadius="3" Padding="3,1" Margin="0,0,2,0">
                                 <TextBlock Text="{Binding TotalAmount, Mode=OneWay, StringFormat='${0:F2}'}"
-                                           FontSize="12" 
+                                           FontSize="9" 
                                            Foreground="#065F46"/>
                             </Border>
-                            <Border Background="#F0F9FF" CornerRadius="4" Padding="6,2">
+                            <Border Background="#F0F9FF" CornerRadius="3" Padding="3,1">
                                 <TextBlock Text="{Binding TableNavigationInfo, Mode=OneWay}"
-                                           FontSize="12"
+                                           FontSize="9"
                                            Foreground="#0891B2"/>
                             </Border>
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- Table Actions -->
-                <Button Grid.Column="2"
+                <!-- Table Selection Button -->
+                <Button Grid.Column="1"
                         Content="📍 Select Table"
                         Command="{Binding SelectTableCommand}"
                         Style="{StaticResource TouchButton}"
-                        FontSize="14"
-                        Padding="16,8"/>
-            </Grid>
-        </Border>
-
-        <!-- Payment Footer -->
-        <Border Grid.Row="2" 
-                Style="{StaticResource TouchCardPanel}" 
-                Margin="16,0,16,0"
-                Background="#FEFEFE">
-            <Grid Margin="20,16">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                        Height="50"
+                        FontSize="12"
+                        Padding="10,6"
+                        Margin="0,0,12,0"/>
 
                 <!-- Print Receipt Button -->
-                <Button Grid.Column="1"
+                <Button Grid.Column="3"
                         Content="🖨️ Print" 
                         Command="{Binding PrintReceiptCommand}"
                         Style="{StaticResource TouchButton}"
-                        Height="55"
-                        MinWidth="120"
-                        FontSize="16"
+                        Height="50"
+                        MinWidth="100"
+                        FontSize="15"
                         FontWeight="Bold"
-                        Margin="0,0,12,0"/>
+                        Margin="0,0,10,0"/>
 
                 <!-- Complete Sale Button -->
-                <Button Grid.Column="2"
+                <Button Grid.Column="4"
                         Content="Complete Sale" 
                         Command="{Binding CheckoutCommand}"
                         Style="{StaticResource TouchSuccessButton}"
-                        Height="55"
-                        MinWidth="180"
-                        FontSize="18"
+                        Height="50"
+                        MinWidth="160"
+                        FontSize="16"
                         FontWeight="Bold"
                         IsEnabled="{Binding IsDrawerOpen}"/>
             </Grid>
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="3" 
+        <Border Grid.Row="2" 
                 Background="#F1F5F9" 
                 BorderBrush="#E2E8F0" 
                 BorderThickness="0,1,0,0" 
-                Padding="20,8">
+                Padding="16,6">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>

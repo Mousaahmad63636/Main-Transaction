@@ -2,29 +2,30 @@
 // COMPLETE FILE: Enhanced with table navigation and multi-table support
 // UPDATED: Customer selection UI functionality removed
 
+using Microsoft.EntityFrameworkCore;
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Models.Enums;
 using QuickTechPOS.Services;
 using QuickTechPOS.Views;
-using System.Windows;
 using System;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using System.Linq;
 using System.Printing;
+using System.Text;
 using System.Threading.Tasks;
+using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Collections.Generic;
-using System.IO;
-using Microsoft.EntityFrameworkCore;
 
 namespace QuickTechPOS.ViewModels
 {
@@ -634,7 +635,7 @@ namespace QuickTechPOS.ViewModels
 
             // Transaction commands
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout && IsDrawerOpen);
-            PrintReceiptCommand = new RelayCommand(param => PrintReceipt(), param => IsTransactionLoaded);
+            PrintReceiptCommand = new RelayCommand(param => PrintReceipt());
             LookupTransactionCommand = new RelayCommand(async param =>
             {
                 if (param != null)
@@ -3249,85 +3250,129 @@ namespace QuickTechPOS.ViewModels
                 CanNavigatePrevious = false;
             }
         }
-
         private void PrintReceipt()
         {
             try
             {
-                if (LoadedTransaction == null)
+                // Check if we have a completed transaction loaded (for reprinting)
+                if (LoadedTransaction != null)
                 {
-                    StatusMessage = "No transaction loaded to print.";
-                    return;
-                }
+                    Console.WriteLine($"[TransactionViewModel] Printing receipt for completed transaction #{LoadedTransaction.TransactionId}");
 
-                Console.WriteLine($"[TransactionViewModel] Printing receipt for transaction #{LoadedTransaction.TransactionId}");
+                    StatusMessage = $"Preparing receipt for transaction #{LoadedTransaction.TransactionId}...";
+                    IsProcessing = true;
 
-                StatusMessage = $"Preparing receipt for transaction #{LoadedTransaction.TransactionId}...";
-                IsProcessing = true;
+                    // Get table information and add to customer name for receipt
+                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string originalCustomerName = LoadedTransaction.CustomerName;
+                    LoadedTransaction.CustomerName = $"{originalCustomerName} - {tableInfo}";
 
-                decimal previousBalance = 0;
-                if (CustomerId > 0 && SelectedCustomer != null)
-                {
-                    try
+                    if (_printQueueManager != null)
                     {
-                        var customer = _customerService.GetByIdAsync(CustomerId).Result;
-                        if (customer != null)
-                        {
-                            previousBalance = customer.Balance;
+                        string jobId = _printQueueManager.EnqueueTransactionReceipt(
+                            LoadedTransaction,
+                            CartItems.ToList(),
+                            CustomerId,
+                            0, // No balance calculations
+                            ExchangeRate);
 
-                            bool transactionHasDebt = LoadedTransaction.PaidAmount < LoadedTransaction.TotalAmount;
-                            if (transactionHasDebt)
+                        StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} ({tableInfo}) queued for printing.";
+                        Console.WriteLine($"[TransactionViewModel] Receipt queued for printing with job ID: {jobId}");
+                    }
+                    else
+                    {
+                        _receiptPrinterService.PrintTransactionReceiptWpfAsync(
+                            LoadedTransaction,
+                            CartItems.ToList(),
+                            CustomerId,
+                            0, // No balance calculations
+                            ExchangeRate).ContinueWith(t =>
                             {
-                                decimal transactionDebt = LoadedTransaction.TotalAmount - LoadedTransaction.PaidAmount;
-                                previousBalance -= transactionDebt;
-                            }
-                        }
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    StatusMessage = t.Result;
+                                });
+                            });
                     }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"[TransactionViewModel] Error retrieving customer balance: {ex.Message}");
-                    }
-                }
 
-                if (_printQueueManager != null)
-                {
-                    string jobId = _printQueueManager.EnqueueTransactionReceipt(
-                        LoadedTransaction,
-                        CartItems.ToList(),
-                        CustomerId,
-                        previousBalance,
-                        ExchangeRate);
-
-                    StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} queued for printing (Job ID: {jobId}).";
-                    Console.WriteLine($"[TransactionViewModel] Receipt queued for printing with job ID: {jobId}");
+                    // Restore original customer name
+                    LoadedTransaction.CustomerName = originalCustomerName;
                 }
                 else
                 {
-                    _receiptPrinterService.PrintTransactionReceiptWpfAsync(
-                        LoadedTransaction,
-                        CartItems.ToList(),
-                        CustomerId,
-                        previousBalance,
-                        ExchangeRate).ContinueWith(t =>
-                        {
-                            Application.Current.Dispatcher.Invoke(() =>
+                    // No completed transaction - print current cart as preview/estimate
+                    Console.WriteLine("[TransactionViewModel] Printing current cart as preview/estimate");
+
+                    if (CartItems.Count == 0)
+                    {
+                        StatusMessage = "Cart is empty. Add items to cart before printing.";
+                        return;
+                    }
+
+                    StatusMessage = "Preparing cart preview for printing...";
+                    IsProcessing = true;
+
+                    // Get table information
+                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string customerNameWithTable = $"{(CustomerName ?? "Walk-in Customer")} - {tableInfo}";
+
+                    // Create a temporary transaction object for printing current cart
+                    var previewTransaction = new Transaction
+                    {
+                        TransactionId = 0, // Preview - no real transaction ID
+                        CustomerId = CustomerId > 0 ? CustomerId : null,
+                        CustomerName = customerNameWithTable, // Include table info here
+                        TotalAmount = TotalAmount,
+                        PaidAmount = 0, // Not paid yet - this is a preview
+                        TransactionDate = DateTime.Now,
+                        TransactionType = TransactionType.Sale,
+                        Status = TransactionStatus.Pending,
+                        PaymentMethod = "PREVIEW",
+                        CashierId = _authService.CurrentEmployee?.EmployeeId.ToString() ?? "0",
+                        CashierName = _authService.CurrentEmployee?.FullName ?? "Cashier",
+                        CashierRole = _authService.CurrentEmployee?.Role ?? "Cashier"
+                    };
+
+                    if (_printQueueManager != null)
+                    {
+                        string jobId = _printQueueManager.EnqueueTransactionReceipt(
+                            previewTransaction,
+                            CartItems.ToList(),
+                            CustomerId,
+                            0, // No balance calculations
+                            ExchangeRate);
+
+                        StatusMessage = $"Cart preview for {tableInfo} queued for printing.";
+                        Console.WriteLine($"[TransactionViewModel] Cart preview queued for printing with job ID: {jobId}");
+                    }
+                    else
+                    {
+                        _receiptPrinterService.PrintTransactionReceiptWpfAsync(
+                            previewTransaction,
+                            CartItems.ToList(),
+                            CustomerId,
+                            0, // No balance calculations
+                            ExchangeRate).ContinueWith(t =>
                             {
-                                StatusMessage = t.Result;
+                                Application.Current.Dispatcher.Invoke(() =>
+                                {
+                                    StatusMessage = t.Result.Replace("Transaction", $"Preview ({tableInfo})");
+                                });
                             });
-                        });
+                    }
                 }
             }
             catch (Exception ex)
             {
-                StatusMessage = $"Error printing receipt: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Print receipt error: {ex}");
+                StatusMessage = $"Error printing: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Print error: {ex}");
             }
             finally
             {
                 IsProcessing = false;
             }
         }
-
+        
         private async Task NavigateToNextTransactionAsync()
         {
             try

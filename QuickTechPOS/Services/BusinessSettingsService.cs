@@ -131,7 +131,7 @@ namespace QuickTechPOS.Services
         /// <summary>
         /// Gets the company name
         /// </summary>
-        public async Task<string> GetCompanyNameAsync() => await GetSettingAsync("CompanyName", "QuickTech Systems");
+        public async Task<string> GetCompanyNameAsync() => await GetSettingAsync("CompanyName", "Sunshine Resort");
 
         /// <summary>
         /// Gets the company address
@@ -182,11 +182,11 @@ namespace QuickTechPOS.Services
         /// <summary>
         /// Gets the first receipt footer line
         /// </summary>
-        public async Task<string> GetReceiptFooter1Async() => await GetSettingAsync("ReceiptFooter1", "Thank you for your business!");
+        public async Task<string> GetReceiptFooter1Async() => await GetSettingAsync("ReceiptFooter1", "Sunshine Resort \n 71468848");
 
         /// <summary>
         /// Gets the second receipt footer line
         /// </summary>
-        public async Task<string> GetReceiptFooter2Async() => await GetSettingAsync("ReceiptFooter2", "See you next time");
+        public async Task<string> GetReceiptFooter2Async() => await GetSettingAsync("ReceiptFooter2", "Powered By QuickTech");
     }
 }

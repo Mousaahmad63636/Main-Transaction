@@ -76,7 +76,7 @@ namespace QuickTechPOS.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;component/views/languagesettingsdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;V1.0.0.0;component/views/languagesettingsdialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\LanguageSettingsDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

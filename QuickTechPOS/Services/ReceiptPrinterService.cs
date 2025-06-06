@@ -92,7 +92,7 @@ namespace QuickTechPOS.Services
                     if (transaction.PaidAmount == 0)
                     {
                         // Pure debt transaction - no cash paid
-                        paymentMethodDisplay = "Customer Account (Debt)";
+                        paymentMethodDisplay = "Walk in customer";
                     }
                     else
                     {
@@ -165,27 +165,7 @@ namespace QuickTechPOS.Services
                     }
                 }
 
-                // Customer balance section for debt transactions
-                if (isCustomerTransaction && (hasDebt || previousCustomerBalance != 0))
-                {
-                    receipt.AppendLine();
-                    receipt.AppendLine("---------- ACCOUNT BALANCE --------");
 
-                    if (previousCustomerBalance != 0)
-                    {
-                        receipt.AppendLine($"Previous Balance:  {currency}{previousCustomerBalance:F2}");
-                    }
-
-                    if (hasDebt)
-                    {
-                        receipt.AppendLine($"This Purchase:     {currency}{debtAmount:F2}");
-                        receipt.AppendLine($"New Balance:       {currency}{newCustomerBalance:F2}");
-                    }
-                    else if (previousCustomerBalance != 0)
-                    {
-                        receipt.AppendLine($"Current Balance:   {currency}{previousCustomerBalance:F2}");
-                    }
-                }
 
                 receipt.AppendLine();
 
@@ -198,19 +178,6 @@ namespace QuickTechPOS.Services
                     receipt.AppendLine(footer2);
                 }
                 receipt.AppendLine();
-
-                if (hasDebt && isCustomerTransaction)
-                {
-                    receipt.AppendLine("===================================");
-                    receipt.AppendLine("    PARTIAL PAYMENT - ACCOUNT     ");
-                    receipt.AppendLine("===================================");
-                }
-                else
-                {
-                    receipt.AppendLine("===================================");
-                    receipt.AppendLine("         Thank You!               ");
-                    receipt.AppendLine("===================================");
-                }
             }
             catch (Exception ex)
             {
@@ -402,8 +369,8 @@ namespace QuickTechPOS.Services
                         address = "123 Main Street";
                         phoneNumber = "(555) 123-4567";
                         email = "info@quicktech.com";
-                        footerText1 = "Thank you for your business!";
-                        footerText2 = "See you next time";
+                        footerText1 = "Sunshine Resort \n 71468848";
+                        footerText2 = "Powered By QuickTech";
                     }
 
                     // Check for printer availability
@@ -678,7 +645,7 @@ namespace QuickTechPOS.Services
                 if (transaction.PaidAmount == 0)
                 {
                     // Pure debt transaction - no cash paid
-                    paymentMethodDisplay = "Customer Account (Debt)";
+                    paymentMethodDisplay = "Walk in Customer";
                 }
                 else
                 {
@@ -732,7 +699,7 @@ namespace QuickTechPOS.Services
             paymentTable.RowGroups.Add(new TableRowGroup());
 
             // Subtotal
-            AddTotalRow(paymentTable, "Subtotal:", $"${totalAmount:N2}");
+          //  AddTotalRow(paymentTable, "Subtotal:", $"${totalAmount:N2}");
 
             if (discountAmount > 0)
             {
@@ -748,9 +715,7 @@ namespace QuickTechPOS.Services
             // Payment breakdown
             if (hasDebt && isCustomerTransaction)
             {
-                // Show payment breakdown for debt transactions
-                AddTotalRow(paymentTable, "Cash Paid:", $"${transaction.PaidAmount:N2}");
-                AddTotalRow(paymentTable, "Amount on Account:", $"${debtAmount:N2}", true);
+
                 AddTotalRow(paymentTable, "Total:", $"${finalTotal:N2}", true);
 
                 if (transaction.PaidAmount > finalTotal)
@@ -761,22 +726,7 @@ namespace QuickTechPOS.Services
             }
             else
             {
-                // Regular cash transaction
-                AddTotalRow(paymentTable, "Amount Paid:", $"${transaction.PaidAmount:N2}");
 
-                // Calculate change due amount
-                decimal changeDue = Math.Max(0, transaction.PaidAmount - finalTotal);
-                if (changeDue > 0)
-                {
-                    AddTotalRow(paymentTable, "Change Due:", $"${changeDue:N2}", true);
-
-                    // If showing exchange rate, also show change in LBP
-                    if (exchangeRate > 0)
-                    {
-                        decimal changeLBP = changeDue * exchangeRate;
-                        AddTotalRow(paymentTable, "Change (LBP):", $"{changeLBP:N0} LBP");
-                    }
-                }
             }
 
             // Add LBP total if exchange rate is available
@@ -787,44 +737,7 @@ namespace QuickTechPOS.Services
 
             flowDocument.Blocks.Add(paymentTable);
 
-            // Customer balance section for debt transactions
-            if (isCustomerTransaction && (hasDebt || previousCustomerBalance != 0))
-            {
-                flowDocument.Blocks.Add(CreateDivider());
-
-                var balanceTable = new Table { FontSize = 11, CellSpacing = 0 };
-                balanceTable.Columns.Add(new TableColumn { Width = new GridLength(3, GridUnitType.Star) });
-                balanceTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
-                balanceTable.RowGroups.Add(new TableRowGroup());
-
-                // Add balance header
-                var balanceHeaderRow = new TableRow();
-                balanceHeaderRow.Cells.Add(new TableCell(new Paragraph(new Run("ACCOUNT BALANCE"))
-                {
-                    FontWeight = FontWeights.Bold,
-                    TextAlignment = TextAlignment.Center,
-                    Margin = new Thickness(0, 5, 0, 2)
-                })
-                { ColumnSpan = 2 });
-                balanceTable.RowGroups[0].Rows.Add(balanceHeaderRow);
-
-                if (previousCustomerBalance != 0)
-                {
-                    AddTotalRow(balanceTable, "Previous Balance:", $"${previousCustomerBalance:N2}");
-                }
-
-                if (hasDebt)
-                {
-                    AddTotalRow(balanceTable, "This Purchase:", $"${debtAmount:N2}");
-                    AddTotalRow(balanceTable, "New Balance:", $"${newCustomerBalance:N2}", true);
-                }
-                else if (previousCustomerBalance != 0)
-                {
-                    AddTotalRow(balanceTable, "Current Balance:", $"${previousCustomerBalance:N2}", true);
-                }
-
-                flowDocument.Blocks.Add(balanceTable);
-            }
+         
 
             flowDocument.Blocks.Add(CreateDivider());
 
@@ -853,18 +766,6 @@ namespace QuickTechPOS.Services
                     FontWeight = FontWeights.Normal
                 });
                 footer.Inlines.Add(new LineBreak());
-            }
-
-            // Add special message for debt transactions
-            if (hasDebt && isCustomerTransaction)
-            {
-                footer.Inlines.Add(new LineBreak());
-                footer.Inlines.Add(new Run("PARTIAL PAYMENT - BALANCE ON ACCOUNT")
-                {
-                    FontSize = 12,
-                    FontWeight = FontWeights.Bold,
-                    Foreground = Brushes.DarkRed
-                });
             }
 
             flowDocument.Blocks.Add(footer);

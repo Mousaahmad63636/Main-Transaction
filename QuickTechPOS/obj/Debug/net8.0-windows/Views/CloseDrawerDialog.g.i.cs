@@ -52,7 +52,7 @@ namespace QuickTechPOS.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;component/views/closedrawerdialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;V1.0.0.0;component/views/closedrawerdialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\CloseDrawerDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

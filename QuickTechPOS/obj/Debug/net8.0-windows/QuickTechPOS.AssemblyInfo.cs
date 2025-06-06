@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("QuickTechPOS")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8b2f112430fac90032792130169ee8e32300f06b")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+d8bae7651770171bf2e8f2ec98fc6698a4743e46")]
 [assembly: System.Reflection.AssemblyProductAttribute("QuickTechPOS")]
 [assembly: System.Reflection.AssemblyTitleAttribute("QuickTechPOS")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

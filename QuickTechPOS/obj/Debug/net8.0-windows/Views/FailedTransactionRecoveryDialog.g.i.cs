@@ -93,7 +93,7 @@ namespace QuickTechPOS.Views {
                 return;
             }
             _contentLoaded = true;
-            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;component/views/failedtransactionrecoverydialog.xaml", System.UriKind.Relative);
+            System.Uri resourceLocater = new System.Uri("/QuickTechPOS;V1.0.0.0;component/views/failedtransactionrecoverydialog.xaml", System.UriKind.Relative);
             
             #line 1 "..\..\..\..\Views\FailedTransactionRecoveryDialog.xaml"
             System.Windows.Application.LoadComponent(this, resourceLocater);

@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/Views/TransactionView.xaml.cs
-// UPDATED: Fixed to allow decimal quantities (0.5, 1.5, etc.)
+// COMPLETE FILE: Enhanced with table status management (red tables when items present)
+// UPDATED: Fixed to allow decimal quantities (0.5, 1.5, etc.) + automatic table status updates
 
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
@@ -20,6 +21,7 @@ namespace QuickTechPOS.Views
     /// TransactionView optimized specifically for 1024x768 POS touch screens
     /// Target resolution: 1024x768 (exact fit optimization)
     /// Focus: Compact but readable product cards, efficient space usage, touch-friendly controls
+    /// ENHANCED: Added automatic table status management - tables turn red when they have items
     /// UPDATED: Added decimal quantity support (0.5, 1.5, etc.)
     /// </summary>
     public partial class TransactionView : UserControl
@@ -40,12 +42,13 @@ namespace QuickTechPOS.Views
 
         /// <summary>
         /// Initializes the TransactionView optimized specifically for 1024x768 POS displays
+        /// Enhanced with automatic table status management
         /// </summary>
         /// <param name="viewModel">The transaction view model containing business logic and data binding</param>
         /// <exception cref="ArgumentNullException">Thrown when viewModel is null</exception>
         public TransactionView(TransactionViewModel viewModel)
         {
-            Console.WriteLine("[TransactionView] Initializing TransactionView optimized for 1024x768 resolution with decimal quantity support...");
+            Console.WriteLine("[TransactionView] Initializing enhanced TransactionView optimized for 1024x768 resolution with table status management...");
 
             InitializeComponent();
 
@@ -70,7 +73,7 @@ namespace QuickTechPOS.Views
             // Optimize specifically for 1024x768 resolution
             OptimizeForPOSDisplay();
 
-            Console.WriteLine("[TransactionView] 1024x768 TransactionView initialization completed successfully with decimal quantity support");
+            Console.WriteLine("[TransactionView] Enhanced 1024x768 TransactionView initialization completed successfully with table status management");
         }
 
         #endregion
@@ -146,7 +149,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// NEW: Handles key presses in quantity field to allow only valid decimal input
+        /// ENHANCED: Handles key presses in quantity field to allow only valid decimal input
         /// </summary>
         private void Quantity_KeyDown(object sender, KeyEventArgs e)
         {
@@ -189,8 +192,9 @@ namespace QuickTechPOS.Views
                 }
             }
         }
+
         /// <summary>
-        /// NEW: Handles quantity field focus to select all text for easy editing
+        /// ENHANCED: Handles quantity field focus to select all text for easy editing
         /// </summary>
         private void Quantity_GotFocus(object sender, RoutedEventArgs e)
         {
@@ -481,7 +485,7 @@ namespace QuickTechPOS.Views
 
         #endregion
 
-        #region UPDATED: Decimal Quantity Support Methods
+        #region ENHANCED: Decimal Quantity Support Methods with Table Status Updates
 
         /// <summary>
         /// Validates and parses decimal quantity input
@@ -541,10 +545,10 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Increments the quantity of a cart item by the default increment
+        /// ENHANCED: Increments the quantity of a cart item with automatic table status update
         /// </summary>
         /// <param name="cartItem">The cart item to increment</param>
-        private void IncrementQuantity(CartItem cartItem)
+        private void IncrementQuantityWithStatusUpdate(CartItem cartItem)
         {
             if (cartItem == null) return;
 
@@ -555,7 +559,8 @@ namespace QuickTechPOS.Views
 
                 Console.WriteLine($"[TransactionView] Incremented quantity for {cartItem.Product.Name} to {cartItem.Quantity}");
 
-                _viewModel.UpdateCartItemQuantity(cartItem);
+                // ENHANCED: Use the enhanced method that includes table status updates
+                _viewModel.UpdateCartItemQuantityWithStatus(cartItem);
                 ProvideHapticFeedback();
             }
             catch (Exception ex)
@@ -565,10 +570,10 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Decrements the quantity of a cart item by the default increment
+        /// ENHANCED: Decrements the quantity of a cart item with automatic table status update
         /// </summary>
         /// <param name="cartItem">The cart item to decrement</param>
-        private void DecrementQuantity(CartItem cartItem)
+        private void DecrementQuantityWithStatusUpdate(CartItem cartItem)
         {
             if (cartItem == null) return;
 
@@ -584,7 +589,8 @@ namespace QuickTechPOS.Views
 
                 Console.WriteLine($"[TransactionView] Decremented quantity for {cartItem.Product.Name} to {cartItem.Quantity}");
 
-                _viewModel.UpdateCartItemQuantity(cartItem);
+                // ENHANCED: Use the enhanced method that includes table status updates
+                _viewModel.UpdateCartItemQuantityWithStatus(cartItem);
                 ProvideHapticFeedback();
             }
             catch (Exception ex)
@@ -595,11 +601,11 @@ namespace QuickTechPOS.Views
 
         #endregion
 
-        #region UPDATED: Standard Event Handlers (Enhanced for Decimal Quantities)
+        #region ENHANCED: Event Handlers with Table Status Updates
 
         /// <summary>
         /// Handles view model property changes to maintain UI consistency
-        /// Enhanced for improved layout responsiveness
+        /// Enhanced for improved layout responsiveness and table status updates
         /// </summary>
         private void OnViewModelPropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
@@ -614,6 +620,20 @@ namespace QuickTechPOS.Views
                 e.PropertyName == nameof(TransactionViewModel.WholesaleMode))
             {
                 Console.WriteLine($"[TransactionView] Property changed: {e.PropertyName}");
+
+                // ENHANCED: Trigger table status refresh for cart-related changes
+                if (e.PropertyName == nameof(TransactionViewModel.CartItems) ||
+                    e.PropertyName == nameof(TransactionViewModel.TotalAmount))
+                {
+                    try
+                    {
+                        _viewModel.RefreshAllTableStatuses();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[TransactionView] Error refreshing table statuses: {ex.Message}");
+                    }
+                }
 
                 // Ensure UI command states are refreshed on the main thread
                 Application.Current.Dispatcher.Invoke(() => {
@@ -637,6 +657,9 @@ namespace QuickTechPOS.Views
 
                 // Apply 1024x768 specific screen optimizations
                 ApplyEnhancedScreenSizeOptimizations();
+
+                // ENHANCED: Initialize table status management
+                _viewModel.RefreshAllTableStatuses();
 
                 Console.WriteLine("[TransactionView] 1024x768 optimized view initialization completed successfully");
             }
@@ -685,7 +708,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// UPDATED: Handles cart item quantity updates with enhanced decimal validation and touch support
+        /// ENHANCED: Handles cart item quantity updates with decimal validation and automatic table status updates
         /// </summary>
         private void Quantity_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -707,8 +730,8 @@ namespace QuickTechPOS.Views
 
                         Console.WriteLine($"[TransactionView] Quantity updated for {cartItem.Product.Name}: {cartItem.Quantity}");
 
-                        // Delegate quantity update to view model for business logic processing
-                        _viewModel.UpdateCartItemQuantity(cartItem);
+                        // ENHANCED: Use the new method that includes table status updates
+                        _viewModel.UpdateCartItemQuantityWithStatus(cartItem);
 
                         // Provide enhanced haptic feedback if available
                         ProvideHapticFeedback();
@@ -742,7 +765,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles cart item discount updates with enhanced validation
+        /// ENHANCED: Handles cart item discount updates with validation and automatic table status updates
         /// </summary>
         private void Discount_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -754,6 +777,9 @@ namespace QuickTechPOS.Views
 
                     // Process discount update through view model business logic
                     _viewModel.UpdateCartItemDiscount(cartItem);
+
+                    // ENHANCED: Trigger table status update after discount change
+                    _viewModel.RefreshAllTableStatuses();
 
                     // Provide feedback for successful update
                     ProvideHapticFeedback();
@@ -770,7 +796,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles discount type selection changes with immediate recalculation
+        /// ENHANCED: Handles discount type selection changes with immediate recalculation and table status updates
         /// </summary>
         private void DiscountType_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -782,6 +808,9 @@ namespace QuickTechPOS.Views
 
                     // Update discount calculation based on new type selection
                     _viewModel.UpdateCartItemDiscount(cartItem);
+
+                    // ENHANCED: Trigger table status update after discount type change
+                    _viewModel.RefreshAllTableStatuses();
                 }
                 catch (Exception ex)
                 {
@@ -792,24 +821,24 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// NEW: Handles quantity increment button clicks
+        /// ENHANCED: Handles quantity increment button clicks with table status updates
         /// </summary>
         private void QuantityIncrement_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is CartItem cartItem)
             {
-                IncrementQuantity(cartItem);
+                IncrementQuantityWithStatusUpdate(cartItem);
             }
         }
 
         /// <summary>
-        /// NEW: Handles quantity decrement button clicks
+        /// ENHANCED: Handles quantity decrement button clicks with table status updates
         /// </summary>
         private void QuantityDecrement_Click(object sender, RoutedEventArgs e)
         {
             if (sender is Button button && button.DataContext is CartItem cartItem)
             {
-                DecrementQuantity(cartItem);
+                DecrementQuantityWithStatusUpdate(cartItem);
             }
         }
 

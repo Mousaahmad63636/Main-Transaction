@@ -90,5 +90,15 @@
     "C:\\Users\\Mr. Ahmad\\.nuget\\packages\\system.threading.tasks.extensions\\4.5.4\\system.threading.tasks.extensions.4.5.4.nupkg.sha512",
     "C:\\Users\\Mr. Ahmad\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1900",
+      "level": "Warning",
+      "message": "Error occurred while getting package vulnerability data: Unable to load the service index for source https://api.nuget.org/v3/index.json.",
+      "projectPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
+      "targetGraphs": []
+    }
+  ]
 }

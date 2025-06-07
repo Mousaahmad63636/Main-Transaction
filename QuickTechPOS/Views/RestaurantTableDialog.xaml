@@ -1,4 +1,5 @@
 ﻿<!-- File: QuickTechPOS/Views/RestaurantTableDialog.xaml -->
+<!-- ENHANCED: Red styling for occupied tables with items -->
 
 <Window x:Class="QuickTechPOS.Views.RestaurantTableDialog"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -120,10 +121,10 @@
             </Setter>
         </Style>
 
-        <!-- Table Card Style -->
+        <!-- ENHANCED: Table Card Style with Red Styling for Occupied Tables -->
         <Style x:Key="TableCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderThickness" Value="2"/>
             <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Margin" Value="4"/>
             <Setter Property="Padding" Value="16"/>
@@ -134,52 +135,112 @@
                                       Color="#1E293B" Opacity="0.1" BlurRadius="4"/>
                 </Setter.Value>
             </Setter>
+
+            <!-- ENHANCED: Default border color -->
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+
             <Style.Triggers>
-                <DataTrigger Binding="{Binding Status}" Value="Available">
-                    <Setter Property="BorderBrush" Value="#10B981"/>
-                </DataTrigger>
+                <!-- ENHANCED: Occupied tables with items - RED styling -->
                 <DataTrigger Binding="{Binding Status}" Value="Occupied">
-                    <Setter Property="BorderBrush" Value="#EF4444"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Reserved">
-                    <Setter Property="BorderBrush" Value="#F59E0B"/>
-                </DataTrigger>
-                <DataTrigger Binding="{Binding Status}" Value="Out of Service">
-                    <Setter Property="BorderBrush" Value="#64748B"/>
-                </DataTrigger>
-                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#DC2626"/>
+                    <Setter Property="Background" Value="#FEF2F2"/>
                     <Setter Property="Effect">
                         <Setter.Value>
                             <DropShadowEffect ShadowDepth="2" Direction="270" 
-                                              Color="#2563EB" Opacity="0.2" BlurRadius="8"/>
+                                              Color="#DC2626" Opacity="0.3" BlurRadius="8"/>
                         </Setter.Value>
                     </Setter>
+                </DataTrigger>
+
+                <!-- Available tables - GREEN styling -->
+                <DataTrigger Binding="{Binding Status}" Value="Available">
+                    <Setter Property="BorderBrush" Value="#10B981"/>
+                    <Setter Property="Background" Value="White"/>
+                </DataTrigger>
+
+                <!-- Reserved tables - ORANGE styling -->
+                <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                    <Setter Property="BorderBrush" Value="#F59E0B"/>
+                    <Setter Property="Background" Value="#FFFBEB"/>
+                </DataTrigger>
+
+                <!-- Out of Service tables - GRAY styling -->
+                <DataTrigger Binding="{Binding Status}" Value="Out of Service">
+                    <Setter Property="BorderBrush" Value="#64748B"/>
+                    <Setter Property="Background" Value="#F8FAFC"/>
+                    <Setter Property="Opacity" Value="0.7"/>
+                </DataTrigger>
+
+                <!-- Hover effect - Enhanced for occupied tables -->
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect ShadowDepth="3" Direction="270" 
+                                              Color="#2563EB" Opacity="0.4" BlurRadius="12"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="BorderThickness" Value="3"/>
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Status Badge Style -->
+        <!-- ENHANCED: Status Badge Style with Enhanced Colors -->
         <Style x:Key="StatusBadge" TargetType="Border">
             <Setter Property="CornerRadius" Value="12"/>
             <Setter Property="Padding" Value="8,4"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Style.Triggers>
+                <!-- Available - Green -->
                 <DataTrigger Binding="{Binding Status}" Value="Available">
                     <Setter Property="Background" Value="#DCFCE7"/>
                 </DataTrigger>
+
+                <!-- ENHANCED: Occupied - Red background -->
                 <DataTrigger Binding="{Binding Status}" Value="Occupied">
                     <Setter Property="Background" Value="#FEE2E2"/>
                 </DataTrigger>
+
+                <!-- Reserved - Orange -->
                 <DataTrigger Binding="{Binding Status}" Value="Reserved">
                     <Setter Property="Background" Value="#FEF3C7"/>
                 </DataTrigger>
+
+                <!-- Out of Service - Gray -->
                 <DataTrigger Binding="{Binding Status}" Value="Out of Service">
                     <Setter Property="Background" Value="#F1F5F9"/>
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Data Templates -->
+        <!-- ENHANCED: Status Text Style with Enhanced Colors -->
+        <Style x:Key="StatusText" TargetType="TextBlock">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Style.Triggers>
+                <!-- Available - Green text -->
+                <DataTrigger Binding="{Binding Status}" Value="Available">
+                    <Setter Property="Foreground" Value="#166534"/>
+                </DataTrigger>
+
+                <!-- ENHANCED: Occupied - Red text -->
+                <DataTrigger Binding="{Binding Status}" Value="Occupied">
+                    <Setter Property="Foreground" Value="#991B1B"/>
+                </DataTrigger>
+
+                <!-- Reserved - Orange text -->
+                <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                    <Setter Property="Foreground" Value="#92400E"/>
+                </DataTrigger>
+
+                <!-- Out of Service - Gray text -->
+                <DataTrigger Binding="{Binding Status}" Value="Out of Service">
+                    <Setter Property="Foreground" Value="#475569"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- ENHANCED: Data Templates with Enhanced Status Display -->
         <DataTemplate x:Key="TableCardTemplate">
             <Border Style="{StaticResource TableCard}">
                 <Border.InputBindings>
@@ -207,33 +268,44 @@
                                Foreground="#1E293B"
                                Margin="0,0,0,8"/>
 
-                    <!-- Status Badge -->
+                    <!-- ENHANCED: Status Badge with Enhanced Styling -->
                     <Border Grid.Row="1" 
                             Style="{StaticResource StatusBadge}"
                             Margin="0,0,0,8">
-                        <TextBlock Text="{Binding Status}" 
-                                   FontWeight="SemiBold"
-                                   FontSize="12"
+                        <StackPanel Orientation="Horizontal" 
                                    HorizontalAlignment="Center">
-                            <TextBlock.Style>
-                                <Style TargetType="TextBlock">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Status}" Value="Available">
-                                            <Setter Property="Foreground" Value="#166534"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Occupied">
-                                            <Setter Property="Foreground" Value="#991B1B"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Reserved">
-                                            <Setter Property="Foreground" Value="#92400E"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Out of Service">
-                                            <Setter Property="Foreground" Value="#475569"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBlock.Style>
-                        </TextBlock>
+                            <!-- Status Icon -->
+                            <TextBlock FontSize="14" 
+                                      VerticalAlignment="Center"
+                                      Margin="0,0,4,0">
+                                <TextBlock.Style>
+                                    <Style TargetType="TextBlock">
+                                        <Style.Triggers>
+                                            <DataTrigger Binding="{Binding Status}" Value="Available">
+                                                <Setter Property="Text" Value="✓"/>
+                                                <Setter Property="Foreground" Value="#166534"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Occupied">
+                                                <Setter Property="Text" Value="🔴"/>
+                                                <Setter Property="Foreground" Value="#991B1B"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                                                <Setter Property="Text" Value="📋"/>
+                                                <Setter Property="Foreground" Value="#92400E"/>
+                                            </DataTrigger>
+                                            <DataTrigger Binding="{Binding Status}" Value="Out of Service">
+                                                <Setter Property="Text" Value="⚠"/>
+                                                <Setter Property="Foreground" Value="#475569"/>
+                                            </DataTrigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </TextBlock.Style>
+                            </TextBlock>
+
+                            <!-- Status Text -->
+                            <TextBlock Text="{Binding Status}" 
+                                      Style="{StaticResource StatusText}"/>
+                        </StackPanel>
                     </Border>
 
                     <!-- Description -->
@@ -249,20 +321,46 @@
                     <!-- Spacer -->
                     <Grid Grid.Row="3"/>
 
-                    <!-- Actions -->
+                    <!-- ENHANCED: Actions with Status-Specific Button Colors -->
                     <StackPanel Grid.Row="4" 
                                 Orientation="Horizontal"
                                 HorizontalAlignment="Center">
 
-                        <!-- Select Button -->
-                        <Button Content="Select"
-                                Command="{Binding DataContext.SelectTableCommand, 
+                        <!-- Select Button with Dynamic Color -->
+                        <Button Command="{Binding DataContext.SelectTableCommand, 
                                          RelativeSource={RelativeSource AncestorType=Window}}"
                                 CommandParameter="{Binding}"
-                                Style="{StaticResource SuccessButton}"
                                 Margin="0,0,4,0"
                                 FontSize="12"
-                                Padding="12,6"/>
+                                Padding="12,6">
+                            <Button.Style>
+                                <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+                                    <Style.Triggers>
+                                        <!-- Occupied tables - Red select button -->
+                                        <DataTrigger Binding="{Binding Status}" Value="Occupied">
+                                            <Setter Property="Content" Value="View Items"/>
+                                            <Setter Property="Background" Value="#EF4444"/>
+                                        </DataTrigger>
+                                        <!-- Available tables - Green select button -->
+                                        <DataTrigger Binding="{Binding Status}" Value="Available">
+                                            <Setter Property="Content" Value="Select"/>
+                                            <Setter Property="Background" Value="#10B981"/>
+                                        </DataTrigger>
+                                        <!-- Reserved tables - Orange select button -->
+                                        <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                                            <Setter Property="Content" Value="Use Reserved"/>
+                                            <Setter Property="Background" Value="#F59E0B"/>
+                                        </DataTrigger>
+                                        <!-- Out of Service - Disabled -->
+                                        <DataTrigger Binding="{Binding Status}" Value="Out of Service">
+                                            <Setter Property="Content" Value="Unavailable"/>
+                                            <Setter Property="Background" Value="#94A3B8"/>
+                                            <Setter Property="IsEnabled" Value="False"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
 
                         <!-- Change Status Button -->
                         <Button Content="Change Status"
@@ -279,6 +377,7 @@
         </DataTemplate>
     </Window.Resources>
 
+    <!-- Rest of the XAML content remains the same -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -302,14 +401,14 @@
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Select Restaurant Table" 
                                Style="{StaticResource SectionTitle}"/>
-                    <TextBlock Text="Choose a table for this transaction" 
+                    <TextBlock Text="Choose a table for this transaction. Red tables have active orders." 
                                Style="{StaticResource HeaderText}"
                                Foreground="#64748B"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="1" 
                             Orientation="Horizontal">
-                    <!-- Statistics Display -->
+                    <!-- ENHANCED: Statistics Display with Occupied Count -->
                     <Border Background="White" 
                             BorderBrush="#E2E8F0" 
                             BorderThickness="1"
@@ -496,7 +595,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Status and Count -->
+                <!-- ENHANCED: Status and Count with Color Legend -->
                 <StackPanel Grid.Column="0" 
                             Orientation="Horizontal"
                             VerticalAlignment="Center">
@@ -509,16 +608,36 @@
                                Margin="8,0"
                                VerticalAlignment="Center"/>
 
-                    <TextBlock Text="Showing " 
+                    <TextBlock Text="Legend: " 
                                Foreground="#64748B"
                                VerticalAlignment="Center"/>
-                    <TextBlock Text="{Binding FilteredTableCount}" 
-                               FontWeight="SemiBold"
-                               Foreground="#1E293B"
-                               VerticalAlignment="Center"/>
-                    <TextBlock Text=" tables" 
-                               Foreground="#64748B"
-                               VerticalAlignment="Center"/>
+
+                    <Border Background="#DCFCE7" 
+                            CornerRadius="3" 
+                            Padding="4,2" 
+                            Margin="4,0">
+                        <TextBlock Text="Available" 
+                                   FontSize="10" 
+                                   Foreground="#166534"/>
+                    </Border>
+
+                    <Border Background="#FEE2E2" 
+                            CornerRadius="3" 
+                            Padding="4,2" 
+                            Margin="4,0">
+                        <TextBlock Text="Occupied (Has Items)" 
+                                   FontSize="10" 
+                                   Foreground="#991B1B"/>
+                    </Border>
+
+                    <Border Background="#FEF3C7" 
+                            CornerRadius="3" 
+                            Padding="4,2" 
+                            Margin="4,0">
+                        <TextBlock Text="Reserved" 
+                                   FontSize="10" 
+                                   Foreground="#92400E"/>
+                    </Border>
                 </StackPanel>
 
                 <!-- Action Buttons -->

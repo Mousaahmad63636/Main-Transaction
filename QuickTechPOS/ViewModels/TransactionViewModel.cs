@@ -1,7 +1,4 @@
 ﻿// File: QuickTechPOS/ViewModels/TransactionViewModel.cs
-// COMPLETE FILE: Enhanced with table navigation and multi-table support
-// SIMPLIFIED: Removed print queue - direct printing only
-// UPDATED: Customer selection UI functionality removed
 
 using Microsoft.EntityFrameworkCore;
 using QuickTechPOS.Helpers;
@@ -31,24 +28,10 @@ namespace QuickTechPOS.ViewModels
     {
         #region Table-Specific Data Storage
 
-        /// <summary>
-        /// Stores table-specific transaction data for each active table
-        /// </summary>
         private readonly Dictionary<int, TableTransactionData> _tableTransactionData;
-
-        /// <summary>
-        /// Collection of currently active tables with transactions
-        /// </summary>
         private ObservableCollection<RestaurantTable> _activeTables;
-
-        /// <summary>
-        /// Index of the currently selected table in the active tables collection
-        /// </summary>
         private int _currentTableIndex = -1;
 
-        /// <summary>
-        /// Data structure to store table-specific transaction information
-        /// </summary>
         private class TableTransactionData
         {
             public List<CartItem> CartItems { get; set; } = new List<CartItem>();
@@ -76,8 +59,6 @@ namespace QuickTechPOS.ViewModels
         private readonly BusinessSettingsService _businessSettingsService;
         private readonly CustomerProductPriceService _customerPriceService;
         private readonly Customer _walkInCustomer;
-
-        // REMOVED: Print queue manager - direct printing only
 
         #endregion
 
@@ -123,33 +104,18 @@ namespace QuickTechPOS.ViewModels
 
         #region Table Navigation Properties
 
-        /// <summary>
-        /// Gets the collection of active tables with transaction data
-        /// </summary>
         public ObservableCollection<RestaurantTable> ActiveTables
         {
             get => _activeTables;
             private set => SetProperty(ref _activeTables, value);
         }
 
-        /// <summary>
-        /// Gets whether there are multiple active tables to navigate between
-        /// </summary>
         public bool HasMultipleTables => ActiveTables?.Count > 1;
 
-        /// <summary>
-        /// Gets whether navigation to previous table is possible
-        /// </summary>
         public bool CanNavigateToPreviousTable => _currentTableIndex > 0;
 
-        /// <summary>
-        /// Gets whether navigation to next table is possible
-        /// </summary>
         public bool CanNavigateToNextTable => _currentTableIndex >= 0 && _currentTableIndex < (ActiveTables?.Count - 1 ?? 0);
 
-        /// <summary>
-        /// Gets the current table position information for display
-        /// </summary>
         public string TableNavigationInfo
         {
             get
@@ -164,9 +130,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// Gets detailed information about the current table's transaction
-        /// </summary>
         public string CurrentTableInfo
         {
             get
@@ -195,7 +158,7 @@ namespace QuickTechPOS.ViewModels
                 var oldTable = _selectedTable;
                 if (SetProperty(ref _selectedTable, value))
                 {
-                    OnTableSelectionChanged(oldTable); // Pass previous table
+                    OnTableSelectionChanged(oldTable);
                 }
             }
         }
@@ -337,9 +300,7 @@ namespace QuickTechPOS.ViewModels
                 {
                     CustomerId = value.CustomerId;
                     CustomerName = value.Name;
-
-                    // FIXED: Auto-save when customer changes
-                    AutoSaveCurrentTableState();
+                    AutoSaveCurrentTableStateWithStatus();
                 }
             }
         }
@@ -406,12 +367,11 @@ namespace QuickTechPOS.ViewModels
                 if (SetProperty(ref _paidAmount, value))
                 {
                     CalculateAmountToDebt();
-
-                    // FIXED: Auto-save when payment amount changes
-                    AutoSaveCurrentTableState();
+                    AutoSaveCurrentTableStateWithStatus();
                 }
             }
         }
+
         public bool AddToCustomerDebt
         {
             get => _addToCustomerDebt;
@@ -420,9 +380,7 @@ namespace QuickTechPOS.ViewModels
                 if (SetProperty(ref _addToCustomerDebt, value))
                 {
                     CalculateAmountToDebt();
-
-                    // FIXED: Auto-save when debt option changes
-                    AutoSaveCurrentTableState();
+                    AutoSaveCurrentTableStateWithStatus();
                 }
             }
         }
@@ -477,8 +435,8 @@ namespace QuickTechPOS.ViewModels
                 {
                     UpdateCartWholesaleMode();
                     StatusMessage = value ?
-                        "Switched to Wholesale mode. All items will use wholesale pricing." :
-                        "Switched to Retail mode. All items will use regular pricing.";
+        "Switched to Wholesale mode. All items will use wholesale pricing." :
+        "Switched to Retail mode. All items will use regular pricing.";
 
                     Console.WriteLine($"[TransactionViewModel] Wholesale mode changed to: {value}");
                 }
@@ -489,13 +447,10 @@ namespace QuickTechPOS.ViewModels
 
         #region Commands
 
-        // Table Navigation Commands
         public ICommand NavigateToPreviousTableCommand { get; }
         public ICommand NavigateToNextTableCommand { get; }
         public ICommand ShowTableNavigationCommand { get; }
         public ICommand CloseCurrentTableCommand { get; }
-
-        // Core Transaction Commands (Customer search UI commands removed)
         public ICommand SearchBarcodeCommand { get; }
         public ICommand SelectCategoryCommand { get; }
         public ICommand AddToCartCommand { get; }
@@ -508,7 +463,6 @@ namespace QuickTechPOS.ViewModels
         public ICommand AddToCartAsWholesaleBoxCommand { get; }
         public ICommand HoldCartCommand { get; }
         public ICommand RestoreCartCommand { get; }
-        // REMOVED: AddCustomerCommand
         public ICommand SelectTableCommand { get; }
         public ICommand LookupTransactionCommand { get; }
         public ICommand EditTransactionCommand { get; }
@@ -521,7 +475,6 @@ namespace QuickTechPOS.ViewModels
         public ICommand CashOutCommand { get; }
         public ICommand OpenDrawerCommand { get; }
         public ICommand CloseDrawerCommand { get; }
-        // REMOVED: ViewPrintQueueCommand
         public ICommand CashInCommand { get; }
 
         #endregion
@@ -530,13 +483,11 @@ namespace QuickTechPOS.ViewModels
 
         public TransactionViewModel(AuthenticationService authService, Customer walkInCustomer = null)
         {
-            Console.WriteLine("[TransactionViewModel] Initializing enhanced TransactionViewModel with table navigation (Customer UI removed)...");
+            Console.WriteLine("[TransactionViewModel] Initializing enhanced TransactionViewModel with table navigation...");
 
-            // Initialize table-specific data storage
             _tableTransactionData = new Dictionary<int, TableTransactionData>();
             ActiveTables = new ObservableCollection<RestaurantTable>();
 
-            // Initialize basic services
             _productService = new ProductService();
             _categoryService = new CategoryService();
             _customerService = new CustomerService();
@@ -549,14 +500,11 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine("[TransactionViewModel] Services initialized successfully");
 
-            // REMOVED: Print queue manager initialization - using direct printing only
             _transactionService = new TransactionService();
 
-            // Initialize default values
             _exchangeRate = 90000;
             _selectedCategoryId = 0;
 
-            // Initialize collections
             HeldCarts = new ObservableCollection<HeldCart>();
             SearchedProducts = new ObservableCollection<Product>();
             SearchedCustomers = new ObservableCollection<Customer>();
@@ -565,7 +513,6 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine("[TransactionViewModel] Collections initialized");
 
-            // Initialize customer information (always walk-in, no UI interaction)
             CustomerName = "Walk-in Customer";
             if (_walkInCustomer != null)
             {
@@ -578,12 +525,10 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine("[TransactionViewModel] No walk-in customer provided. Customer ID set to 0.");
             }
 
-            // Initialize payment properties
             PaidAmount = 0;
             AddToCustomerDebt = false;
             AmountToDebt = 0;
 
-            // Initialize table navigation commands
             NavigateToPreviousTableCommand = new RelayCommand(
                 param => NavigateToPreviousTable(),
                 param => CanNavigateToPreviousTable);
@@ -600,11 +545,9 @@ namespace QuickTechPOS.ViewModels
                 param => CloseCurrentTable(),
                 param => SelectedTable != null);
 
-            // Initialize core transaction commands
             LogoutCommand = new RelayCommand(param => Logout());
             SelectTableCommand = new RelayCommand(param => OpenTableSelectionDialog());
 
-            // Transaction navigation commands
             NextTransactionCommand = new RelayCommand(
                 async param => await NavigateToNextTransactionAsync(),
                 param => IsTransactionLoaded && CanNavigateNext);
@@ -613,27 +556,23 @@ namespace QuickTechPOS.ViewModels
                 async param => await NavigateToPreviousTransactionAsync(),
                 param => IsTransactionLoaded && CanNavigatePrevious);
 
-            // Cart management commands
             HoldCartCommand = new RelayCommand(param => HoldCurrentCart(), param => CanHoldCart());
             RestoreCartCommand = new RelayCommand(param => RestoreHeldCart(), param => CanRestoreCart());
 
-            // Search commands
             SearchBarcodeCommand = new RelayCommand(async param => await SearchByBarcodeAsync());
             SelectCategoryCommand = new RelayCommand(param => SelectCategory(param as Category));
 
             Console.WriteLine("[TransactionViewModel] Search commands initialized");
 
-            // Cart item commands
-            AddToCartCommand = new RelayCommand(param => AddToCart(param as Product));
-            RemoveFromCartCommand = new RelayCommand(param => RemoveFromCart(param as CartItem), param => param != null);
-            ClearCartCommand = new RelayCommand(param => ClearCart());
-            AddToCartAsBoxCommand = new RelayCommand(param => AddToCart(param as Product, true, false));
-            AddToCartAsWholesaleCommand = new RelayCommand(param => AddToCart(param as Product, false, true));
-            AddToCartAsWholesaleBoxCommand = new RelayCommand(param => AddToCart(param as Product, true, true));
+            AddToCartCommand = new RelayCommand(param => AddToCartWithStatusUpdate(param as Product));
+            RemoveFromCartCommand = new RelayCommand(param => RemoveFromCartWithStatusUpdate(param as CartItem), param => param != null);
+            ClearCartCommand = new RelayCommand(param => ClearCartWithStatusUpdate());
+            AddToCartAsBoxCommand = new RelayCommand(param => AddToCartWithStatusUpdate(param as Product, true, false));
+            AddToCartAsWholesaleCommand = new RelayCommand(param => AddToCartWithStatusUpdate(param as Product, false, true));
+            AddToCartAsWholesaleBoxCommand = new RelayCommand(param => AddToCartWithStatusUpdate(param as Product, true, true));
 
-            // Transaction commands
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout && IsDrawerOpen);
-            PrintReceiptCommand = new RelayCommand(async param => await PrintReceiptDirectAsync()); // UPDATED: Direct printing
+            PrintReceiptCommand = new RelayCommand(async param => await PrintReceiptDirectAsync());
             LookupTransactionCommand = new RelayCommand(async param =>
             {
                 if (param != null)
@@ -645,21 +584,16 @@ namespace QuickTechPOS.ViewModels
             EditTransactionCommand = new RelayCommand(param => EnterEditMode(), param => IsTransactionLoaded && !IsEditMode);
             SaveTransactionCommand = new RelayCommand(async param => await SaveTransactionChangesAsync(), param => IsTransactionLoaded && IsEditMode);
 
-            // Drawer commands
-            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportDirectAsync(), param => IsDrawerOpen); // UPDATED: Direct printing
+            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportDirectAsync(), param => IsDrawerOpen);
             CashOutCommand = new RelayCommand(async param => await ShowCashOutDialogAsync(), param => IsDrawerOpen);
             OpenDrawerCommand = new RelayCommand(async param => await OpenDrawerDialogAsync());
             CloseDrawerCommand = new RelayCommand(async param => await CloseDrawerDialogAsync(), param => IsDrawerOpen);
             CashInCommand = new RelayCommand(async param => await ShowCashInDialogAsync(), param => IsDrawerOpen);
 
-            // Recovery command
             OpenRecoveryDialogCommand = new RelayCommand(param => OpenRecoveryDialog());
 
-            // REMOVED: Print queue commands
+            Console.WriteLine("[TransactionViewModel] All commands initialized");
 
-            Console.WriteLine("[TransactionViewModel] All commands initialized (Customer UI commands excluded)");
-
-            // Initial data loading
             LoadInitialDataAsync();
             GetCurrentDrawerAsync().ConfigureAwait(false);
             LoadExchangeRateAsync();
@@ -670,13 +604,369 @@ namespace QuickTechPOS.ViewModels
 
         #endregion
 
+        #region Enhanced Table Status Management
+
+        private void UpdateTableVisualStatus(RestaurantTable table)
+        {
+            if (table == null) return;
+
+            try
+            {
+                var tableData = GetTableDataById(table.Id);
+                int itemCount = tableData?.CartItems?.Count ?? 0;
+
+                string newStatus;
+                if (itemCount > 0)
+                {
+                    newStatus = "Occupied";
+                    Console.WriteLine($"[TransactionViewModel] Table {table.DisplayName} marked as Occupied ({itemCount} items)");
+                }
+                else
+                {
+                    if (table.Status == "Occupied")
+                    {
+                        newStatus = "Available";
+                        Console.WriteLine($"[TransactionViewModel] Table {table.DisplayName} marked as Available (no items)");
+                    }
+                    else
+                    {
+                        newStatus = table.Status;
+                    }
+                }
+
+                if (table.Status != newStatus)
+                {
+                    table.Status = newStatus;
+                    OnPropertyChanged(nameof(SelectedTable));
+
+                    var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
+                    if (activeTable != null)
+                    {
+                        activeTable.Status = newStatus;
+                    }
+
+                    Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status to: {newStatus}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error updating table visual status: {ex.Message}");
+            }
+        }
+
+        private void SaveTableStateWithStatusUpdate(RestaurantTable table)
+        {
+            if (table == null)
+            {
+                Console.WriteLine("[TransactionViewModel] SaveTableStateWithStatusUpdate: Cannot save state for null table");
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Starting SaveTableStateWithStatusUpdate for {table.DisplayName} (ID: {table.Id})...");
+
+                SaveTableState(table);
+                UpdateTableVisualStatus(table);
+                UpdateTableDisplayInformation();
+
+                Console.WriteLine($"[TransactionViewModel] SaveTableStateWithStatusUpdate completed for {table.DisplayName}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error in SaveTableStateWithStatusUpdate: {ex.Message}");
+                StatusMessage = $"Error saving table state: {ex.Message}";
+            }
+        }
+
+        private void AutoSaveCurrentTableStateWithStatus()
+        {
+            if (SelectedTable != null)
+            {
+                SaveTableStateWithStatusUpdate(SelectedTable);
+            }
+        }
+
+        public void RefreshAllTableStatuses()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionViewModel] Refreshing all table statuses...");
+
+                if (ActiveTables != null)
+                {
+                    foreach (var table in ActiveTables)
+                    {
+                        UpdateTableVisualStatus(table);
+                    }
+                }
+
+                if (SelectedTable != null && (ActiveTables == null || !ActiveTables.Any(t => t.Id == SelectedTable.Id)))
+                {
+                    UpdateTableVisualStatus(SelectedTable);
+                }
+
+                UpdateTableDisplayInformation();
+                OnPropertyChanged(nameof(SelectedTable));
+                OnPropertyChanged(nameof(CurrentTableInfo));
+                OnPropertyChanged(nameof(TableDisplayText));
+                CommandManager.InvalidateRequerySuggested();
+
+                Console.WriteLine("[TransactionViewModel] All table statuses refreshed");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error refreshing table statuses: {ex.Message}");
+            }
+        }
+
+        public int GetTableItemCount(int tableId)
+        {
+            var tableData = GetTableDataById(tableId);
+            return tableData?.CartItems?.Count ?? 0;
+        }
+
+        public decimal GetTableTotalValue(int tableId)
+        {
+            var tableData = GetTableDataById(tableId);
+            return tableData?.CartItems?.Sum(item => item.Total) ?? 0;
+        }
+
+        public bool TableHasItems(int tableId)
+        {
+            return GetTableItemCount(tableId) > 0;
+        }
+
+        public string GetTableStatusInfo()
+        {
+            try
+            {
+                if (SelectedTable == null)
+                    return "No table selected";
+
+                var itemCount = CartItems?.Count ?? 0;
+                var totalValue = TotalAmount;
+                var status = SelectedTable.Status;
+
+                return $"Table: {SelectedTable.DisplayName}, Status: {status}, Items: {itemCount}, Value: ${totalValue:F2}";
+            }
+            catch (Exception ex)
+            {
+                return $"Error getting table status: {ex.Message}";
+            }
+        }
+
+        #endregion
+
+        #region Enhanced Cart Management Methods with Status Updates
+
+        private async void AddToCartWithStatusUpdate(Product product, bool isBox = false, bool? isWholesale = null)
+        {
+            if (product == null)
+                return;
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Adding to cart with status update: {product.Name} (IsBox: {isBox}, IsWholesale: {isWholesale}, WholesaleMode: {WholesaleMode})");
+
+                bool useWholesale = isWholesale ?? WholesaleMode;
+
+                decimal unitPrice;
+                if (isBox)
+                {
+                    unitPrice = useWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
+                }
+                else
+                {
+                    unitPrice = useWholesale ? product.WholesalePrice : product.SalePrice;
+                }
+
+                Console.WriteLine($"[TransactionViewModel] Calculated unit price: ${unitPrice:F2}");
+
+                if (!useWholesale && CustomerId > 0)
+                {
+                    var specialPrice = await _customerPriceService.GetCustomerProductPriceAsync(CustomerId, product.ProductId);
+                    if (specialPrice.HasValue)
+                    {
+                        unitPrice = specialPrice.Value;
+                        Console.WriteLine($"[TransactionViewModel] Applied customer-specific price for {product.Name}: ${unitPrice}");
+                    }
+                }
+
+                var existingItemIndex = CartItems.ToList().FindIndex(i =>
+                    i.Product.ProductId == product.ProductId &&
+                    i.IsBox == isBox &&
+                    i.IsWholesale == useWholesale);
+
+                if (existingItemIndex >= 0)
+                {
+                    var existingItem = CartItems[existingItemIndex];
+
+                    existingItem.Quantity += 1;
+
+                    if (existingItem.DiscountType == 1)
+                    {
+                        decimal currentPercentage = existingItem.DiscountValue;
+                        decimal subtotal = existingItem.Quantity * existingItem.UnitPrice;
+                        existingItem.Discount = (currentPercentage / 100) * subtotal;
+                    }
+
+                    var updatedItem = existingItem;
+                    CartItems.RemoveAt(existingItemIndex);
+                    CartItems.Insert(existingItemIndex, updatedItem);
+
+                    StatusMessage = $"Updated {(isBox ? $"BOX-{product.Name}" : product.Name)} quantity to {updatedItem.Quantity}";
+                    Console.WriteLine($"[TransactionViewModel] Updated existing cart item quantity to {updatedItem.Quantity}");
+                }
+                else
+                {
+                    var newItem = new CartItem
+                    {
+                        Product = product,
+                        Quantity = 1,
+                        UnitPrice = unitPrice,
+                        Discount = 0,
+                        DiscountType = 0,
+                        IsBox = isBox,
+                        IsWholesale = useWholesale
+                    };
+
+                    CartItems.Add(newItem);
+                    StatusMessage = $"Added {(isBox ? $"BOX-{product.Name}" : product.Name)} to cart.";
+                    Console.WriteLine($"[TransactionViewModel] Added new cart item: {product.Name}");
+                }
+
+                UpdateTotals();
+                AutoSaveCurrentTableStateWithStatus();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error adding to cart: {ex.Message}");
+                StatusMessage = $"Error adding product to cart: {ex.Message}";
+            }
+        }
+
+        private void RemoveFromCartWithStatusUpdate(CartItem cartItem = null)
+        {
+            var itemToRemove = cartItem ?? SelectedCartItem;
+
+            if (itemToRemove == null)
+                return;
+
+            Console.WriteLine($"[TransactionViewModel] Removing from cart with status update: {itemToRemove.Product.Name}");
+
+            CartItems.Remove(itemToRemove);
+            UpdateTotals();
+            StatusMessage = "Item removed from cart.";
+
+            if (SelectedCartItem == itemToRemove)
+                SelectedCartItem = null;
+
+            AutoSaveCurrentTableStateWithStatus();
+        }
+
+        private void ClearCartWithStatusUpdate()
+        {
+            Console.WriteLine("[TransactionViewModel] Clearing cart with status update...");
+
+            CartItems.Clear();
+            UpdateTotals();
+            StatusMessage = "Cart cleared.";
+
+            LoadedTransaction = null;
+            IsTransactionLoaded = false;
+            IsEditMode = false;
+
+            AutoSaveCurrentTableStateWithStatus();
+        }
+
+        public void UpdateCartItemQuantityWithStatus(CartItem cartItem)
+        {
+            if (cartItem == null)
+                return;
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Updating quantity with status update for {cartItem.Product.Name} from {cartItem.Quantity}");
+
+                if (cartItem.Quantity < 0.1m)
+                    cartItem.Quantity = 0.1m;
+
+                cartItem.Quantity = Math.Round(cartItem.Quantity, 2);
+
+                decimal subtotal = cartItem.Quantity * cartItem.UnitPrice;
+
+                if (cartItem.DiscountType == 1)
+                {
+                    cartItem.Discount = (cartItem.DiscountValue / 100) * subtotal;
+                }
+                else if (cartItem.DiscountType == 0 && cartItem.Discount > subtotal)
+                {
+                    cartItem.Discount = subtotal;
+                    cartItem.DiscountValue = subtotal;
+                }
+
+                Console.WriteLine($"[TransactionViewModel] Updated quantity for {cartItem.Product.Name}: Qty={cartItem.Quantity}, " +
+                                 $"Subtotal={subtotal:C2}, Discount={cartItem.Discount:C2}, Final={cartItem.Total:C2}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error updating quantity: {ex.Message}");
+            }
+
+            cartItem.RefreshCalculations();
+            UpdateTotals();
+            AutoSaveCurrentTableStateWithStatus();
+        }
+
+        public void UpdateCartItemDiscount(CartItem cartItem)
+        {
+            if (cartItem == null)
+                return;
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Updating discount for {cartItem.Product.Name}");
+
+                decimal subtotal = cartItem.Quantity * cartItem.UnitPrice;
+
+                if (cartItem.DiscountType == 0)
+                {
+                    if (cartItem.DiscountValue > subtotal)
+                        cartItem.DiscountValue = subtotal;
+
+                    cartItem.Discount = cartItem.DiscountValue;
+                }
+                else if (cartItem.DiscountType == 1)
+                {
+                    if (cartItem.DiscountValue > 100)
+                        cartItem.DiscountValue = 100;
+
+                    cartItem.Discount = (cartItem.DiscountValue / 100) * subtotal;
+                }
+
+                Console.WriteLine($"[TransactionViewModel] Updated discount for {cartItem.Product.Name}: Type={cartItem.DiscountType}, " +
+                                 $"Value={cartItem.DiscountValue}, Amount={cartItem.Discount}, " +
+                                 $"Subtotal={subtotal}, Final={cartItem.Total}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error updating discount: {ex.Message}");
+            }
+
+            cartItem.RefreshCalculations();
+            UpdateTotals();
+            AutoSaveCurrentTableStateWithStatus();
+        }
+
+        #endregion
+
         #region Table Navigation Methods
 
         private TableTransactionData GetCurrentTableData()
         {
             if (SelectedTable == null) return null;
 
-            // FIXED: Always ensure data exists before returning
             EnsureTableDataIsInitialized(SelectedTable);
 
             _tableTransactionData.TryGetValue(SelectedTable.Id, out var data);
@@ -696,32 +986,6 @@ namespace QuickTechPOS.ViewModels
             return _tableTransactionData[table.Id];
         }
 
-        #region FIXED: Auto-Save Table State Methods
-        /// <summary>
-        /// Automatically saves current table state when cart or customer data changes
-        /// Prevents data loss and ensures table-specific isolation
-        /// </summary>
-        private void AutoSaveCurrentTableState()
-        {
-            if (SelectedTable != null)
-            {
-                SaveTableState(SelectedTable);
-            }
-        }
-
-        /// <summary>
-        /// Saves the current transaction state for the specified table with comprehensive data preservation.
-        /// This method performs a deep copy of all cart items and preserves all customer and payment information
-        /// to ensure table-specific transaction isolation and prevent data loss during table navigation.
-        /// </summary>
-        /// <param name="table">The restaurant table to save state for. If null, the method returns immediately.</param>
-        /// <remarks>
-        /// This method is critical for multi-table POS operations, ensuring that:
-        /// - Cart items are deep-copied to prevent reference issues
-        /// - Customer selections and payment data are preserved
-        /// - Table-specific pricing and discounts are maintained
-        /// - Transaction timestamps are updated for audit purposes
-        /// </remarks>
         private void SaveTableState(RestaurantTable table)
         {
             if (table == null)
@@ -734,7 +998,6 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Starting SaveTableState for {table.DisplayName} (ID: {table.Id})...");
 
-                // Ensure table data structure exists in the dictionary
                 var tableData = EnsureTableData(table);
                 if (tableData == null)
                 {
@@ -743,10 +1006,8 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
-                // Clear existing cart items to prevent duplication
                 tableData.CartItems.Clear();
 
-                // Deep copy all cart items with complete property preservation
                 if (CartItems != null && CartItems.Count > 0)
                 {
                     Console.WriteLine($"[TransactionViewModel] Copying {CartItems.Count} cart items for {table.DisplayName}...");
@@ -759,25 +1020,16 @@ namespace QuickTechPOS.ViewModels
                             continue;
                         }
 
-                        // Create a complete deep copy of the cart item
                         var copiedItem = new CartItem
                         {
-                            // Core product and quantity information
                             Product = originalItem.Product,
                             Quantity = originalItem.Quantity,
                             UnitPrice = originalItem.UnitPrice,
-
-                            // Discount and pricing information
                             Discount = originalItem.Discount,
                             DiscountType = originalItem.DiscountType,
                             DiscountValue = originalItem.DiscountValue,
-
-                            // Product variant flags
                             IsBox = originalItem.IsBox,
                             IsWholesale = originalItem.IsWholesale,
-
-                            // Ensure calculated properties are preserved
-                            // Note: Total property will be recalculated automatically via CartItem.Total getter
                         };
 
                         tableData.CartItems.Add(copiedItem);
@@ -792,20 +1044,14 @@ namespace QuickTechPOS.ViewModels
                     Console.WriteLine($"[TransactionViewModel] No cart items to save for {table.DisplayName}");
                 }
 
-                // Save comprehensive customer information
                 tableData.CustomerId = CustomerId;
                 tableData.CustomerName = !string.IsNullOrWhiteSpace(CustomerName) ? CustomerName : "Walk-in Customer";
                 tableData.SelectedCustomer = SelectedCustomer;
-
-                // Save complete payment and transaction state
                 tableData.PaidAmount = PaidAmount;
                 tableData.AddToCustomerDebt = AddToCustomerDebt;
                 tableData.AmountToDebt = AmountToDebt;
-
-                // Update activity timestamp for audit and session management
                 tableData.LastActivity = DateTime.Now;
 
-                // Calculate and log summary information
                 var totalItemCount = tableData.CartItems.Count;
                 var totalValue = tableData.CartItems.Sum(item => item.Total);
                 var customerInfo = tableData.CustomerId > 0 ? $" (Customer: {tableData.CustomerName})" : " (Walk-in)";
@@ -816,19 +1062,15 @@ namespace QuickTechPOS.ViewModels
                                  $"Debt: {(tableData.AddToCustomerDebt ? $"${tableData.AmountToDebt:F2}" : "None")}" +
                                  customerInfo);
 
-                // Update the table's status if needed (for UI display purposes)
                 if (totalItemCount > 0)
                 {
-                    // Mark table as having active transaction data
                     table.Status = "Occupied";
                 }
                 else if (totalItemCount == 0 && table.Status == "Occupied")
                 {
-                    // Clear status if no items remain
                     table.Status = "Available";
                 }
 
-                // Force UI refresh for table-related properties
                 UpdateTableDisplayInformation();
 
                 Console.WriteLine($"[TransactionViewModel] SaveTableState completed successfully for {table.DisplayName}");
@@ -858,7 +1100,6 @@ namespace QuickTechPOS.ViewModels
 
                 StatusMessage = $"Error saving table state: {ex.Message}";
 
-                // Attempt to maintain system stability by ensuring table data exists even after error
                 try
                 {
                     EnsureTableData(table);
@@ -869,7 +1110,6 @@ namespace QuickTechPOS.ViewModels
                 }
             }
         }
-        #endregion
 
         private void SaveCurrentTableState()
         {
@@ -882,7 +1122,6 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Saving state for {SelectedTable.DisplayName}...");
 
-                // Save cart items with deep copy to prevent reference issues
                 tableData.CartItems.Clear();
                 if (CartItems != null)
                 {
@@ -902,7 +1141,6 @@ namespace QuickTechPOS.ViewModels
                     }
                 }
 
-                // Save customer and payment information
                 tableData.CustomerId = CustomerId;
                 tableData.CustomerName = CustomerName ?? "Walk-in Customer";
                 tableData.SelectedCustomer = SelectedCustomer;
@@ -941,10 +1179,8 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Loading state for {SelectedTable.DisplayName}...");
 
-                // Suspend UI updates during bulk changes
                 IsProcessing = true;
 
-                // Clear and reload cart items
                 Application.Current.Dispatcher.Invoke(() => {
                     CartItems.Clear();
                     foreach (var item in tableData.CartItems)
@@ -953,22 +1189,16 @@ namespace QuickTechPOS.ViewModels
                     }
                 });
 
-                // Restore customer information
                 CustomerId = tableData.CustomerId;
                 CustomerName = tableData.CustomerName ?? "Walk-in Customer";
                 SelectedCustomer = tableData.SelectedCustomer;
-
-                // Restore payment information
                 PaidAmount = tableData.PaidAmount;
                 AddToCustomerDebt = tableData.AddToCustomerDebt;
                 AmountToDebt = tableData.AmountToDebt;
 
-                // Update all calculated values
                 UpdateTotals();
                 CalculateExchangeAmount();
                 CalculateAmountToDebt();
-
-                // Force refresh of all UI-bound properties
                 RefreshAllProperties();
 
                 Console.WriteLine($"[TransactionViewModel] Loaded state for {SelectedTable.DisplayName}: {CartItems.Count} items, Customer: {CustomerName}, Total: ${TotalAmount:F2}");
@@ -1014,14 +1244,12 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Switching tables: {previousTable?.DisplayName ?? "None"} -> {SelectedTable?.DisplayName ?? "None"}");
 
-                // Save previous table state
                 if (previousTable != null)
                 {
                     SaveTableState(previousTable);
                     Console.WriteLine($"[TransactionViewModel] Saved state for table: {previousTable.DisplayName}");
                 }
 
-                // Load new table state
                 if (SelectedTable != null)
                 {
                     LoadCurrentTableState();
@@ -1032,7 +1260,6 @@ namespace QuickTechPOS.ViewModels
                     ClearTransactionState();
                 }
 
-                // Refresh UI
                 UpdateTableDisplayInformation();
                 RefreshTransactionUI();
             }
@@ -1043,9 +1270,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// Ensures table data is properly initialized with empty state if it doesn't exist
-        /// </summary>
         private void EnsureTableDataIsInitialized(RestaurantTable table)
         {
             if (table == null) return;
@@ -1068,6 +1292,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Initialized empty data for {table.DisplayName}");
             }
         }
+
         private void NavigateToPreviousTable()
         {
             if (!CanNavigateToPreviousTable) return;
@@ -1076,14 +1301,11 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Navigating to previous table from index {_currentTableIndex}");
 
-                // Save current state before navigation
                 SaveCurrentTableState();
 
-                // Navigate to previous table
                 _currentTableIndex--;
                 var previousTable = ActiveTables[_currentTableIndex];
 
-                // Set the selected table (this will trigger OnTableSelectionChanged)
                 SelectedTable = previousTable;
 
                 Console.WriteLine($"[TransactionViewModel] Navigated to previous table: {previousTable.DisplayName}");
@@ -1103,14 +1325,11 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Navigating to next table from index {_currentTableIndex}");
 
-                // Save current state before navigation
                 SaveCurrentTableState();
 
-                // Navigate to next table
                 _currentTableIndex++;
                 var nextTable = ActiveTables[_currentTableIndex];
 
-                // Set the selected table (this will trigger OnTableSelectionChanged)
                 SelectedTable = nextTable;
 
                 Console.WriteLine($"[TransactionViewModel] Navigated to next table: {nextTable.DisplayName}");
@@ -1126,7 +1345,6 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
-                // Update table display text
                 if (SelectedTable != null)
                 {
                     var itemCount = CartItems?.Count ?? 0;
@@ -1142,7 +1360,6 @@ namespace QuickTechPOS.ViewModels
                     TableDisplayText = "No table selected";
                 }
 
-                // Update computed table info properties
                 OnPropertyChanged(nameof(CurrentTableInfo));
                 OnPropertyChanged(nameof(TableNavigationInfo));
                 OnPropertyChanged(nameof(TableDisplayText));
@@ -1159,39 +1376,28 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine("[TransactionViewModel] Refreshing transaction UI...");
 
-                // Ensure we're on the UI thread for property updates
                 Application.Current.Dispatcher.Invoke(() => {
 
-                    // Refresh all collection-based properties
                     OnPropertyChanged(nameof(CartItems));
                     OnPropertyChanged(nameof(SearchedProducts));
                     OnPropertyChanged(nameof(SearchedCustomers));
-
-                    // Refresh customer-related properties (simplified)
                     OnPropertyChanged(nameof(CustomerId));
                     OnPropertyChanged(nameof(CustomerName));
                     OnPropertyChanged(nameof(SelectedCustomer));
-
-                    // Refresh calculation properties
                     OnPropertyChanged(nameof(TotalAmount));
                     OnPropertyChanged(nameof(PaidAmount));
                     OnPropertyChanged(nameof(AddToCustomerDebt));
                     OnPropertyChanged(nameof(AmountToDebt));
                     OnPropertyChanged(nameof(ChangeDueAmount));
                     OnPropertyChanged(nameof(ExchangeAmount));
-
-                    // Refresh table-specific properties
                     OnPropertyChanged(nameof(SelectedTable));
                     OnPropertyChanged(nameof(TableDisplayText));
                     OnPropertyChanged(nameof(CurrentTableInfo));
                     OnPropertyChanged(nameof(HasMultipleTables));
                     OnPropertyChanged(nameof(TableNavigationInfo));
-
-                    // Refresh command availability
                     OnPropertyChanged(nameof(CanCheckout));
                     OnPropertyChanged(nameof(CanRemoveItem));
 
-                    // Force command re-evaluation
                     CommandManager.InvalidateRequerySuggested();
                 });
 
@@ -1207,23 +1413,16 @@ namespace QuickTechPOS.ViewModels
         {
             try
             {
-                // Core transaction properties
                 OnPropertyChanged(nameof(CartItems));
                 OnPropertyChanged(nameof(TotalAmount));
                 OnPropertyChanged(nameof(PaidAmount));
                 OnPropertyChanged(nameof(ChangeDueAmount));
                 OnPropertyChanged(nameof(ExchangeAmount));
-
-                // Customer properties
                 OnPropertyChanged(nameof(CustomerId));
                 OnPropertyChanged(nameof(CustomerName));
                 OnPropertyChanged(nameof(SelectedCustomer));
-
-                // Payment properties
                 OnPropertyChanged(nameof(AddToCustomerDebt));
                 OnPropertyChanged(nameof(AmountToDebt));
-
-                // Table properties
                 OnPropertyChanged(nameof(SelectedTable));
                 OnPropertyChanged(nameof(TableDisplayText));
                 OnPropertyChanged(nameof(CurrentTableInfo));
@@ -1231,8 +1430,6 @@ namespace QuickTechPOS.ViewModels
                 OnPropertyChanged(nameof(CanNavigateToPreviousTable));
                 OnPropertyChanged(nameof(CanNavigateToNextTable));
                 OnPropertyChanged(nameof(TableNavigationInfo));
-
-                // Command states
                 OnPropertyChanged(nameof(CanCheckout));
                 OnPropertyChanged(nameof(CanRemoveItem));
             }
@@ -1241,6 +1438,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Error refreshing properties: {ex.Message}");
             }
         }
+
         private void ShowTableNavigationOverview()
         {
             try
@@ -1255,7 +1453,6 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
-                // FIXED: Ensure current table state is saved before showing overview
                 if (SelectedTable != null)
                 {
                     SaveCurrentTableState();
@@ -1266,7 +1463,6 @@ namespace QuickTechPOS.ViewModels
                 {
                     var table = ActiveTables[i];
 
-                    // FIXED: Get the actual table-specific data, not current cart
                     var tableData = GetTableDataById(table.Id);
 
                     int itemCount;
@@ -1275,14 +1471,12 @@ namespace QuickTechPOS.ViewModels
 
                     if (tableData != null)
                     {
-                        // Use table-specific data
                         itemCount = tableData.CartItems?.Count ?? 0;
                         totalAmount = tableData.CartItems?.Sum(item => item.Total) ?? 0;
                         customerName = tableData.CustomerName ?? "Walk-in Customer";
                     }
                     else
                     {
-                        // Table has no data - show empty state
                         itemCount = 0;
                         totalAmount = 0;
                         customerName = "Walk-in Customer";
@@ -1309,6 +1503,7 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = "Error showing table overview";
             }
         }
+
         private void CloseCurrentTable()
         {
             if (SelectedTable == null) return;
@@ -1319,7 +1514,6 @@ namespace QuickTechPOS.ViewModels
                 var hasItems = CartItems.Count > 0;
                 var totalValue = TotalAmount;
 
-                // Confirm closure if table has items
                 if (hasItems)
                 {
                     var result = MessageBox.Show(
@@ -1336,23 +1530,19 @@ namespace QuickTechPOS.ViewModels
 
                 Console.WriteLine($"[TransactionViewModel] Closing table: {tableToClose.DisplayName}");
 
-                // Remove from active tables and clear data
                 Application.Current.Dispatcher.Invoke(() => {
                     ActiveTables.Remove(tableToClose);
                 });
 
                 _tableTransactionData.Remove(tableToClose.Id);
 
-                // Navigate to another table or clear state
                 if (ActiveTables.Count > 0)
                 {
-                    // Navigate to the nearest available table
                     _currentTableIndex = Math.Max(0, Math.Min(_currentTableIndex, ActiveTables.Count - 1));
                     SelectedTable = ActiveTables[_currentTableIndex];
                 }
                 else
                 {
-                    // No more tables - clear everything
                     SelectedTable = null;
                     _currentTableIndex = -1;
                 }
@@ -1377,14 +1567,12 @@ namespace QuickTechPOS.ViewModels
 
         private void UpdateNavigationProperties()
         {
-            // Update navigation availability
             OnPropertyChanged(nameof(HasMultipleTables));
             OnPropertyChanged(nameof(CanNavigateToPreviousTable));
             OnPropertyChanged(nameof(CanNavigateToNextTable));
             OnPropertyChanged(nameof(TableNavigationInfo));
             OnPropertyChanged(nameof(CurrentTableInfo));
 
-            // Force command re-evaluation for navigation commands
             Application.Current.Dispatcher.BeginInvoke(new Action(() => {
                 CommandManager.InvalidateRequerySuggested();
             }), System.Windows.Threading.DispatcherPriority.Background);
@@ -1392,7 +1580,7 @@ namespace QuickTechPOS.ViewModels
 
         #endregion
 
-        #region Core Transaction Methods (Customer UI Methods Removed)
+        #region Core Transaction Methods
 
         private void OpenTableSelectionDialog()
         {
@@ -1551,8 +1739,6 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error selecting category: {ex.Message}";
             }
         }
-
-        // REMOVED: ViewPrintQueue method - no longer needed with direct printing
 
         private async Task CheckForFailedTransactionsAsync()
         {
@@ -1833,7 +2019,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // Core Customer Methods (Simplified - No UI Interaction)
         private async void LoadInitialCustomersAsync()
         {
             try
@@ -1875,7 +2060,7 @@ namespace QuickTechPOS.ViewModels
 
                 if (searchResult != null)
                 {
-                    AddToCart(searchResult.Product, searchResult.IsBoxBarcode, false);
+                    AddToCartWithStatusUpdate(searchResult.Product, searchResult.IsBoxBarcode, false);
                     BarcodeQuery = string.Empty;
                     StatusMessage = searchResult.IsBoxBarcode ?
         $"Added BOX-{searchResult.Product.Name} to cart." :
@@ -1896,7 +2081,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // Core customer methods kept for programmatic use
         public async void SetSelectedCustomer(Customer customer)
         {
             if (customer == null)
@@ -2135,7 +2319,6 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Transaction #{transaction.TransactionId} created successfully");
                 Console.WriteLine($"[TransactionViewModel] - Total Amount: {transaction.TotalAmount:C2}, Paid Amount: {transaction.PaidAmount:C2}, Payment Method: {transaction.PaymentMethod}");
 
-                // UPDATED: Direct printing instead of queue
                 string receiptResult = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                     transaction,
                     CartItems.ToList(),
@@ -2150,11 +2333,10 @@ namespace QuickTechPOS.ViewModels
 
                 TransactionLookupId = transaction.TransactionId.ToString();
 
-                // Reset transaction state for current table
                 if (SelectedTable != null)
                 {
                     _tableTransactionData.Remove(SelectedTable.Id);
-                    LoadCurrentTableState(); // This will clear the state since data was removed
+                    LoadCurrentTableState();
                 }
                 else
                 {
@@ -2704,219 +2886,7 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine($"[TransactionViewModel] Adding selected product to cart: {product.Name}");
 
-            AddToCart(product);
-        }
-
-        private async void AddToCart(Product product, bool isBox = false, bool? isWholesale = null)
-        {
-            if (product == null)
-                return;
-
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Adding to cart: {product.Name} (IsBox: {isBox}, IsWholesale: {isWholesale}, WholesaleMode: {WholesaleMode})");
-
-                bool useWholesale = isWholesale ?? WholesaleMode;
-
-                decimal unitPrice;
-                if (isBox)
-                {
-                    unitPrice = useWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
-                }
-                else
-                {
-                    unitPrice = useWholesale ? product.WholesalePrice : product.SalePrice;
-                }
-
-                Console.WriteLine($"[TransactionViewModel] Calculated unit price: ${unitPrice:F2}");
-
-                if (!useWholesale && CustomerId > 0)
-                {
-                    var specialPrice = await _customerPriceService.GetCustomerProductPriceAsync(CustomerId, product.ProductId);
-                    if (specialPrice.HasValue)
-                    {
-                        unitPrice = specialPrice.Value;
-                        Console.WriteLine($"[TransactionViewModel] Applied customer-specific price for {product.Name}: ${unitPrice}");
-                    }
-                }
-
-                var existingItemIndex = CartItems.ToList().FindIndex(i =>
-                    i.Product.ProductId == product.ProductId &&
-                    i.IsBox == isBox &&
-                    i.IsWholesale == useWholesale);
-
-                if (existingItemIndex >= 0)
-                {
-                    var existingItem = CartItems[existingItemIndex];
-
-                    existingItem.Quantity += 1;
-
-                    if (existingItem.DiscountType == 1)
-                    {
-                        decimal currentPercentage = existingItem.DiscountValue;
-                        decimal subtotal = existingItem.Quantity * existingItem.UnitPrice;
-                        existingItem.Discount = (currentPercentage / 100) * subtotal;
-                    }
-
-                    var updatedItem = existingItem;
-                    CartItems.RemoveAt(existingItemIndex);
-                    CartItems.Insert(existingItemIndex, updatedItem);
-
-                    StatusMessage = $"Updated {(isBox ? $"BOX-{product.Name}" : product.Name)} quantity to {updatedItem.Quantity}";
-                    Console.WriteLine($"[TransactionViewModel] Updated existing cart item quantity to {updatedItem.Quantity}");
-                }
-                else
-                {
-                    var newItem = new CartItem
-                    {
-                        Product = product,
-                        Quantity = 1,
-                        UnitPrice = unitPrice,
-                        Discount = 0,
-                        DiscountType = 0,
-                        IsBox = isBox,
-                        IsWholesale = useWholesale
-                    };
-
-                    CartItems.Add(newItem);
-                    StatusMessage = $"Added {(isBox ? $"BOX-{product.Name}" : product.Name)} to cart.";
-                    Console.WriteLine($"[TransactionViewModel] Added new cart item: {product.Name}");
-                }
-
-                UpdateTotals();
-
-                // FIXED: Auto-save table state after adding to cart
-                AutoSaveCurrentTableState();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error adding to cart: {ex.Message}");
-                StatusMessage = $"Error adding product to cart: {ex.Message}";
-            }
-        }
-
-        /// <summary>
-        /// UPDATED: UpdateCartItemQuantity method to support decimal quantities (0.5, 1.5, etc.)
-        /// </summary>
-        public void UpdateCartItemQuantity(CartItem cartItem)
-        {
-            if (cartItem == null)
-                return;
-
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Updating quantity for {cartItem.Product.Name} from {cartItem.Quantity}");
-
-                // FIXED: Allow decimal quantities with minimum of 0.1 instead of 1
-                if (cartItem.Quantity < 0.1m)
-                    cartItem.Quantity = 0.1m;
-
-                // FIXED: Round to 2 decimal places for consistency
-                cartItem.Quantity = Math.Round(cartItem.Quantity, 2);
-
-                decimal subtotal = cartItem.Quantity * cartItem.UnitPrice;
-
-                if (cartItem.DiscountType == 1)
-                {
-                    cartItem.Discount = (cartItem.DiscountValue / 100) * subtotal;
-                }
-                else if (cartItem.DiscountType == 0 && cartItem.Discount > subtotal)
-                {
-                    cartItem.Discount = subtotal;
-                    cartItem.DiscountValue = subtotal;
-                }
-
-                Console.WriteLine($"[TransactionViewModel] Updated quantity for {cartItem.Product.Name}: Qty={cartItem.Quantity}, " +
-                                 $"Subtotal={subtotal:C2}, Discount={cartItem.Discount:C2}, Final={cartItem.Total:C2}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error updating quantity: {ex.Message}");
-            }
-
-            cartItem.RefreshCalculations();
-            UpdateTotals();
-
-            // Auto-save table state after quantity update
-            AutoSaveCurrentTableState();
-        }
-
-        public void UpdateCartItemDiscount(CartItem cartItem)
-        {
-            if (cartItem == null)
-                return;
-
-            try
-            {
-                Console.WriteLine($"[TransactionViewModel] Updating discount for {cartItem.Product.Name}");
-
-                decimal subtotal = cartItem.Quantity * cartItem.UnitPrice;
-
-                if (cartItem.DiscountType == 0)
-                {
-                    if (cartItem.DiscountValue > subtotal)
-                        cartItem.DiscountValue = subtotal;
-
-                    cartItem.Discount = cartItem.DiscountValue;
-                }
-                else if (cartItem.DiscountType == 1)
-                {
-                    if (cartItem.DiscountValue > 100)
-                        cartItem.DiscountValue = 100;
-
-                    cartItem.Discount = (cartItem.DiscountValue / 100) * subtotal;
-                }
-
-                Console.WriteLine($"[TransactionViewModel] Updated discount for {cartItem.Product.Name}: Type={cartItem.DiscountType}, " +
-                                 $"Value={cartItem.DiscountValue}, Amount={cartItem.Discount}, " +
-                                 $"Subtotal={subtotal}, Final={cartItem.Total}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[TransactionViewModel] Error updating discount: {ex.Message}");
-            }
-
-            cartItem.RefreshCalculations();
-            UpdateTotals();
-
-            // FIXED: Auto-save table state after discount update
-            AutoSaveCurrentTableState();
-        }
-
-        private void RemoveFromCart(CartItem cartItem = null)
-        {
-            var itemToRemove = cartItem ?? SelectedCartItem;
-
-            if (itemToRemove == null)
-                return;
-
-            Console.WriteLine($"[TransactionViewModel] Removing from cart: {itemToRemove.Product.Name}");
-
-            CartItems.Remove(itemToRemove);
-            UpdateTotals();
-            StatusMessage = "Item removed from cart.";
-
-            if (SelectedCartItem == itemToRemove)
-                SelectedCartItem = null;
-
-            // FIXED: Auto-save table state after removing from cart
-            AutoSaveCurrentTableState();
-        }
-
-        private void ClearCart()
-        {
-            Console.WriteLine("[TransactionViewModel] Clearing cart...");
-
-            CartItems.Clear();
-            UpdateTotals();
-            StatusMessage = "Cart cleared.";
-
-            LoadedTransaction = null;
-            IsTransactionLoaded = false;
-            IsEditMode = false;
-
-            // FIXED: Auto-save table state after clearing cart
-            AutoSaveCurrentTableState();
+            AddToCartWithStatusUpdate(product);
         }
 
         private void UpdateTotals()
@@ -3301,18 +3271,14 @@ namespace QuickTechPOS.ViewModels
 
         #endregion
 
-        #region UPDATED: Direct Printing Methods (No Queue)
+        #region Direct Printing Methods
 
-        /// <summary>
-        /// UPDATED: Direct printing of receipts without queue
-        /// </summary>
         private async Task PrintReceiptDirectAsync()
         {
             try
             {
                 Console.WriteLine("[TransactionViewModel] Starting direct receipt printing...");
 
-                // Check if we have a completed transaction loaded (for reprinting)
                 if (LoadedTransaction != null)
                 {
                     Console.WriteLine($"[TransactionViewModel] Printing receipt for completed transaction #{LoadedTransaction.TransactionId}");
@@ -3320,28 +3286,24 @@ namespace QuickTechPOS.ViewModels
                     StatusMessage = $"Printing receipt for transaction #{LoadedTransaction.TransactionId}...";
                     IsProcessing = true;
 
-                    // Get table information and add to customer name for receipt
                     string tableInfo = SelectedTable?.DisplayName ?? "No Table";
                     string originalCustomerName = LoadedTransaction.CustomerName;
                     LoadedTransaction.CustomerName = $"{originalCustomerName} - {tableInfo}";
 
-                    // SIMPLIFIED: Direct printing without queue
                     string result = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                         LoadedTransaction,
                         CartItems.ToList(),
                         CustomerId,
-                        0, // No balance calculations
+                        0,
                         ExchangeRate);
 
                     StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} ({tableInfo}): {result}";
                     Console.WriteLine($"[TransactionViewModel] Receipt printed directly: {result}");
 
-                    // Restore original customer name
                     LoadedTransaction.CustomerName = originalCustomerName;
                 }
                 else
                 {
-                    // No completed transaction - print current cart as preview/estimate
                     Console.WriteLine("[TransactionViewModel] Printing current cart as preview/estimate");
 
                     if (CartItems.Count == 0)
@@ -3353,18 +3315,16 @@ namespace QuickTechPOS.ViewModels
                     StatusMessage = "Printing cart preview...";
                     IsProcessing = true;
 
-                    // Get table information
                     string tableInfo = SelectedTable?.DisplayName ?? "No Table";
                     string customerNameWithTable = $"{(CustomerName ?? "Walk-in Customer")} - {tableInfo}";
 
-                    // Create a temporary transaction object for printing current cart
                     var previewTransaction = new Transaction
                     {
-                        TransactionId = 0, // Preview - no real transaction ID
+                        TransactionId = 0,
                         CustomerId = CustomerId > 0 ? CustomerId : null,
                         CustomerName = customerNameWithTable,
                         TotalAmount = TotalAmount,
-                        PaidAmount = 0, // Not paid yet - this is a preview
+                        PaidAmount = 0,
                         TransactionDate = DateTime.Now,
                         TransactionType = TransactionType.Sale,
                         Status = TransactionStatus.Pending,
@@ -3374,12 +3334,11 @@ namespace QuickTechPOS.ViewModels
                         CashierRole = _authService.CurrentEmployee?.Role ?? "Cashier"
                     };
 
-                    // SIMPLIFIED: Direct printing without queue
                     string result = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                         previewTransaction,
                         CartItems.ToList(),
                         CustomerId,
-                        0, // No balance calculations
+                        0,
                         ExchangeRate);
 
                     StatusMessage = result.Replace("Transaction", $"Preview ({tableInfo})");
@@ -3397,9 +3356,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// UPDATED: Direct printing of drawer reports without queue
-        /// </summary>
         private async Task PrintDrawerReportDirectAsync()
         {
             try
@@ -3415,7 +3371,6 @@ namespace QuickTechPOS.ViewModels
                 IsProcessing = true;
                 StatusMessage = $"Printing drawer report for drawer #{CurrentDrawer.DrawerId}...";
 
-                // SIMPLIFIED: Direct printing without queue
                 string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
                 StatusMessage = $"Drawer report #{CurrentDrawer.DrawerId}: {result}";
 

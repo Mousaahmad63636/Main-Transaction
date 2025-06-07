@@ -2816,6 +2816,9 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        /// <summary>
+        /// UPDATED: UpdateCartItemQuantity method to support decimal quantities (0.5, 1.5, etc.)
+        /// </summary>
         public void UpdateCartItemQuantity(CartItem cartItem)
         {
             if (cartItem == null)
@@ -2825,8 +2828,12 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Updating quantity for {cartItem.Product.Name} from {cartItem.Quantity}");
 
-                if (cartItem.Quantity <= 0)
-                    cartItem.Quantity = 1;
+                // FIXED: Allow decimal quantities with minimum of 0.1 instead of 1
+                if (cartItem.Quantity < 0.1m)
+                    cartItem.Quantity = 0.1m;
+
+                // FIXED: Round to 2 decimal places for consistency
+                cartItem.Quantity = Math.Round(cartItem.Quantity, 2);
 
                 decimal subtotal = cartItem.Quantity * cartItem.UnitPrice;
 
@@ -2841,7 +2848,7 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 Console.WriteLine($"[TransactionViewModel] Updated quantity for {cartItem.Product.Name}: Qty={cartItem.Quantity}, " +
-                                 $"Subtotal={subtotal}, Discount={cartItem.Discount}, Final={cartItem.Total}");
+                                 $"Subtotal={subtotal:C2}, Discount={cartItem.Discount:C2}, Final={cartItem.Total:C2}");
             }
             catch (Exception ex)
             {
@@ -2851,7 +2858,7 @@ namespace QuickTechPOS.ViewModels
             cartItem.RefreshCalculations();
             UpdateTotals();
 
-            // FIXED: Auto-save table state after quantity update
+            // Auto-save table state after quantity update
             AutoSaveCurrentTableState();
         }
 

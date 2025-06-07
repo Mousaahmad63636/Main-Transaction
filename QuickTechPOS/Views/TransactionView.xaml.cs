@@ -1,12 +1,12 @@
 ﻿// File: QuickTechPOS/Views/TransactionView.xaml.cs
-// OPTIMIZED SPECIFICALLY FOR 1024x768 POS TOUCH SCREENS
-// UPDATED: Product cards, layout spacing, and UI elements sized for 1024x768 resolution
+// UPDATED: Fixed to allow decimal quantities (0.5, 1.5, etc.)
 
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Services;
 using QuickTechPOS.ViewModels;
 using System;
+using System.Globalization;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -20,6 +20,7 @@ namespace QuickTechPOS.Views
     /// TransactionView optimized specifically for 1024x768 POS touch screens
     /// Target resolution: 1024x768 (exact fit optimization)
     /// Focus: Compact but readable product cards, efficient space usage, touch-friendly controls
+    /// UPDATED: Added decimal quantity support (0.5, 1.5, etc.)
     /// </summary>
     public partial class TransactionView : UserControl
     {
@@ -28,6 +29,10 @@ namespace QuickTechPOS.Views
         private readonly TransactionViewModel _viewModel;
         private DateTime _lastTouchTime = DateTime.MinValue;
         private const int TOUCH_DEBOUNCE_MS = 150; // Prevent accidental double-touches
+
+        // Decimal quantity configuration
+        private const decimal MIN_QUANTITY = 0.1m; // Minimum allowed quantity
+        private const decimal QUANTITY_INCREMENT = 0.5m; // Default increment for +/- buttons
 
         #endregion
 
@@ -40,7 +45,7 @@ namespace QuickTechPOS.Views
         /// <exception cref="ArgumentNullException">Thrown when viewModel is null</exception>
         public TransactionView(TransactionViewModel viewModel)
         {
-            Console.WriteLine("[TransactionView] Initializing TransactionView optimized for 1024x768 resolution...");
+            Console.WriteLine("[TransactionView] Initializing TransactionView optimized for 1024x768 resolution with decimal quantity support...");
 
             InitializeComponent();
 
@@ -65,7 +70,7 @@ namespace QuickTechPOS.Views
             // Optimize specifically for 1024x768 resolution
             OptimizeForPOSDisplay();
 
-            Console.WriteLine("[TransactionView] 1024x768 TransactionView initialization completed successfully");
+            Console.WriteLine("[TransactionView] 1024x768 TransactionView initialization completed successfully with decimal quantity support");
         }
 
         #endregion
@@ -137,6 +142,62 @@ namespace QuickTechPOS.Views
             catch (Exception ex)
             {
                 Console.WriteLine($"[TransactionView] Error configuring enhanced touch handling: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// NEW: Handles key presses in quantity field to allow only valid decimal input
+        /// </summary>
+        private void Quantity_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                // Allow: Numbers, Decimal point, Backspace, Delete, Tab, Enter, Arrow keys
+                if ((e.Key >= Key.D0 && e.Key <= Key.D9) ||           // Regular numbers
+                    (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9) ||  // Numpad numbers
+                    e.Key == Key.OemPeriod ||                          // Decimal point (.)
+                    e.Key == Key.Decimal ||                            // Numpad decimal
+                    e.Key == Key.Back ||                               // Backspace
+                    e.Key == Key.Delete ||                             // Delete
+                    e.Key == Key.Tab ||                                // Tab
+                    e.Key == Key.Enter ||                              // Enter
+                    e.Key == Key.Left ||                               // Arrow keys
+                    e.Key == Key.Right ||
+                    e.Key == Key.Home ||
+                    e.Key == Key.End)
+                {
+                    // Allow these keys
+
+                    // Handle Enter key to confirm input
+                    if (e.Key == Key.Enter)
+                    {
+                        textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                        e.Handled = true;
+                    }
+
+                    // Prevent multiple decimal points
+                    if ((e.Key == Key.OemPeriod || e.Key == Key.Decimal) &&
+                        textBox.Text.Contains("."))
+                    {
+                        e.Handled = true;
+                    }
+                }
+                else
+                {
+                    // Block all other keys
+                    e.Handled = true;
+                }
+            }
+        }
+        /// <summary>
+        /// NEW: Handles quantity field focus to select all text for easy editing
+        /// </summary>
+        private void Quantity_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                // Select all text when focused for easy replacement
+                textBox.SelectAll();
             }
         }
 
@@ -420,7 +481,121 @@ namespace QuickTechPOS.Views
 
         #endregion
 
-        #region Standard Event Handlers (Enhanced for Improved Layout)
+        #region UPDATED: Decimal Quantity Support Methods
+
+        /// <summary>
+        /// Validates and parses decimal quantity input
+        /// </summary>
+        /// <param name="input">The input string to validate</param>
+        /// <param name="quantity">The parsed quantity if valid</param>
+        /// <returns>True if the input is a valid decimal quantity</returns>
+        private bool TryParseQuantity(string input, out decimal quantity)
+        {
+            quantity = 0;
+
+            if (string.IsNullOrWhiteSpace(input))
+                return false;
+
+            // Try to parse as decimal using current culture
+            if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.CurrentCulture, out quantity))
+            {
+                // Ensure quantity is within acceptable range
+                if (quantity >= MIN_QUANTITY && quantity <= 999999)
+                {
+                    // Round to 2 decimal places for consistency
+                    quantity = Math.Round(quantity, 2);
+                    return true;
+                }
+            }
+
+            // Try alternative parsing with different culture (handle both . and , as decimal separators)
+            var invariantInput = input.Replace(',', '.');
+            if (decimal.TryParse(invariantInput, NumberStyles.Number, CultureInfo.InvariantCulture, out quantity))
+            {
+                if (quantity >= MIN_QUANTITY && quantity <= 999999)
+                {
+                    quantity = Math.Round(quantity, 2);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Formats a decimal quantity for display
+        /// </summary>
+        /// <param name="quantity">The quantity to format</param>
+        /// <returns>Formatted quantity string</returns>
+        private string FormatQuantity(decimal quantity)
+        {
+            // Remove unnecessary decimal places
+            if (quantity == Math.Floor(quantity))
+            {
+                return quantity.ToString("0");
+            }
+            else
+            {
+                return quantity.ToString("0.##");
+            }
+        }
+
+        /// <summary>
+        /// Increments the quantity of a cart item by the default increment
+        /// </summary>
+        /// <param name="cartItem">The cart item to increment</param>
+        private void IncrementQuantity(CartItem cartItem)
+        {
+            if (cartItem == null) return;
+
+            try
+            {
+                decimal newQuantity = cartItem.Quantity + QUANTITY_INCREMENT;
+                cartItem.Quantity = Math.Round(newQuantity, 2);
+
+                Console.WriteLine($"[TransactionView] Incremented quantity for {cartItem.Product.Name} to {cartItem.Quantity}");
+
+                _viewModel.UpdateCartItemQuantity(cartItem);
+                ProvideHapticFeedback();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error incrementing quantity: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Decrements the quantity of a cart item by the default increment
+        /// </summary>
+        /// <param name="cartItem">The cart item to decrement</param>
+        private void DecrementQuantity(CartItem cartItem)
+        {
+            if (cartItem == null) return;
+
+            try
+            {
+                decimal newQuantity = cartItem.Quantity - QUANTITY_INCREMENT;
+
+                // Ensure minimum quantity
+                if (newQuantity < MIN_QUANTITY)
+                    newQuantity = MIN_QUANTITY;
+
+                cartItem.Quantity = Math.Round(newQuantity, 2);
+
+                Console.WriteLine($"[TransactionView] Decremented quantity for {cartItem.Product.Name} to {cartItem.Quantity}");
+
+                _viewModel.UpdateCartItemQuantity(cartItem);
+                ProvideHapticFeedback();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error decrementing quantity: {ex.Message}");
+            }
+        }
+
+        #endregion
+
+        #region UPDATED: Standard Event Handlers (Enhanced for Decimal Quantities)
 
         /// <summary>
         /// Handles view model property changes to maintain UI consistency
@@ -510,7 +685,7 @@ namespace QuickTechPOS.Views
         }
 
         /// <summary>
-        /// Handles cart item quantity updates with enhanced touch validation
+        /// UPDATED: Handles cart item quantity updates with enhanced decimal validation and touch support
         /// </summary>
         private void Quantity_LostFocus(object sender, RoutedEventArgs e)
         {
@@ -518,20 +693,41 @@ namespace QuickTechPOS.Views
             {
                 try
                 {
-                    Console.WriteLine($"[TransactionView] Quantity updated for {cartItem.Product.Name}: {cartItem.Quantity}");
+                    string inputText = textBox.Text?.Trim() ?? "";
+                    Console.WriteLine($"[TransactionView] Quantity input received for {cartItem.Product.Name}: '{inputText}'");
 
-                    // Enhanced validation for touch input
-                    if (cartItem.Quantity < 1)
+                    // Validate and parse the decimal quantity
+                    if (TryParseQuantity(inputText, out decimal parsedQuantity))
                     {
-                        cartItem.Quantity = 1;
-                        textBox.Text = "1";
+                        // Update the cart item with the parsed quantity
+                        cartItem.Quantity = parsedQuantity;
+
+                        // Update the text box to show the properly formatted value
+                        textBox.Text = FormatQuantity(parsedQuantity);
+
+                        Console.WriteLine($"[TransactionView] Quantity updated for {cartItem.Product.Name}: {cartItem.Quantity}");
+
+                        // Delegate quantity update to view model for business logic processing
+                        _viewModel.UpdateCartItemQuantity(cartItem);
+
+                        // Provide enhanced haptic feedback if available
+                        ProvideHapticFeedback();
                     }
+                    else
+                    {
+                        // Invalid input - show error and reset to previous valid value
+                        Console.WriteLine($"[TransactionView] Invalid quantity input: '{inputText}'. Resetting to previous value.");
 
-                    // Delegate quantity update to view model for business logic processing
-                    _viewModel.UpdateCartItemQuantity(cartItem);
+                        textBox.Text = FormatQuantity(cartItem.Quantity);
 
-                    // Provide enhanced haptic feedback if available
-                    ProvideHapticFeedback();
+                        // Show user-friendly error message
+                        string errorMessage = $"Invalid quantity '{inputText}'. Please enter a decimal number ≥ {MIN_QUANTITY}.";
+                        MessageBox.Show(errorMessage, "Invalid Quantity", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                        // Refocus the textbox for correction
+                        textBox.Focus();
+                        textBox.SelectAll();
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -539,6 +735,7 @@ namespace QuickTechPOS.Views
                     System.Diagnostics.Debug.WriteLine($"Quantity update error: {ex.Message}");
 
                     // Reset to previous valid value if update fails
+                    textBox.Text = FormatQuantity(cartItem.Quantity);
                     textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
                 }
             }
@@ -591,6 +788,28 @@ namespace QuickTechPOS.Views
                     Console.WriteLine($"[TransactionView] Discount type change error: {ex.Message}");
                     System.Diagnostics.Debug.WriteLine($"Discount type change error: {ex.Message}");
                 }
+            }
+        }
+
+        /// <summary>
+        /// NEW: Handles quantity increment button clicks
+        /// </summary>
+        private void QuantityIncrement_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is CartItem cartItem)
+            {
+                IncrementQuantity(cartItem);
+            }
+        }
+
+        /// <summary>
+        /// NEW: Handles quantity decrement button clicks
+        /// </summary>
+        private void QuantityDecrement_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Button button && button.DataContext is CartItem cartItem)
+            {
+                DecrementQuantity(cartItem);
             }
         }
 

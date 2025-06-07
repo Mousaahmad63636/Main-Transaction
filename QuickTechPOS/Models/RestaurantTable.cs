@@ -1,16 +1,20 @@
 ﻿// File: QuickTechPOS/Models/RestaurantTable.cs
 
 using System;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Runtime.CompilerServices;
 
 namespace QuickTechPOS.Models
 {
     /// <summary>
     /// Represents a restaurant table entity for table management and ordering
     /// </summary>
-    public class RestaurantTable
+    public class RestaurantTable : INotifyPropertyChanged
     {
+        private string _status = "Available";
+
         /// <summary>
         /// Unique identifier for the restaurant table
         /// </summary>
@@ -28,7 +32,24 @@ namespace QuickTechPOS.Models
         /// </summary>
         [Required]
         [StringLength(50)]
-        public string Status { get; set; } = "Available";
+        public string Status
+        {
+            get => _status;
+            set
+            {
+                if (_status != value)
+                {
+                    _status = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(StatusDisplay));
+                    OnPropertyChanged(nameof(IsAvailable));
+                    OnPropertyChanged(nameof(IsOccupied));
+                    OnPropertyChanged(nameof(IsReserved));
+                    OnPropertyChanged(nameof(StatusClass));
+                    OnPropertyChanged(nameof(TableInfo));
+                }
+            }
+        }
 
         /// <summary>
         /// Optional description or notes about the table
@@ -112,6 +133,20 @@ namespace QuickTechPOS.Models
                 }
                 return info;
             }
+        }
+
+        /// <summary>
+        /// Property changed event for data binding
+        /// </summary>
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        /// <summary>
+        /// Raises the PropertyChanged event
+        /// </summary>
+        /// <param name="propertyName">Name of the property that changed</param>
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         /// <summary>

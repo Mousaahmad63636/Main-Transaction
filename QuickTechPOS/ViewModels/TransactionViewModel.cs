@@ -637,13 +637,32 @@ namespace QuickTechPOS.ViewModels
                 if (table.Status != newStatus)
                 {
                     table.Status = newStatus;
-                    OnPropertyChanged(nameof(SelectedTable));
 
+                    // ENHANCED: Update status in ActiveTables collection and notify UI
                     var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
                     if (activeTable != null)
                     {
                         activeTable.Status = newStatus;
                     }
+
+                    // CRITICAL: Force UI refresh for table status changes
+                    Application.Current.Dispatcher.Invoke(() => {
+                        OnPropertyChanged(nameof(SelectedTable));
+                        OnPropertyChanged(nameof(ActiveTables));
+                        OnPropertyChanged(nameof(CurrentTableInfo));
+                        OnPropertyChanged(nameof(TableDisplayText));
+
+                        // Force refresh of the collection
+                        if (ActiveTables != null)
+                        {
+                            var temp = ActiveTables.ToList();
+                            ActiveTables.Clear();
+                            foreach (var t in temp)
+                            {
+                                ActiveTables.Add(t);
+                            }
+                        }
+                    });
 
                     Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status to: {newStatus}");
                 }
@@ -653,7 +672,6 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Error updating table visual status: {ex.Message}");
             }
         }
-
         private void SaveTableStateWithStatusUpdate(RestaurantTable table)
         {
             if (table == null)
@@ -706,11 +724,15 @@ namespace QuickTechPOS.ViewModels
                     UpdateTableVisualStatus(SelectedTable);
                 }
 
-                UpdateTableDisplayInformation();
-                OnPropertyChanged(nameof(SelectedTable));
-                OnPropertyChanged(nameof(CurrentTableInfo));
-                OnPropertyChanged(nameof(TableDisplayText));
-                CommandManager.InvalidateRequerySuggested();
+                // CRITICAL: Force UI refresh after all status updates
+                Application.Current.Dispatcher.Invoke(() => {
+                    UpdateTableDisplayInformation();
+                    OnPropertyChanged(nameof(SelectedTable));
+                    OnPropertyChanged(nameof(CurrentTableInfo));
+                    OnPropertyChanged(nameof(TableDisplayText));
+                    OnPropertyChanged(nameof(ActiveTables));
+                    CommandManager.InvalidateRequerySuggested();
+                });
 
                 Console.WriteLine("[TransactionViewModel] All table statuses refreshed");
             }
@@ -801,7 +823,6 @@ namespace QuickTechPOS.ViewModels
                 if (existingItemIndex >= 0)
                 {
                     var existingItem = CartItems[existingItemIndex];
-
                     existingItem.Quantity += 1;
 
                     if (existingItem.DiscountType == 1)
@@ -837,7 +858,19 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 UpdateTotals();
-                AutoSaveCurrentTableStateWithStatus();
+
+                // CRITICAL: Force immediate table status update after adding item
+                if (SelectedTable != null)
+                {
+                    SaveTableStateWithStatusUpdate(SelectedTable);
+
+                    // Force immediate UI refresh
+                    Application.Current.Dispatcher.Invoke(() => {
+                        UpdateTableVisualStatus(SelectedTable);
+                        OnPropertyChanged(nameof(SelectedTable));
+                        OnPropertyChanged(nameof(CurrentTableInfo));
+                    });
+                }
             }
             catch (Exception ex)
             {
@@ -845,7 +878,6 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error adding product to cart: {ex.Message}";
             }
         }
-
         private void RemoveFromCartWithStatusUpdate(CartItem cartItem = null)
         {
             var itemToRemove = cartItem ?? SelectedCartItem;

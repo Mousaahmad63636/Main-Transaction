@@ -19,18 +19,14 @@ namespace QuickTechPOS
         private MainWindow _mainWindow;
         private Customer _walkInCustomer;
         private TransactionViewModel _transactionViewModel;
-        // Add this field to the App class
-        private PrintQueueManager _printQueueManager;
 
-        // Add this property to the App class
-        public PrintQueueManager PrintQueueManager => _printQueueManager;
+        // REMOVED: Print queue manager - direct printing only
 
         protected override async void OnStartup(StartupEventArgs e)
         {
             base.OnStartup(e);
 
-            // Initialize printing queue manager
-            _printQueueManager = new PrintQueueManager();
+            // REMOVED: Print queue manager initialization - simplified printing
 
             // Initialize language settings first (loads saved language)
             LanguageManager.Initialize();
@@ -63,8 +59,6 @@ namespace QuickTechPOS
             // Show the main window
             _mainWindow.Show();
         }
-
-        // File: QuickTechPOS/App.xaml.cs
 
         private async Task CheckForOpenDrawerAsync(AuthenticationService authService)
         {
@@ -188,8 +182,6 @@ namespace QuickTechPOS
                     MessageBoxImage.Error);
             }
         }
-
-        // File: QuickTechPOS/App.xaml.cs
 
         private async Task<bool> RetryOpenDrawerAsync(AuthenticationService authService)
         {
@@ -340,7 +332,6 @@ namespace QuickTechPOS
                 return false;
             }
         }
-        // File: QuickTechPOS/App.xaml.cs
 
         private async Task<bool> VerifyOpenDrawerWithRetryAsync(string cashierId, int maxRetries = 3, int delayMs = 800)
         {
@@ -404,6 +395,7 @@ namespace QuickTechPOS
             Console.WriteLine($"[App] Drawer verification failed after {maxRetries + 1} attempts");
             return false;
         }
+
         private void RegisterViews()
         {
             // Create a shared authentication service

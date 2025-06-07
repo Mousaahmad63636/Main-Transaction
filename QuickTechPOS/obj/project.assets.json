@@ -4511,11 +4511,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
+      "projectUniqueName": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
       "projectName": "QuickTechPOS",
-      "projectPath": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
+      "projectPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
       "packagesPath": "C:\\Users\\Mr. Ahmad\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\obj\\",
+      "outputPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\Mr. Ahmad\\AppData\\Roaming\\NuGet\\NuGet.Config",

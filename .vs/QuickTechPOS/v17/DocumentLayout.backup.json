@@ -1,12 +1,37 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\4-6-2025 POS PAGE Sunshine\\POS PAGE\\",
-  "Documents": [],
+  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "TransactionViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "RelativeDocumentMoniker": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "RelativeToolTip": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "ViewState": "AgIAAKgNAAAAAAAAAADwv70NAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-07T09:05:11.931Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

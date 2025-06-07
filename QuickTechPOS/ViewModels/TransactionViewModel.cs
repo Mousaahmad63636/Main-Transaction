@@ -1,5 +1,6 @@
 ﻿// File: QuickTechPOS/ViewModels/TransactionViewModel.cs
 // COMPLETE FILE: Enhanced with table navigation and multi-table support
+// SIMPLIFIED: Removed print queue - direct printing only
 // UPDATED: Customer selection UI functionality removed
 
 using Microsoft.EntityFrameworkCore;
@@ -9,16 +10,13 @@ using QuickTechPOS.Models.Enums;
 using QuickTechPOS.Services;
 using QuickTechPOS.Views;
 using System;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Linq;
 using System.Printing;
 using System.Text;
-using System.Threading.Tasks;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -78,7 +76,8 @@ namespace QuickTechPOS.ViewModels
         private readonly BusinessSettingsService _businessSettingsService;
         private readonly CustomerProductPriceService _customerPriceService;
         private readonly Customer _walkInCustomer;
-        private readonly PrintQueueManager _printQueueManager;
+
+        // REMOVED: Print queue manager - direct printing only
 
         #endregion
 
@@ -522,7 +521,7 @@ namespace QuickTechPOS.ViewModels
         public ICommand CashOutCommand { get; }
         public ICommand OpenDrawerCommand { get; }
         public ICommand CloseDrawerCommand { get; }
-        public ICommand ViewPrintQueueCommand { get; }
+        // REMOVED: ViewPrintQueueCommand
         public ICommand CashInCommand { get; }
 
         #endregion
@@ -550,8 +549,7 @@ namespace QuickTechPOS.ViewModels
 
             Console.WriteLine("[TransactionViewModel] Services initialized successfully");
 
-            // Get the print queue manager from the App
-            _printQueueManager = (Application.Current as App)?.PrintQueueManager;
+            // REMOVED: Print queue manager initialization - using direct printing only
             _transactionService = new TransactionService();
 
             // Initialize default values
@@ -635,7 +633,7 @@ namespace QuickTechPOS.ViewModels
 
             // Transaction commands
             CheckoutCommand = new RelayCommand(async param => await CheckoutAsync(), param => CanCheckout && IsDrawerOpen);
-            PrintReceiptCommand = new RelayCommand(param => PrintReceipt());
+            PrintReceiptCommand = new RelayCommand(async param => await PrintReceiptDirectAsync()); // UPDATED: Direct printing
             LookupTransactionCommand = new RelayCommand(async param =>
             {
                 if (param != null)
@@ -648,7 +646,7 @@ namespace QuickTechPOS.ViewModels
             SaveTransactionCommand = new RelayCommand(async param => await SaveTransactionChangesAsync(), param => IsTransactionLoaded && IsEditMode);
 
             // Drawer commands
-            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportAsync(), param => IsDrawerOpen);
+            PrintDrawerReportCommand = new RelayCommand(async param => await PrintDrawerReportDirectAsync(), param => IsDrawerOpen); // UPDATED: Direct printing
             CashOutCommand = new RelayCommand(async param => await ShowCashOutDialogAsync(), param => IsDrawerOpen);
             OpenDrawerCommand = new RelayCommand(async param => await OpenDrawerDialogAsync());
             CloseDrawerCommand = new RelayCommand(async param => await CloseDrawerDialogAsync(), param => IsDrawerOpen);
@@ -657,8 +655,7 @@ namespace QuickTechPOS.ViewModels
             // Recovery command
             OpenRecoveryDialogCommand = new RelayCommand(param => OpenRecoveryDialog());
 
-            // Print queue commands
-            ViewPrintQueueCommand = new RelayCommand(param => ViewPrintQueue(), param => _printQueueManager != null);
+            // REMOVED: Print queue commands
 
             Console.WriteLine("[TransactionViewModel] All commands initialized (Customer UI commands excluded)");
 
@@ -1555,25 +1552,7 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        private void ViewPrintQueue()
-        {
-            if (_printQueueManager == null)
-            {
-                StatusMessage = "Print queue manager is not available.";
-                return;
-            }
-
-            try
-            {
-                var dialog = new PrintJobStatusDialog(_printQueueManager);
-                dialog.Owner = Application.Current.MainWindow;
-                dialog.ShowDialog();
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error opening print queue dialog: {ex.Message}";
-            }
-        }
+        // REMOVED: ViewPrintQueue method - no longer needed with direct printing
 
         private async Task CheckForFailedTransactionsAsync()
         {
@@ -2008,8 +1987,7 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // Rest of the existing methods remain unchanged...
-        // [The rest of the file continues with all the existing transaction, cart, checkout, navigation, etc. methods]
+        #endregion
 
         #region Checkout and Transaction Methods
 
@@ -2157,6 +2135,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Transaction #{transaction.TransactionId} created successfully");
                 Console.WriteLine($"[TransactionViewModel] - Total Amount: {transaction.TotalAmount:C2}, Paid Amount: {transaction.PaidAmount:C2}, Payment Method: {transaction.PaymentMethod}");
 
+                // UPDATED: Direct printing instead of queue
                 string receiptResult = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                     transaction,
                     CartItems.ToList(),
@@ -3257,129 +3236,7 @@ namespace QuickTechPOS.ViewModels
                 CanNavigatePrevious = false;
             }
         }
-        private void PrintReceipt()
-        {
-            try
-            {
-                // Check if we have a completed transaction loaded (for reprinting)
-                if (LoadedTransaction != null)
-                {
-                    Console.WriteLine($"[TransactionViewModel] Printing receipt for completed transaction #{LoadedTransaction.TransactionId}");
 
-                    StatusMessage = $"Preparing receipt for transaction #{LoadedTransaction.TransactionId}...";
-                    IsProcessing = true;
-
-                    // Get table information and add to customer name for receipt
-                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
-                    string originalCustomerName = LoadedTransaction.CustomerName;
-                    LoadedTransaction.CustomerName = $"{originalCustomerName} - {tableInfo}";
-
-                    if (_printQueueManager != null)
-                    {
-                        string jobId = _printQueueManager.EnqueueTransactionReceipt(
-                            LoadedTransaction,
-                            CartItems.ToList(),
-                            CustomerId,
-                            0, // No balance calculations
-                            ExchangeRate);
-
-                        StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} ({tableInfo}) queued for printing.";
-                        Console.WriteLine($"[TransactionViewModel] Receipt queued for printing with job ID: {jobId}");
-                    }
-                    else
-                    {
-                        _receiptPrinterService.PrintTransactionReceiptWpfAsync(
-                            LoadedTransaction,
-                            CartItems.ToList(),
-                            CustomerId,
-                            0, // No balance calculations
-                            ExchangeRate).ContinueWith(t =>
-                            {
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    StatusMessage = t.Result;
-                                });
-                            });
-                    }
-
-                    // Restore original customer name
-                    LoadedTransaction.CustomerName = originalCustomerName;
-                }
-                else
-                {
-                    // No completed transaction - print current cart as preview/estimate
-                    Console.WriteLine("[TransactionViewModel] Printing current cart as preview/estimate");
-
-                    if (CartItems.Count == 0)
-                    {
-                        StatusMessage = "Cart is empty. Add items to cart before printing.";
-                        return;
-                    }
-
-                    StatusMessage = "Preparing cart preview for printing...";
-                    IsProcessing = true;
-
-                    // Get table information
-                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
-                    string customerNameWithTable = $"{(CustomerName ?? "Walk-in Customer")} - {tableInfo}";
-
-                    // Create a temporary transaction object for printing current cart
-                    var previewTransaction = new Transaction
-                    {
-                        TransactionId = 0, // Preview - no real transaction ID
-                        CustomerId = CustomerId > 0 ? CustomerId : null,
-                        CustomerName = customerNameWithTable, // Include table info here
-                        TotalAmount = TotalAmount,
-                        PaidAmount = 0, // Not paid yet - this is a preview
-                        TransactionDate = DateTime.Now,
-                        TransactionType = TransactionType.Sale,
-                        Status = TransactionStatus.Pending,
-                        PaymentMethod = "PREVIEW",
-                        CashierId = _authService.CurrentEmployee?.EmployeeId.ToString() ?? "0",
-                        CashierName = _authService.CurrentEmployee?.FullName ?? "Cashier",
-                        CashierRole = _authService.CurrentEmployee?.Role ?? "Cashier"
-                    };
-
-                    if (_printQueueManager != null)
-                    {
-                        string jobId = _printQueueManager.EnqueueTransactionReceipt(
-                            previewTransaction,
-                            CartItems.ToList(),
-                            CustomerId,
-                            0, // No balance calculations
-                            ExchangeRate);
-
-                        StatusMessage = $"Cart preview for {tableInfo} queued for printing.";
-                        Console.WriteLine($"[TransactionViewModel] Cart preview queued for printing with job ID: {jobId}");
-                    }
-                    else
-                    {
-                        _receiptPrinterService.PrintTransactionReceiptWpfAsync(
-                            previewTransaction,
-                            CartItems.ToList(),
-                            CustomerId,
-                            0, // No balance calculations
-                            ExchangeRate).ContinueWith(t =>
-                            {
-                                Application.Current.Dispatcher.Invoke(() =>
-                                {
-                                    StatusMessage = t.Result.Replace("Transaction", $"Preview ({tableInfo})");
-                                });
-                            });
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                StatusMessage = $"Error printing: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Print error: {ex}");
-            }
-            finally
-            {
-                IsProcessing = false;
-            }
-        }
-        
         private async Task NavigateToNextTransactionAsync()
         {
             try
@@ -3444,13 +3301,110 @@ namespace QuickTechPOS.ViewModels
 
         #endregion
 
-        #region Print and Report Methods
+        #region UPDATED: Direct Printing Methods (No Queue)
 
-        private async Task PrintDrawerReportAsync()
+        /// <summary>
+        /// UPDATED: Direct printing of receipts without queue
+        /// </summary>
+        private async Task PrintReceiptDirectAsync()
         {
             try
             {
-                Console.WriteLine("[TransactionViewModel] Starting PrintDrawerReportAsync...");
+                Console.WriteLine("[TransactionViewModel] Starting direct receipt printing...");
+
+                // Check if we have a completed transaction loaded (for reprinting)
+                if (LoadedTransaction != null)
+                {
+                    Console.WriteLine($"[TransactionViewModel] Printing receipt for completed transaction #{LoadedTransaction.TransactionId}");
+
+                    StatusMessage = $"Printing receipt for transaction #{LoadedTransaction.TransactionId}...";
+                    IsProcessing = true;
+
+                    // Get table information and add to customer name for receipt
+                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string originalCustomerName = LoadedTransaction.CustomerName;
+                    LoadedTransaction.CustomerName = $"{originalCustomerName} - {tableInfo}";
+
+                    // SIMPLIFIED: Direct printing without queue
+                    string result = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
+                        LoadedTransaction,
+                        CartItems.ToList(),
+                        CustomerId,
+                        0, // No balance calculations
+                        ExchangeRate);
+
+                    StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} ({tableInfo}): {result}";
+                    Console.WriteLine($"[TransactionViewModel] Receipt printed directly: {result}");
+
+                    // Restore original customer name
+                    LoadedTransaction.CustomerName = originalCustomerName;
+                }
+                else
+                {
+                    // No completed transaction - print current cart as preview/estimate
+                    Console.WriteLine("[TransactionViewModel] Printing current cart as preview/estimate");
+
+                    if (CartItems.Count == 0)
+                    {
+                        StatusMessage = "Cart is empty. Add items to cart before printing.";
+                        return;
+                    }
+
+                    StatusMessage = "Printing cart preview...";
+                    IsProcessing = true;
+
+                    // Get table information
+                    string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string customerNameWithTable = $"{(CustomerName ?? "Walk-in Customer")} - {tableInfo}";
+
+                    // Create a temporary transaction object for printing current cart
+                    var previewTransaction = new Transaction
+                    {
+                        TransactionId = 0, // Preview - no real transaction ID
+                        CustomerId = CustomerId > 0 ? CustomerId : null,
+                        CustomerName = customerNameWithTable,
+                        TotalAmount = TotalAmount,
+                        PaidAmount = 0, // Not paid yet - this is a preview
+                        TransactionDate = DateTime.Now,
+                        TransactionType = TransactionType.Sale,
+                        Status = TransactionStatus.Pending,
+                        PaymentMethod = "PREVIEW",
+                        CashierId = _authService.CurrentEmployee?.EmployeeId.ToString() ?? "0",
+                        CashierName = _authService.CurrentEmployee?.FullName ?? "Cashier",
+                        CashierRole = _authService.CurrentEmployee?.Role ?? "Cashier"
+                    };
+
+                    // SIMPLIFIED: Direct printing without queue
+                    string result = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
+                        previewTransaction,
+                        CartItems.ToList(),
+                        CustomerId,
+                        0, // No balance calculations
+                        ExchangeRate);
+
+                    StatusMessage = result.Replace("Transaction", $"Preview ({tableInfo})");
+                    Console.WriteLine($"[TransactionViewModel] Cart preview printed directly: {result}");
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error printing: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Direct print error: {ex}");
+            }
+            finally
+            {
+                IsProcessing = false;
+            }
+        }
+
+        /// <summary>
+        /// UPDATED: Direct printing of drawer reports without queue
+        /// </summary>
+        private async Task PrintDrawerReportDirectAsync()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionViewModel] Starting direct drawer report printing...");
 
                 if (CurrentDrawer == null)
                 {
@@ -3459,25 +3413,18 @@ namespace QuickTechPOS.ViewModels
                 }
 
                 IsProcessing = true;
-                StatusMessage = $"Preparing drawer report for drawer #{CurrentDrawer.DrawerId}...";
+                StatusMessage = $"Printing drawer report for drawer #{CurrentDrawer.DrawerId}...";
 
-                if (_printQueueManager != null)
-                {
-                    string jobId = _printQueueManager.EnqueueDrawerReport(CurrentDrawer);
-                    StatusMessage = $"Drawer report #{CurrentDrawer.DrawerId} queued for printing (Job ID: {jobId}).";
-                }
-                else
-                {
-                    string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
-                    StatusMessage = result;
-                }
+                // SIMPLIFIED: Direct printing without queue
+                string result = await _receiptPrinterService.PrintDrawerReportAsync(CurrentDrawer);
+                StatusMessage = $"Drawer report #{CurrentDrawer.DrawerId}: {result}";
 
-                Console.WriteLine("[TransactionViewModel] PrintDrawerReportAsync completed");
+                Console.WriteLine($"[TransactionViewModel] Drawer report printed directly: {result}");
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error printing drawer report: {ex.Message}";
-                Console.WriteLine($"[TransactionViewModel] Drawer report print error: {ex}");
+                Console.WriteLine($"[TransactionViewModel] Direct drawer report print error: {ex}");
             }
             finally
             {
@@ -3567,8 +3514,5 @@ namespace QuickTechPOS.ViewModels
         }
 
         #endregion
-
-        #endregion
     }
 }
-    

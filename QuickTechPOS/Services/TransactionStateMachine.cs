@@ -446,58 +446,13 @@ namespace QuickTechPOS.Services
                 Console.WriteLine($"[TransactionStateMachine] Payment Method: {context.Transaction.PaymentMethod}");
                 Console.WriteLine($"[TransactionStateMachine] Drawer Before Update - Balance: {context.Drawer.CurrentBalance:C2}");
 
-                // Determine drawer transaction type and description based on payment method
-                string drawerTransactionType;
-                string drawerDescription;
-
-                if (context.Transaction.PaymentMethod == "Debt")
-                {
-                    if (cashAmountForDrawer > 0)
-                    {
-                        drawerTransactionType = "Partial Cash Sale";
-                        drawerDescription = $"Debt Transaction #{context.Transaction.TransactionId} (Cash: {cashAmountForDrawer:C2}, Debt: {context.AmountToDebt:C2})";
-                    }
-                    else
-                    {
-                        drawerTransactionType = "Debt Sale";
-                        drawerDescription = $"Full Debt Transaction #{context.Transaction.TransactionId} (Total Debt: {context.AmountToDebt:C2})";
-                    }
-                }
-                else
-                {
-                    drawerTransactionType = "Cash Sale";
-                    drawerDescription = $"Cash Transaction #{context.Transaction.TransactionId}";
-                }
-
-                // Create drawer transaction record with appropriate payment method
-                var drawerTransaction = new DrawerTransaction
-                {
-                    DrawerId = context.Drawer.DrawerId,
-                    Timestamp = DateTime.Now,
-                    Type = drawerTransactionType,
-                    Amount = cashAmountForDrawer, // Only the cash portion
-                    Balance = context.Drawer.CurrentBalance + cashAmountForDrawer,
-                    ActionType = "Sale",
-                    Description = drawerDescription,
-                    TransactionReference = context.Transaction.TransactionId.ToString(),
-                    IsVoided = false,
-                    PaymentMethod = context.Transaction.PaymentMethod // Use the transaction's payment method
-                };
-
-                _dbContext.DrawerTransactions.Add(drawerTransaction);
-                await _dbContext.SaveChangesAsync();
-
-                Console.WriteLine($"[TransactionStateMachine] Drawer transaction record created:");
-                Console.WriteLine($"[TransactionStateMachine] - Type: {drawerTransactionType}");
-                Console.WriteLine($"[TransactionStateMachine] - Amount: {cashAmountForDrawer:C2}");
-                Console.WriteLine($"[TransactionStateMachine] - Payment Method: {context.Transaction.PaymentMethod}");
-
                 // Update drawer with only the cash amount received (if any)
                 if (cashAmountForDrawer > 0)
                 {
                     Drawer updatedDrawer;
                     try
                     {
+                        // Let UpdateDrawerTransactionsAsync handle the DrawerTransaction creation
                         updatedDrawer = await _drawerService.UpdateDrawerTransactionsAsync(
                             context.Drawer.DrawerId,
                             cashAmountForDrawer, // Only cash received, not total amount

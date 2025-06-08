@@ -950,7 +950,7 @@ namespace QuickTechPOS.Services
                         Balance = drawer.CurrentBalance,
                         ActionType = "Sale",
                         Description = "Sale added to drawer",
-                        TransactionReference = "",
+                        TransactionReference = "", // This will be populated by the calling context if needed
                         IsVoided = false,
                         PaymentMethod = "Cash"
                     };

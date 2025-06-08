@@ -3,20 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\models\\restauranttable.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\models\\restauranttable.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\transactionview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\views\\transactionview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\restauranttabledialog.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\views\\restauranttabledialog.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
     }
   ],
   "DocumentGroupContainers": [
@@ -31,50 +19,15 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "RestaurantTable.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Models\\RestaurantTable.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\Models\\RestaurantTable.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Models\\RestaurantTable.cs",
-              "RelativeToolTip": "QuickTechPOS\\Models\\RestaurantTable.cs",
-              "ViewState": "AgIAAP0AAAAAAAAAAAA5wBkBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-07T10:24:17.116Z",
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
+              "RelativeDocumentMoniker": "QuickTechPOS\\appsettings.json",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
+              "RelativeToolTip": "QuickTechPOS\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAApAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-07T17:03:06.325Z",
               "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 1,
-              "Title": "TransactionView.xaml.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "RelativeToolTip": "QuickTechPOS\\Views\\TransactionView.xaml.cs",
-              "ViewState": "AgIAAIoDAAAAAAAAAAAqwDgCAAAGAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-07T09:52:08.052Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TransactionViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "RelativeToolTip": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "ViewState": "AgIAALgCAAAAAAAAAAAIwOYCAAAJAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-07T09:05:11.931Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 3,
-              "Title": "RestaurantTableDialog.xaml",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\RestaurantTableDialog.xaml",
-              "RelativeDocumentMoniker": "QuickTechPOS\\Views\\RestaurantTableDialog.xaml",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\RestaurantTableDialog.xaml",
-              "RelativeToolTip": "QuickTechPOS\\Views\\RestaurantTableDialog.xaml",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-06-07T09:50:21.807Z"
             }
           ]
         }

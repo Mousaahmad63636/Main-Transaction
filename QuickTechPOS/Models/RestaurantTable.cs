@@ -1,35 +1,28 @@
-﻿// File: QuickTechPOS/Models/RestaurantTable.cs
-
-using System;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 using System.Runtime.CompilerServices;
 
 namespace QuickTechPOS.Models
 {
-    /// <summary>
-    /// Represents a restaurant table entity for table management and ordering
-    /// </summary>
+    [Table("RestaurantTables")]
     public class RestaurantTable : INotifyPropertyChanged
     {
-        private string _status = "Available";
+        private string _status;
+        private string _description;
+        private bool _isActive;
+        private DateTime? _updatedAt;
 
-        /// <summary>
-        /// Unique identifier for the restaurant table
-        /// </summary>
         [Key]
         public int Id { get; set; }
 
-        /// <summary>
-        /// Table number for identification and ordering
-        /// </summary>
         [Required]
+        [Range(1, int.MaxValue, ErrorMessage = "Table number must be greater than 0")]
         public int TableNumber { get; set; }
 
-        /// <summary>
-        /// Current status of the table (Available, Occupied, Reserved, Out of Service)
-        /// </summary>
         [Required]
         [StringLength(50)]
         public string Status
@@ -40,199 +33,257 @@ namespace QuickTechPOS.Models
                 if (_status != value)
                 {
                     _status = value;
+                    _updatedAt = DateTime.Now;
                     OnPropertyChanged();
-                    OnPropertyChanged(nameof(StatusDisplay));
                     OnPropertyChanged(nameof(IsAvailable));
                     OnPropertyChanged(nameof(IsOccupied));
                     OnPropertyChanged(nameof(IsReserved));
-                    OnPropertyChanged(nameof(StatusClass));
+                    OnPropertyChanged(nameof(StatusColor));
+                    OnPropertyChanged(nameof(StatusIcon));
+                    OnPropertyChanged(nameof(DisplayName));
                     OnPropertyChanged(nameof(TableInfo));
                 }
             }
         }
 
-        /// <summary>
-        /// Optional description or notes about the table
-        /// </summary>
-        [StringLength(500)]
-        public string Description { get; set; } = string.Empty;
+        [StringLength(255)]
+        public string Description
+        {
+            get => _description;
+            set
+            {
+                if (_description != value)
+                {
+                    _description = value;
+                    _updatedAt = DateTime.Now;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(DisplayName));
+                    OnPropertyChanged(nameof(TableInfo));
+                }
+            }
+        }
 
-        /// <summary>
-        /// Indicates whether the table is active and available for use
-        /// </summary>
-        public bool IsActive { get; set; } = true;
+        public bool IsActive
+        {
+            get => _isActive;
+            set
+            {
+                if (_isActive != value)
+                {
+                    _isActive = value;
+                    _updatedAt = DateTime.Now;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
-        /// <summary>
-        /// Date and time when the table record was created
-        /// </summary>
         public DateTime CreatedAt { get; set; } = DateTime.Now;
 
-        /// <summary>
-        /// Date and time when the table record was last updated
-        /// </summary>
-        public DateTime? UpdatedAt { get; set; }
+        public DateTime? UpdatedAt
+        {
+            get => _updatedAt;
+            set
+            {
+                if (_updatedAt != value)
+                {
+                    _updatedAt = value;
+                    OnPropertyChanged();
+                }
+            }
+        }
 
-        /// <summary>
-        /// Gets the display name for the table
-        /// </summary>
         [NotMapped]
         public string DisplayName => $"Table {TableNumber}";
 
-        /// <summary>
-        /// Gets a formatted status display string
-        /// </summary>
-        [NotMapped]
-        public string StatusDisplay => Status?.ToString() ?? "Unknown";
-
-        /// <summary>
-        /// Gets whether the table is available for new orders
-        /// </summary>
-        [NotMapped]
-        public bool IsAvailable => IsActive &&
-                                  string.Equals(Status, "Available", StringComparison.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Gets whether the table is currently occupied
-        /// </summary>
-        [NotMapped]
-        public bool IsOccupied => IsActive &&
-                                 string.Equals(Status, "Occupied", StringComparison.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Gets whether the table is reserved
-        /// </summary>
-        [NotMapped]
-        public bool IsReserved => IsActive &&
-                                 string.Equals(Status, "Reserved", StringComparison.OrdinalIgnoreCase);
-
-        /// <summary>
-        /// Gets the CSS class for status display based on table status
-        /// </summary>
-        [NotMapped]
-        public string StatusClass => Status?.ToLower() switch
-        {
-            "available" => "status-available",
-            "occupied" => "status-occupied",
-            "reserved" => "status-reserved",
-            "out of service" => "status-outofservice",
-            _ => "status-unknown"
-        };
-
-        /// <summary>
-        /// Gets a detailed information string about the table
-        /// </summary>
         [NotMapped]
         public string TableInfo
         {
             get
             {
-                var info = $"Table {TableNumber} - {Status}";
-                if (!string.IsNullOrWhiteSpace(Description))
+                var info = DisplayName;
+                if (!string.IsNullOrEmpty(Description))
                 {
-                    info += $" ({Description})";
+                    info += $" - {Description}";
                 }
+                info += $" ({Status})";
                 return info;
             }
         }
 
-        /// <summary>
-        /// Property changed event for data binding
-        /// </summary>
-        public event PropertyChangedEventHandler PropertyChanged;
+        [NotMapped]
+        public bool IsAvailable => string.Equals(Status, "Available", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Raises the PropertyChanged event
-        /// </summary>
-        /// <param name="propertyName">Name of the property that changed</param>
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        [NotMapped]
+        public bool IsOccupied => string.Equals(Status, "Occupied", StringComparison.OrdinalIgnoreCase);
 
-        /// <summary>
-        /// Updates the table status and sets the UpdatedAt timestamp
-        /// </summary>
-        /// <param name="newStatus">The new status to set</param>
-        public void UpdateStatus(string newStatus)
+        [NotMapped]
+        public bool IsReserved => string.Equals(Status, "Reserved", StringComparison.OrdinalIgnoreCase);
+
+        [NotMapped]
+        public bool IsOutOfService => string.Equals(Status, "Out of Service", StringComparison.OrdinalIgnoreCase);
+
+        [NotMapped]
+        public string StatusColor
         {
-            if (!string.IsNullOrWhiteSpace(newStatus) && Status != newStatus)
+            get
             {
-                Status = newStatus;
-                UpdatedAt = DateTime.Now;
+                return Status?.ToLower() switch
+                {
+                    "available" => "#10B981",
+                    "occupied" => "#EF4444",
+                    "reserved" => "#F59E0B",
+                    "out of service" => "#6B7280",
+                    _ => "#9CA3AF"
+                };
             }
         }
 
-        /// <summary>
-        /// Marks the table as available and updates the timestamp
-        /// </summary>
-        public void SetAvailable()
+        [NotMapped]
+        public string StatusIcon
         {
-            UpdateStatus("Available");
+            get
+            {
+                return Status?.ToLower() switch
+                {
+                    "available" => "✓",
+                    "occupied" => "🔴",
+                    "reserved" => "📋",
+                    "out of service" => "⚠",
+                    _ => "❓"
+                };
+            }
         }
 
-        /// <summary>
-        /// Marks the table as occupied and updates the timestamp
-        /// </summary>
+        [NotMapped]
+        public string StatusDisplayText
+        {
+            get
+            {
+                return Status?.ToLower() switch
+                {
+                    "available" => "Available (Green)",
+                    "occupied" => "Occupied (Red - Has Items)",
+                    "reserved" => "Reserved (Orange)",
+                    "out of service" => "Out of Service (Gray)",
+                    _ => Status ?? "Unknown"
+                };
+            }
+        }
+
+        [NotMapped]
+        public static readonly HashSet<string> ValidStatuses = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "Available",
+            "Occupied",
+            "Reserved",
+            "Out of Service"
+        };
+
+        public static bool IsValidStatus(string status)
+        {
+            return !string.IsNullOrWhiteSpace(status) && ValidStatuses.Contains(status);
+        }
+
+        public void UpdateStatus(string newStatus)
+        {
+            if (!IsValidStatus(newStatus))
+            {
+                throw new ArgumentException($"Invalid table status: {newStatus}. Valid statuses are: {string.Join(", ", ValidStatuses)}");
+            }
+
+            var oldStatus = Status;
+            Status = newStatus;
+            UpdatedAt = DateTime.Now;
+
+            Console.WriteLine($"[RestaurantTable] Enhanced status update for Table {TableNumber}: '{oldStatus}' -> '{newStatus}' at {UpdatedAt}");
+        }
+
         public void SetOccupied()
         {
             UpdateStatus("Occupied");
+            Console.WriteLine($"[RestaurantTable] Table {TableNumber} set to Occupied (Red - Has Items)");
         }
 
-        /// <summary>
-        /// Marks the table as reserved and updates the timestamp
-        /// </summary>
+        public void SetAvailable()
+        {
+            UpdateStatus("Available");
+            Console.WriteLine($"[RestaurantTable] Table {TableNumber} set to Available (Green - No Items)");
+        }
+
         public void SetReserved()
         {
             UpdateStatus("Reserved");
+            Console.WriteLine($"[RestaurantTable] Table {TableNumber} set to Reserved (Orange)");
         }
 
-        /// <summary>
-        /// Marks the table as out of service and updates the timestamp
-        /// </summary>
         public void SetOutOfService()
         {
             UpdateStatus("Out of Service");
+            Console.WriteLine($"[RestaurantTable] Table {TableNumber} set to Out of Service (Gray)");
         }
 
-        /// <summary>
-        /// Validates the table data
-        /// </summary>
-        /// <returns>True if valid, false otherwise</returns>
-        public bool IsValid()
+        public bool ShouldBeOccupied(int itemCount)
         {
-            return TableNumber > 0 &&
-                   !string.IsNullOrWhiteSpace(Status) &&
-                   IsValidStatus(Status);
+            return itemCount > 0;
         }
 
-        /// <summary>
-        /// Checks if the provided status is a valid table status
-        /// </summary>
-        /// <param name="status">Status to validate</param>
-        /// <returns>True if valid, false otherwise</returns>
-        public static bool IsValidStatus(string status)
+        public bool ShouldBeAvailable(int itemCount)
         {
-            if (string.IsNullOrWhiteSpace(status))
-                return false;
-
-            var validStatuses = new[] { "Available", "Occupied", "Reserved", "Out of Service" };
-            return Array.Exists(validStatuses, s =>
-                string.Equals(s, status, StringComparison.OrdinalIgnoreCase));
+            return itemCount == 0 && (IsOccupied || IsAvailable);
         }
 
-        /// <summary>
-        /// Gets all valid table statuses
-        /// </summary>
-        /// <returns>Array of valid status strings</returns>
-        public static string[] GetValidStatuses()
+        public string DetermineStatusByItems(int itemCount)
         {
-            return new[] { "Available", "Occupied", "Reserved", "Out of Service" };
+            if (itemCount > 0)
+            {
+                return "Occupied";
+            }
+            else if (itemCount == 0 && IsOccupied)
+            {
+                return "Available";
+            }
+            else
+            {
+                return Status;
+            }
         }
 
-        /// <summary>
-        /// Creates a copy of the current table
-        /// </summary>
-        /// <returns>A new RestaurantTable instance with the same properties</returns>
+        public bool NeedsStatusUpdate(int itemCount)
+        {
+            var expectedStatus = DetermineStatusByItems(itemCount);
+            return !string.Equals(Status, expectedStatus, StringComparison.OrdinalIgnoreCase);
+        }
+
+        public void UpdateStatusBasedOnItems(int itemCount)
+        {
+            var newStatus = DetermineStatusByItems(itemCount);
+            if (NeedsStatusUpdate(itemCount))
+            {
+                var oldStatus = Status;
+                UpdateStatus(newStatus);
+                Console.WriteLine($"[RestaurantTable] Auto-updated Table {TableNumber} status from '{oldStatus}' to '{newStatus}' based on {itemCount} items");
+            }
+        }
+
+        public override string ToString()
+        {
+            return $"Table {TableNumber} ({Status})";
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj is RestaurantTable other)
+            {
+                return Id == other.Id && TableNumber == other.TableNumber;
+            }
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Id, TableNumber);
+        }
+
         public RestaurantTable Clone()
         {
             return new RestaurantTable
@@ -247,36 +298,136 @@ namespace QuickTechPOS.Models
             };
         }
 
-        /// <summary>
-        /// Returns a string representation of the table
-        /// </summary>
-        /// <returns>String representation</returns>
-        public override string ToString()
+        public Dictionary<string, object> ToStatusUpdate()
         {
-            return TableInfo;
-        }
-
-        /// <summary>
-        /// Determines equality based on Id
-        /// </summary>
-        /// <param name="obj">Object to compare</param>
-        /// <returns>True if equal, false otherwise</returns>
-        public override bool Equals(object obj)
-        {
-            if (obj is RestaurantTable other)
+            return new Dictionary<string, object>
             {
-                return Id == other.Id;
-            }
-            return false;
+                ["TableId"] = Id,
+                ["TableNumber"] = TableNumber,
+                ["Status"] = Status,
+                ["UpdatedAt"] = UpdatedAt ?? DateTime.Now,
+                ["IsOccupied"] = IsOccupied,
+                ["IsAvailable"] = IsAvailable,
+                ["StatusColor"] = StatusColor,
+                ["DisplayName"] = DisplayName
+            };
         }
 
-        /// <summary>
-        /// Gets hash code based on Id
-        /// </summary>
-        /// <returns>Hash code</returns>
-        public override int GetHashCode()
+        public void Validate()
         {
-            return Id.GetHashCode();
+            var validationResults = new List<ValidationResult>();
+            var validationContext = new ValidationContext(this);
+
+            if (!Validator.TryValidateObject(this, validationContext, validationResults, true))
+            {
+                var errors = validationResults.Select(vr => vr.ErrorMessage);
+                throw new ValidationException($"Table validation failed: {string.Join(", ", errors)}");
+            }
+
+            if (!IsValidStatus(Status))
+            {
+                throw new ValidationException($"Invalid status '{Status}'. Valid statuses: {string.Join(", ", ValidStatuses)}");
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+        public class StatusChangeEventArgs : EventArgs
+        {
+            public string OldStatus { get; set; }
+            public string NewStatus { get; set; }
+            public DateTime ChangeTime { get; set; }
+            public string Reason { get; set; }
+
+            public StatusChangeEventArgs(string oldStatus, string newStatus, string reason = "")
+            {
+                OldStatus = oldStatus;
+                NewStatus = newStatus;
+                ChangeTime = DateTime.Now;
+                Reason = reason;
+            }
+        }
+
+        public event EventHandler<StatusChangeEventArgs> StatusChanged;
+
+        protected virtual void OnStatusChanged(string oldStatus, string newStatus, string reason = "")
+        {
+            StatusChanged?.Invoke(this, new StatusChangeEventArgs(oldStatus, newStatus, reason));
+        }
+    }
+
+    public static class RestaurantTableExtensions
+    {
+        public static IEnumerable<RestaurantTable> GetOccupiedTables(this IEnumerable<RestaurantTable> tables)
+        {
+            return tables.Where(t => t.IsOccupied);
+        }
+
+        public static IEnumerable<RestaurantTable> GetAvailableTables(this IEnumerable<RestaurantTable> tables)
+        {
+            return tables.Where(t => t.IsAvailable);
+        }
+
+        public static IEnumerable<RestaurantTable> GetReservedTables(this IEnumerable<RestaurantTable> tables)
+        {
+            return tables.Where(t => t.IsReserved);
+        }
+
+        public static IEnumerable<RestaurantTable> GetActiveTables(this IEnumerable<RestaurantTable> tables)
+        {
+            return tables.Where(t => t.IsActive);
+        }
+
+        public static Dictionary<string, int> GetStatusCounts(this IEnumerable<RestaurantTable> tables)
+        {
+            var activeTables = tables.Where(t => t.IsActive);
+            return new Dictionary<string, int>
+            {
+                ["Total"] = activeTables.Count(),
+                ["Available"] = activeTables.Count(t => t.IsAvailable),
+                ["Occupied"] = activeTables.Count(t => t.IsOccupied),
+                ["Reserved"] = activeTables.Count(t => t.IsReserved),
+                ["OutOfService"] = activeTables.Count(t => t.IsOutOfService)
+            };
+        }
+
+        public static void BulkUpdateStatusBasedOnItems(this IEnumerable<RestaurantTable> tables, Dictionary<int, int> tableItemCounts)
+        {
+            foreach (var table in tables)
+            {
+                if (tableItemCounts.TryGetValue(table.Id, out int itemCount))
+                {
+                    table.UpdateStatusBasedOnItems(itemCount);
+                }
+            }
+        }
+
+        public static IEnumerable<RestaurantTable> FilterByStatus(this IEnumerable<RestaurantTable> tables, string status)
+        {
+            if (string.IsNullOrWhiteSpace(status) || status.Equals("All Statuses", StringComparison.OrdinalIgnoreCase))
+            {
+                return tables;
+            }
+
+            return tables.Where(t => string.Equals(t.Status, status, StringComparison.OrdinalIgnoreCase));
+        }
+
+        public static IEnumerable<RestaurantTable> SearchTables(this IEnumerable<RestaurantTable> tables, string searchQuery)
+        {
+            if (string.IsNullOrWhiteSpace(searchQuery))
+            {
+                return tables;
+            }
+
+            var query = searchQuery.ToLower();
+            return tables.Where(t =>
+                t.TableNumber.ToString().Contains(query) ||
+                (t.Description?.ToLower().Contains(query) == true));
         }
     }
 }

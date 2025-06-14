@@ -1,6 +1,4 @@
-﻿// File: QuickTechPOS/Services/RestaurantTableService.cs
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuickTechPOS.Models;
 using System;
 using System.Collections.Generic;
@@ -9,32 +7,21 @@ using System.Threading.Tasks;
 
 namespace QuickTechPOS.Services
 {
-    /// <summary>
-    /// Provides comprehensive data access and business logic for restaurant table management
-    /// Implements enterprise-grade CRUD operations with optimized query patterns and caching
-    /// </summary>
     public class RestaurantTableService : IDisposable
     {
         private readonly DatabaseContext _dbContext;
         private bool _disposed = false;
 
-        /// <summary>
-        /// Initializes a new instance of the RestaurantTableService
-        /// </summary>
         public RestaurantTableService()
         {
             _dbContext = new DatabaseContext(ConfigurationService.ConnectionString);
         }
 
-        /// <summary>
-        /// Retrieves all active restaurant tables with optimized query performance
-        /// </summary>
-        /// <returns>Collection of active restaurant tables ordered by table number</returns>
         public async Task<List<RestaurantTable>> GetAllTablesAsync()
         {
             try
             {
-                Console.WriteLine("[RestaurantTableService] Retrieving all restaurant tables...");
+                Console.WriteLine("[RestaurantTableService] Retrieving all restaurant tables with enhanced status tracking...");
 
                 var tables = await _dbContext.Set<RestaurantTable>()
                     .Where(t => t.IsActive)
@@ -42,12 +29,12 @@ namespace QuickTechPOS.Services
                     .AsNoTracking()
                     .ToListAsync();
 
-                Console.WriteLine($"[RestaurantTableService] Retrieved {tables.Count} active tables from database");
+                Console.WriteLine($"[RestaurantTableService] Retrieved {tables.Count} active tables from database with current status");
                 return tables;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error retrieving tables: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced tables: {ex.Message}");
                 if (ex.InnerException != null)
                 {
                     Console.WriteLine($"[RestaurantTableService] Inner exception: {ex.InnerException.Message}");
@@ -56,16 +43,11 @@ namespace QuickTechPOS.Services
             }
         }
 
-        /// <summary>
-        /// Retrieves tables filtered by status with high-performance querying
-        /// </summary>
-        /// <param name="status">Status filter (Available, Occupied, Reserved, Out of Service)</param>
-        /// <returns>Collection of tables matching the specified status</returns>
         public async Task<List<RestaurantTable>> GetTablesByStatusAsync(string status)
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Retrieving tables with status: {status}");
+                Console.WriteLine($"[RestaurantTableService] Retrieving enhanced tables with status: {status}");
 
                 if (string.IsNullOrWhiteSpace(status))
                 {
@@ -79,25 +61,21 @@ namespace QuickTechPOS.Services
                     .AsNoTracking()
                     .ToListAsync();
 
-                Console.WriteLine($"[RestaurantTableService] Retrieved {tables.Count} tables with status '{status}'");
+                Console.WriteLine($"[RestaurantTableService] Retrieved {tables.Count} enhanced tables with status '{status}'");
                 return tables;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error retrieving tables by status: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced tables by status: {ex.Message}");
                 throw new Exception($"Failed to retrieve tables by status '{status}': {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Retrieves only available tables for quick table selection
-        /// </summary>
-        /// <returns>Collection of available tables</returns>
         public async Task<List<RestaurantTable>> GetAvailableTablesAsync()
         {
             try
             {
-                Console.WriteLine("[RestaurantTableService] Retrieving available tables...");
+                Console.WriteLine("[RestaurantTableService] Retrieving enhanced available tables...");
 
                 var availableTables = await _dbContext.Set<RestaurantTable>()
                     .Where(t => t.IsActive && t.Status == "Available")
@@ -105,30 +83,25 @@ namespace QuickTechPOS.Services
                     .AsNoTracking()
                     .ToListAsync();
 
-                Console.WriteLine($"[RestaurantTableService] Found {availableTables.Count} available tables");
+                Console.WriteLine($"[RestaurantTableService] Found {availableTables.Count} enhanced available tables");
                 return availableTables;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error retrieving available tables: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced available tables: {ex.Message}");
                 throw new Exception($"Failed to retrieve available tables: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Retrieves a specific table by its unique identifier
-        /// </summary>
-        /// <param name="tableId">Unique table identifier</param>
-        /// <returns>RestaurantTable if found, null otherwise</returns>
         public async Task<RestaurantTable> GetTableByIdAsync(int tableId)
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Retrieving table with ID: {tableId}");
+                Console.WriteLine($"[RestaurantTableService] Retrieving enhanced table with ID: {tableId}");
 
                 if (tableId <= 0)
                 {
-                    Console.WriteLine("[RestaurantTableService] Invalid table ID provided");
+                    Console.WriteLine("[RestaurantTableService] Invalid enhanced table ID provided");
                     return null;
                 }
 
@@ -138,36 +111,31 @@ namespace QuickTechPOS.Services
 
                 if (table != null)
                 {
-                    Console.WriteLine($"[RestaurantTableService] Found table: {table.DisplayName} ({table.Status})");
+                    Console.WriteLine($"[RestaurantTableService] Found enhanced table: {table.DisplayName} ({table.Status})");
                 }
                 else
                 {
-                    Console.WriteLine($"[RestaurantTableService] Table with ID {tableId} not found");
+                    Console.WriteLine($"[RestaurantTableService] Enhanced table with ID {tableId} not found");
                 }
 
                 return table;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error retrieving table by ID: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced table by ID: {ex.Message}");
                 throw new Exception($"Failed to retrieve table with ID {tableId}: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Retrieves a table by its table number with collision detection
-        /// </summary>
-        /// <param name="tableNumber">Table number to search for</param>
-        /// <returns>RestaurantTable if found, null otherwise</returns>
         public async Task<RestaurantTable> GetTableByNumberAsync(int tableNumber)
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Retrieving table with number: {tableNumber}");
+                Console.WriteLine($"[RestaurantTableService] Retrieving enhanced table with number: {tableNumber}");
 
                 if (tableNumber <= 0)
                 {
-                    Console.WriteLine("[RestaurantTableService] Invalid table number provided");
+                    Console.WriteLine("[RestaurantTableService] Invalid enhanced table number provided");
                     return null;
                 }
 
@@ -177,43 +145,37 @@ namespace QuickTechPOS.Services
 
                 if (table != null)
                 {
-                    Console.WriteLine($"[RestaurantTableService] Found table number {tableNumber}: ID={table.Id} ({table.Status})");
+                    Console.WriteLine($"[RestaurantTableService] Found enhanced table number {tableNumber}: ID={table.Id} ({table.Status})");
                 }
                 else
                 {
-                    Console.WriteLine($"[RestaurantTableService] Table number {tableNumber} not found or inactive");
+                    Console.WriteLine($"[RestaurantTableService] Enhanced table number {tableNumber} not found or inactive");
                 }
 
                 return table;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error retrieving table by number: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced table by number: {ex.Message}");
                 throw new Exception($"Failed to retrieve table number {tableNumber}: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Updates the status of a restaurant table with transaction safety
-        /// </summary>
-        /// <param name="tableId">Unique table identifier</param>
-        /// <param name="newStatus">New status to set</param>
-        /// <returns>True if update successful, false otherwise</returns>
         public async Task<bool> UpdateTableStatusAsync(int tableId, string newStatus)
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Updating table {tableId} status to: {newStatus}");
+                Console.WriteLine($"[RestaurantTableService] Updating enhanced table {tableId} status to: {newStatus}");
 
                 if (tableId <= 0 || string.IsNullOrWhiteSpace(newStatus))
                 {
-                    Console.WriteLine("[RestaurantTableService] Invalid parameters for status update");
+                    Console.WriteLine("[RestaurantTableService] Invalid enhanced parameters for status update");
                     return false;
                 }
 
                 if (!RestaurantTable.IsValidStatus(newStatus))
                 {
-                    Console.WriteLine($"[RestaurantTableService] Invalid status provided: {newStatus}");
+                    Console.WriteLine($"[RestaurantTableService] Invalid enhanced status provided: {newStatus}");
                     return false;
                 }
 
@@ -226,18 +188,27 @@ namespace QuickTechPOS.Services
 
                     if (table == null)
                     {
-                        Console.WriteLine($"[RestaurantTableService] Table with ID {tableId} not found for update");
+                        Console.WriteLine($"[RestaurantTableService] Enhanced table with ID {tableId} not found for update");
                         return false;
                     }
 
                     var oldStatus = table.Status;
                     table.UpdateStatus(newStatus);
 
-                    await _dbContext.SaveChangesAsync();
-                    await transaction.CommitAsync();
+                    var rowsAffected = await _dbContext.SaveChangesAsync();
 
-                    Console.WriteLine($"[RestaurantTableService] Successfully updated table {tableId} status from '{oldStatus}' to '{newStatus}'");
-                    return true;
+                    if (rowsAffected > 0)
+                    {
+                        await transaction.CommitAsync();
+                        Console.WriteLine($"[RestaurantTableService] Successfully updated enhanced table {tableId} status from '{oldStatus}' to '{newStatus}' (rows affected: {rowsAffected})");
+                        return true;
+                    }
+                    else
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine($"[RestaurantTableService] No rows affected when updating enhanced table {tableId} status");
+                        return false;
+                    }
                 }
                 catch (Exception)
                 {
@@ -247,34 +218,125 @@ namespace QuickTechPOS.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error updating table status: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error updating enhanced table status: {ex.Message}");
                 throw new Exception($"Failed to update table {tableId} status: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Creates a new restaurant table with validation and duplicate checking
-        /// </summary>
-        /// <param name="tableNumber">Table number for the new table</param>
-        /// <param name="description">Optional description</param>
-        /// <returns>Created RestaurantTable if successful, null otherwise</returns>
+        public async Task<bool> BulkUpdateTableStatusAsync(Dictionary<int, string> tableStatusUpdates)
+        {
+            try
+            {
+                Console.WriteLine($"[RestaurantTableService] Starting enhanced bulk status update for {tableStatusUpdates.Count} tables");
+
+                if (tableStatusUpdates == null || tableStatusUpdates.Count == 0)
+                {
+                    Console.WriteLine("[RestaurantTableService] No enhanced table status updates provided");
+                    return false;
+                }
+
+                using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+                try
+                {
+                    int totalUpdated = 0;
+
+                    foreach (var update in tableStatusUpdates)
+                    {
+                        var tableId = update.Key;
+                        var newStatus = update.Value;
+
+                        if (tableId <= 0 || string.IsNullOrWhiteSpace(newStatus) || !RestaurantTable.IsValidStatus(newStatus))
+                        {
+                            Console.WriteLine($"[RestaurantTableService] Skipping invalid enhanced update: TableId={tableId}, Status='{newStatus}'");
+                            continue;
+                        }
+
+                        var table = await _dbContext.Set<RestaurantTable>()
+                            .FirstOrDefaultAsync(t => t.Id == tableId);
+
+                        if (table != null && table.Status != newStatus)
+                        {
+                            var oldStatus = table.Status;
+                            table.UpdateStatus(newStatus);
+                            totalUpdated++;
+
+                            Console.WriteLine($"[RestaurantTableService] Enhanced bulk update: Table {tableId} ({table.DisplayName}) from '{oldStatus}' to '{newStatus}'");
+                        }
+                    }
+
+                    if (totalUpdated > 0)
+                    {
+                        var rowsAffected = await _dbContext.SaveChangesAsync();
+                        await transaction.CommitAsync();
+
+                        Console.WriteLine($"[RestaurantTableService] Enhanced bulk update completed: {totalUpdated} tables updated, {rowsAffected} rows affected");
+                        return true;
+                    }
+                    else
+                    {
+                        await transaction.RollbackAsync();
+                        Console.WriteLine("[RestaurantTableService] Enhanced bulk update: No valid updates to process");
+                        return false;
+                    }
+                }
+                catch (Exception)
+                {
+                    await transaction.RollbackAsync();
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error in enhanced bulk table status update: {ex.Message}");
+                throw new Exception($"Failed to bulk update table statuses: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> SetTableOccupiedAsync(int tableId)
+        {
+            try
+            {
+                Console.WriteLine($"[RestaurantTableService] Setting enhanced table {tableId} to Occupied (red status)");
+                return await UpdateTableStatusAsync(tableId, "Occupied");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error setting enhanced table {tableId} to Occupied: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> SetTableAvailableAsync(int tableId)
+        {
+            try
+            {
+                Console.WriteLine($"[RestaurantTableService] Setting enhanced table {tableId} to Available (green status)");
+                return await UpdateTableStatusAsync(tableId, "Available");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error setting enhanced table {tableId} to Available: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<RestaurantTable> CreateTableAsync(int tableNumber, string description = "")
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Creating new table with number: {tableNumber}");
+                Console.WriteLine($"[RestaurantTableService] Creating enhanced new table with number: {tableNumber}");
 
                 if (tableNumber <= 0)
                 {
-                    Console.WriteLine("[RestaurantTableService] Invalid table number for creation");
+                    Console.WriteLine("[RestaurantTableService] Invalid enhanced table number for creation");
                     return null;
                 }
 
-                // Check for existing table with same number
                 var existingTable = await GetTableByNumberAsync(tableNumber);
                 if (existingTable != null)
                 {
-                    Console.WriteLine($"[RestaurantTableService] Table number {tableNumber} already exists");
+                    Console.WriteLine($"[RestaurantTableService] Enhanced table number {tableNumber} already exists");
                     throw new InvalidOperationException($"Table number {tableNumber} already exists");
                 }
 
@@ -295,7 +357,7 @@ namespace QuickTechPOS.Services
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    Console.WriteLine($"[RestaurantTableService] Successfully created table {tableNumber} with ID: {newTable.Id}");
+                    Console.WriteLine($"[RestaurantTableService] Successfully created enhanced table {tableNumber} with ID: {newTable.Id}");
                     return newTable;
                 }
                 catch (Exception)
@@ -306,25 +368,20 @@ namespace QuickTechPOS.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error creating table: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error creating enhanced table: {ex.Message}");
                 throw new Exception($"Failed to create table {tableNumber}: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Soft deletes a table by marking it as inactive
-        /// </summary>
-        /// <param name="tableId">Unique table identifier</param>
-        /// <returns>True if deactivation successful, false otherwise</returns>
         public async Task<bool> DeactivateTableAsync(int tableId)
         {
             try
             {
-                Console.WriteLine($"[RestaurantTableService] Deactivating table with ID: {tableId}");
+                Console.WriteLine($"[RestaurantTableService] Deactivating enhanced table with ID: {tableId}");
 
                 if (tableId <= 0)
                 {
-                    Console.WriteLine("[RestaurantTableService] Invalid table ID for deactivation");
+                    Console.WriteLine("[RestaurantTableService] Invalid enhanced table ID for deactivation");
                     return false;
                 }
 
@@ -337,7 +394,7 @@ namespace QuickTechPOS.Services
 
                     if (table == null)
                     {
-                        Console.WriteLine($"[RestaurantTableService] Table with ID {tableId} not found for deactivation");
+                        Console.WriteLine($"[RestaurantTableService] Enhanced table with ID {tableId} not found for deactivation");
                         return false;
                     }
 
@@ -347,7 +404,7 @@ namespace QuickTechPOS.Services
                     await _dbContext.SaveChangesAsync();
                     await transaction.CommitAsync();
 
-                    Console.WriteLine($"[RestaurantTableService] Successfully deactivated table {tableId}");
+                    Console.WriteLine($"[RestaurantTableService] Successfully deactivated enhanced table {tableId}");
                     return true;
                 }
                 catch (Exception)
@@ -358,20 +415,16 @@ namespace QuickTechPOS.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error deactivating table: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error deactivating enhanced table: {ex.Message}");
                 throw new Exception($"Failed to deactivate table {tableId}: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Gets comprehensive table statistics for reporting and analytics
-        /// </summary>
-        /// <returns>Dictionary containing table statistics</returns>
         public async Task<Dictionary<string, int>> GetTableStatisticsAsync()
         {
             try
             {
-                Console.WriteLine("[RestaurantTableService] Generating table statistics...");
+                Console.WriteLine("[RestaurantTableService] Generating enhanced table statistics...");
 
                 var stats = new Dictionary<string, int>();
 
@@ -386,7 +439,7 @@ namespace QuickTechPOS.Services
                 stats["ReservedTables"] = allTables.Count(t => t.Status == "Reserved");
                 stats["OutOfServiceTables"] = allTables.Count(t => t.Status == "Out of Service");
 
-                Console.WriteLine($"[RestaurantTableService] Generated statistics: Total={stats["TotalTables"]}, " +
+                Console.WriteLine($"[RestaurantTableService] Generated enhanced statistics: Total={stats["TotalTables"]}, " +
                                  $"Available={stats["AvailableTables"]}, Occupied={stats["OccupiedTables"]}, " +
                                  $"Reserved={stats["ReservedTables"]}, OutOfService={stats["OutOfServiceTables"]}");
 
@@ -394,51 +447,113 @@ namespace QuickTechPOS.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Error generating statistics: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Error generating enhanced statistics: {ex.Message}");
                 throw new Exception($"Failed to generate table statistics: {ex.Message}", ex);
             }
         }
 
-        /// <summary>
-        /// Validates database connectivity and table structure
-        /// </summary>
-        /// <returns>True if database connection and table structure are valid</returns>
         public async Task<bool> ValidateDatabaseConnectionAsync()
         {
             try
             {
-                Console.WriteLine("[RestaurantTableService] Validating database connection...");
+                Console.WriteLine("[RestaurantTableService] Validating enhanced database connection...");
 
-                // Test basic connectivity
                 await _dbContext.Database.OpenConnectionAsync();
                 await _dbContext.Database.CloseConnectionAsync();
 
-                // Test table existence and structure
                 var tableCount = await _dbContext.Set<RestaurantTable>().CountAsync();
 
-                Console.WriteLine($"[RestaurantTableService] Database validation successful. Table count: {tableCount}");
+                Console.WriteLine($"[RestaurantTableService] Enhanced database validation successful. Table count: {tableCount}");
                 return true;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[RestaurantTableService] Database validation failed: {ex.Message}");
+                Console.WriteLine($"[RestaurantTableService] Enhanced database validation failed: {ex.Message}");
                 return false;
             }
         }
 
-        /// <summary>
-        /// Releases database resources and performs cleanup
-        /// </summary>
+        public async Task<List<RestaurantTable>> GetTablesWithItemsAsync()
+        {
+            try
+            {
+                Console.WriteLine("[RestaurantTableService] Retrieving enhanced tables that should be marked as Occupied (red)");
+
+                var occupiedTables = await _dbContext.Set<RestaurantTable>()
+                    .Where(t => t.IsActive && t.Status == "Occupied")
+                    .OrderBy(t => t.TableNumber)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                Console.WriteLine($"[RestaurantTableService] Found {occupiedTables.Count} enhanced tables with Occupied status (red)");
+                return occupiedTables;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced tables with items: {ex.Message}");
+                throw new Exception($"Failed to retrieve tables with items: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<List<RestaurantTable>> GetEmptyTablesAsync()
+        {
+            try
+            {
+                Console.WriteLine("[RestaurantTableService] Retrieving enhanced tables that should be marked as Available (green)");
+
+                var availableTables = await _dbContext.Set<RestaurantTable>()
+                    .Where(t => t.IsActive && t.Status == "Available")
+                    .OrderBy(t => t.TableNumber)
+                    .AsNoTracking()
+                    .ToListAsync();
+
+                Console.WriteLine($"[RestaurantTableService] Found {availableTables.Count} enhanced tables with Available status (green)");
+                return availableTables;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error retrieving enhanced empty tables: {ex.Message}");
+                throw new Exception($"Failed to retrieve empty tables: {ex.Message}", ex);
+            }
+        }
+
+        public async Task<bool> SynchronizeTableStatusesAsync(Dictionary<int, bool> tableItemStatus)
+        {
+            try
+            {
+                Console.WriteLine($"[RestaurantTableService] Synchronizing enhanced table statuses for {tableItemStatus.Count} tables");
+
+                var statusUpdates = new Dictionary<int, string>();
+
+                foreach (var kvp in tableItemStatus)
+                {
+                    int tableId = kvp.Key;
+                    bool hasItems = kvp.Value;
+
+                    string targetStatus = hasItems ? "Occupied" : "Available";
+                    statusUpdates[tableId] = targetStatus;
+
+                    Console.WriteLine($"[RestaurantTableService] Enhanced sync: Table {tableId} -> {targetStatus} ({(hasItems ? "red" : "green")})");
+                }
+
+                bool success = await BulkUpdateTableStatusAsync(statusUpdates);
+
+                Console.WriteLine($"[RestaurantTableService] Enhanced table status synchronization {(success ? "completed successfully" : "failed")}");
+                return success;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[RestaurantTableService] Error in enhanced table status synchronization: {ex.Message}");
+                return false;
+            }
+        }
+
         public void Dispose()
         {
             Dispose(true);
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Protected dispose pattern implementation
-        /// </summary>
-        /// <param name="disposing">Whether disposing is being called explicitly</param>
         protected virtual void Dispose(bool disposing)
         {
             if (!_disposed && disposing)
@@ -446,19 +561,16 @@ namespace QuickTechPOS.Services
                 try
                 {
                     _dbContext?.Dispose();
-                    Console.WriteLine("[RestaurantTableService] Database context disposed successfully");
+                    Console.WriteLine("[RestaurantTableService] Enhanced database context disposed successfully");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[RestaurantTableService] Error during disposal: {ex.Message}");
+                    Console.WriteLine($"[RestaurantTableService] Error during enhanced disposal: {ex.Message}");
                 }
                 _disposed = true;
             }
         }
 
-        /// <summary>
-        /// Finalizer to ensure proper resource cleanup
-        /// </summary>
         ~RestaurantTableService()
         {
             Dispose(false);

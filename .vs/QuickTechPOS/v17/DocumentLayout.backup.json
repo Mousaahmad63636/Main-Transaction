@@ -1,37 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
-    }
-  ],
+  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\versions cashier\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
-              "RelativeDocumentMoniker": "QuickTechPOS\\appsettings.json",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
-              "RelativeToolTip": "QuickTechPOS\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAIAAAApAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-06-07T17:03:06.325Z",
-              "EditorCaption": ""
-            }
-          ]
-        }
-      ]
+      "DocumentGroups": []
     }
   ]
 }

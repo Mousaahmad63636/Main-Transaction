@@ -1,6 +1,4 @@
-﻿// File: QuickTechPOS/ViewModels/TransactionViewModel.cs
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using QuickTechPOS.Helpers;
 using QuickTechPOS.Models;
 using QuickTechPOS.Models.Enums;
@@ -58,6 +56,7 @@ namespace QuickTechPOS.ViewModels
         private readonly ReceiptPrinterService _receiptPrinterService;
         private readonly BusinessSettingsService _businessSettingsService;
         private readonly CustomerProductPriceService _customerPriceService;
+        private readonly RestaurantTableService _restaurantTableService;
         private readonly Customer _walkInCustomer;
 
         #endregion
@@ -497,6 +496,7 @@ namespace QuickTechPOS.ViewModels
             _drawerService = new DrawerService();
             _receiptPrinterService = new ReceiptPrinterService();
             _businessSettingsService = new BusinessSettingsService();
+            _restaurantTableService = new RestaurantTableService();
 
             Console.WriteLine("[TransactionViewModel] Services initialized successfully");
 
@@ -606,7 +606,7 @@ namespace QuickTechPOS.ViewModels
 
         #region Enhanced Table Status Management
 
-        private void UpdateTableVisualStatus(RestaurantTable table)
+        private async void UpdateTableVisualStatus(RestaurantTable table)
         {
             if (table == null) return;
 
@@ -636,23 +636,23 @@ namespace QuickTechPOS.ViewModels
 
                 if (table.Status != newStatus)
                 {
+                    string oldStatus = table.Status;
                     table.Status = newStatus;
 
-                    // ENHANCED: Update status in ActiveTables collection and notify UI
+                    await PersistTableStatusToDatabase(table.Id, newStatus);
+
                     var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
                     if (activeTable != null)
                     {
                         activeTable.Status = newStatus;
                     }
 
-                    // CRITICAL: Force UI refresh for table status changes
                     Application.Current.Dispatcher.Invoke(() => {
                         OnPropertyChanged(nameof(SelectedTable));
                         OnPropertyChanged(nameof(ActiveTables));
                         OnPropertyChanged(nameof(CurrentTableInfo));
                         OnPropertyChanged(nameof(TableDisplayText));
 
-                        // Force refresh of the collection
                         if (ActiveTables != null)
                         {
                             var temp = ActiveTables.ToList();
@@ -664,7 +664,7 @@ namespace QuickTechPOS.ViewModels
                         }
                     });
 
-                    Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status to: {newStatus}");
+                    Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status from {oldStatus} to {newStatus} and persisted to database");
                 }
             }
             catch (Exception ex)
@@ -672,7 +672,28 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Error updating table visual status: {ex.Message}");
             }
         }
-        private void SaveTableStateWithStatusUpdate(RestaurantTable table)
+
+        private async Task PersistTableStatusToDatabase(int tableId, string status)
+        {
+            try
+            {
+                bool success = await _restaurantTableService.UpdateTableStatusAsync(tableId, status);
+                if (!success)
+                {
+                    Console.WriteLine($"[TransactionViewModel] Failed to persist table {tableId} status {status} to database");
+                }
+                else
+                {
+                    Console.WriteLine($"[TransactionViewModel] Successfully persisted table {tableId} status {status} to database");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error persisting table status to database: {ex.Message}");
+            }
+        }
+
+        private async void SaveTableStateWithStatusUpdate(RestaurantTable table)
         {
             if (table == null)
             {
@@ -685,7 +706,7 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Starting SaveTableStateWithStatusUpdate for {table.DisplayName} (ID: {table.Id})...");
 
                 SaveTableState(table);
-                UpdateTableVisualStatus(table);
+                await Task.Run(() => UpdateTableVisualStatus(table));
                 UpdateTableDisplayInformation();
 
                 Console.WriteLine($"[TransactionViewModel] SaveTableStateWithStatusUpdate completed for {table.DisplayName}");
@@ -705,7 +726,7 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        public void RefreshAllTableStatuses()
+        public async void RefreshAllTableStatuses()
         {
             try
             {
@@ -713,18 +734,19 @@ namespace QuickTechPOS.ViewModels
 
                 if (ActiveTables != null)
                 {
-                    foreach (var table in ActiveTables)
+                    var updateTasks = ActiveTables.Select(async table =>
                     {
-                        UpdateTableVisualStatus(table);
-                    }
+                        await Task.Run(() => UpdateTableVisualStatus(table));
+                    });
+
+                    await Task.WhenAll(updateTasks);
                 }
 
                 if (SelectedTable != null && (ActiveTables == null || !ActiveTables.Any(t => t.Id == SelectedTable.Id)))
                 {
-                    UpdateTableVisualStatus(SelectedTable);
+                    await Task.Run(() => UpdateTableVisualStatus(SelectedTable));
                 }
 
-                // CRITICAL: Force UI refresh after all status updates
                 Application.Current.Dispatcher.Invoke(() => {
                     UpdateTableDisplayInformation();
                     OnPropertyChanged(nameof(SelectedTable));
@@ -741,7 +763,30 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Error refreshing table statuses: {ex.Message}");
             }
         }
+        public void NotifyTableStatusChanged()
+        {
+            try
+            {
+                UpdateTableDisplayInformation();
 
+                Application.Current.Dispatcher.Invoke(() => {
+                    OnPropertyChanged(nameof(SelectedTable));
+                    OnPropertyChanged(nameof(CurrentTableInfo));
+                    OnPropertyChanged(nameof(TableDisplayText));
+                    OnPropertyChanged(nameof(ActiveTables));
+                    OnPropertyChanged(nameof(HasMultipleTables));
+                    OnPropertyChanged(nameof(TableNavigationInfo));
+                    OnPropertyChanged(nameof(CanNavigateToPreviousTable));
+                    OnPropertyChanged(nameof(CanNavigateToNextTable));
+
+                    CommandManager.InvalidateRequerySuggested();
+                });
+            }
+            catch (Exception ex)
+            {
+                StatusMessage = $"Error updating table display: {ex.Message}";
+            }
+        }
         public int GetTableItemCount(int tableId)
         {
             var tableData = GetTableDataById(tableId);
@@ -859,12 +904,10 @@ namespace QuickTechPOS.ViewModels
 
                 UpdateTotals();
 
-                // CRITICAL: Force immediate table status update after adding item
                 if (SelectedTable != null)
                 {
                     SaveTableStateWithStatusUpdate(SelectedTable);
 
-                    // Force immediate UI refresh
                     Application.Current.Dispatcher.Invoke(() => {
                         UpdateTableVisualStatus(SelectedTable);
                         OnPropertyChanged(nameof(SelectedTable));
@@ -878,6 +921,7 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error adding product to cart: {ex.Message}";
             }
         }
+
         private void RemoveFromCartWithStatusUpdate(CartItem cartItem = null)
         {
             var itemToRemove = cartItem ?? SelectedCartItem;
@@ -2368,7 +2412,10 @@ namespace QuickTechPOS.ViewModels
                 if (SelectedTable != null)
                 {
                     _tableTransactionData.Remove(SelectedTable.Id);
+                    await PersistTableStatusToDatabase(SelectedTable.Id, "Available");
+                    SelectedTable.Status = "Available";
                     LoadCurrentTableState();
+                    RefreshAllTableStatuses();
                 }
                 else
                 {

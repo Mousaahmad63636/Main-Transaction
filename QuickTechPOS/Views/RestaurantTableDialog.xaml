@@ -338,7 +338,7 @@
                                     <Style.Triggers>
                                         <!-- Occupied tables - Red select button -->
                                         <DataTrigger Binding="{Binding Status}" Value="Occupied">
-                                            <Setter Property="Content" Value="View Items"/>
+                                            <Setter Property="Content" Value="Continue Order"/>
                                             <Setter Property="Background" Value="#EF4444"/>
                                         </DataTrigger>
                                         <!-- Available tables - Green select button -->
@@ -362,22 +362,14 @@
                             </Button.Style>
                         </Button>
 
-                        <!-- Change Status Button -->
-                        <Button Content="Change Status"
-                                Command="{Binding DataContext.ChangeTableStatusCommand, 
-                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"
-                                Style="{StaticResource SecondaryButton}"
-                                Margin="4,0,0,0"
-                                FontSize="12"
-                                Padding="12,6"/>
+                        <!-- REMOVED: Change Status Button (now automatic based on items) -->
                     </StackPanel>
                 </Grid>
             </Border>
         </DataTemplate>
     </Window.Resources>
 
-    <!-- Rest of the XAML content remains the same -->
+    <!-- Main Content -->
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -401,7 +393,7 @@
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="Select Restaurant Table" 
                                Style="{StaticResource SectionTitle}"/>
-                    <TextBlock Text="Choose a table for this transaction. Red tables have active orders." 
+                    <TextBlock Text="Choose a table for this transaction. Status is automatic: Available (no items) / Occupied (has items)." 
                                Style="{StaticResource HeaderText}"
                                Foreground="#64748B"/>
                 </StackPanel>
@@ -625,7 +617,7 @@
                             CornerRadius="3" 
                             Padding="4,2" 
                             Margin="4,0">
-                        <TextBlock Text="Occupied (Has Items)" 
+                        <TextBlock Text="Occupied (Auto - Has Items)" 
                                    FontSize="10" 
                                    Foreground="#991B1B"/>
                     </Border>

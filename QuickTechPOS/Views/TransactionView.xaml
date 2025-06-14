@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:QuickTechPOS"
+             xmlns:converters="clr-namespace:QuickTechPOS.Converters"
              xmlns:helpers="clr-namespace:QuickTechPOS.Helpers"
              mc:Ignorable="d" 
              d:DesignHeight="768" d:DesignWidth="1024"
@@ -11,23 +12,21 @@
              UseLayoutRounding="True">
 
     <UserControl.Resources>
-        <!-- Converters -->
         <local:BooleanToIndexConverter x:Key="BooleanToIndexConverter"/>
         <local:BooleanToWholesaleTextConverter x:Key="BooleanToWholesaleTextConverter"/>
         <local:BooleanToStringConverter x:Key="BooleanToStringConverter"/>
-        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <converters:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
         <local:PositiveIntToVisibilityConverter x:Key="PositiveIntToVisibilityConverter"/>
         <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter"/>
         <local:ImagePathToVisibilityConverter x:Key="ImagePathToVisibilityConverter"/>
         <local:NumericToVisibilityConverter x:Key="NumericToVisibilityConverter"/>
+        <converters:FirstLetterConverter x:Key="FirstLetterConverter"/>
         <helpers:ImagePathConverter x:Key="ImagePathConverter"/>
 
-        <!-- Drop Shadow Effect -->
         <DropShadowEffect x:Key="DropShadowEffect" ShadowDepth="2" Direction="270" 
                           Color="#1E293B" Opacity="0.08" BlurRadius="8"/>
 
-        <!-- Touch-Optimized Text Styles for 14-15 inch POS screens -->
         <Style x:Key="HeaderText" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="FontSize" Value="16"/>
@@ -48,7 +47,6 @@
             <Setter Property="Margin" Value="0"/>
         </Style>
 
-        <!-- Touch-Optimized Input Controls -->
         <Style x:Key="TouchSearchBox" TargetType="TextBox">
             <Setter Property="Height" Value="45"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -70,7 +68,6 @@
             </Setter>
         </Style>
 
-        <!-- Touch-Friendly Category Filter ComboBox -->
         <Style x:Key="TouchCategoryFilter" TargetType="ComboBox">
             <Setter Property="Height" Value="48"/>
             <Setter Property="VerticalContentAlignment" Value="Center"/>
@@ -82,7 +79,6 @@
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
-        <!-- Touch-Optimized Button Styles -->
         <Style x:Key="TouchButton" TargetType="Button">
             <Setter Property="Background" Value="#2563EB"/>
             <Setter Property="Foreground" Value="White"/>
@@ -166,7 +162,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Touch-Friendly Icon Button -->
         <Style x:Key="TouchIconButton" TargetType="Button">
             <Setter Property="Width" Value="45"/>
             <Setter Property="Height" Value="45"/>
@@ -200,7 +195,6 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Touch-Optimized Panel Styles -->
         <Style x:Key="TouchCardPanel" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E2E8F0"/>
@@ -217,7 +211,6 @@
             <Setter Property="CornerRadius" Value="8,8,0,0"/>
         </Style>
 
-        <!-- Enhanced Touch-Optimized Product Card - Sized for 4 cards per row in 1024x768 -->
         <Style x:Key="TouchProductCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E2E8F0"/>
@@ -226,9 +219,7 @@
             <Setter Property="Margin" Value="0,0,6,6"/>
             <Setter Property="Cursor" Value="Hand"/>
             <Setter Property="Height" Value="115"/>
-            <!-- Optimized for 1024x768 -->
             <Setter Property="Width" Value="145"/>
-            <!-- Reduced to fit 4 cards per row -->
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect ShadowDepth="1" Direction="270" 
@@ -252,8 +243,40 @@
             </Style.Triggers>
         </Style>
 
-        <!-- Touch-Optimized Cart Item Template - Optimized for 1024x768 -->
-        <!-- Touch-Optimized Cart Item Template - UPDATED for Easy Decimal Input -->
+        <Style x:Key="TouchCategoryCard" TargetType="Border">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="BorderBrush" Value="#E2E8F0"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Margin" Value="0,0,8,8"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Height" Value="150"/>
+            <Setter Property="Width" Value="160"/>
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect ShadowDepth="2" Direction="270" 
+                                      Color="#1E293B" Opacity="0.08" BlurRadius="8"/>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="BorderBrush" Value="#3B82F6"/>
+                    <Setter Property="BorderThickness" Value="3"/>
+                    <Setter Property="Effect">
+                        <Setter.Value>
+                            <DropShadowEffect ShadowDepth="4" Direction="270" 
+                                              Color="#3B82F6" Opacity="0.25" BlurRadius="12"/>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="RenderTransform">
+                        <Setter.Value>
+                            <ScaleTransform ScaleX="1.02" ScaleY="1.02"/>
+                        </Setter.Value>
+                    </Setter>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
         <DataTemplate x:Key="TouchCartItemTemplate">
             <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="12,10">
                 <Grid>
@@ -264,97 +287,61 @@
                         <ColumnDefinition Width="30"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Product Info -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{Binding Product.Name}" 
-                           FontWeight="SemiBold" 
-                           FontSize="13"
-                           Foreground="#1E293B"
-                           TextTrimming="CharacterEllipsis"
-                           MaxWidth="150"/>
+                                   FontWeight="SemiBold" 
+                                   FontSize="13"
+                                   Foreground="#1E293B"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxWidth="150"/>
                         <TextBlock Text="{Binding UnitPrice, StringFormat='${0:F2}'}" 
-                           FontSize="11"
-                           Foreground="#64748B"/>
+                                   FontSize="11" 
+                                   Foreground="#64748B"/>
                     </StackPanel>
 
-                    <!-- UPDATED: Enhanced Quantity Input for Decimal Values -->
-                    <Border Grid.Column="1" 
-                    Background="White" 
-                    BorderBrush="#CBD5E1" 
-                    BorderThickness="2"
-                    CornerRadius="6"
-                    Height="32">
-                        <TextBox x:Name="QuantityTextBox"
-                         Text="{Binding Quantity, UpdateSourceTrigger=LostFocus, StringFormat='{}{0:0.##}'}"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         VerticalContentAlignment="Center"
-                         HorizontalContentAlignment="Center"
-                         FontSize="13"
-                         FontWeight="SemiBold"
-                         LostFocus="Quantity_LostFocus"
-                         GotFocus="Quantity_GotFocus"
-                         KeyDown="Quantity_KeyDown"
-                         TextAlignment="Center"
-                         MaxLength="8"
-                         ToolTip="Enter quantity (decimals allowed: 0.5, 1.5, etc.)">
-                            <!-- Allow only numbers, decimal point, and navigation keys -->
-                            <TextBox.Style>
-                                <Style TargetType="TextBox">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="TextBox">
-                                                <Border Background="{TemplateBinding Background}"
-                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                CornerRadius="4">
-                                                    <ScrollViewer x:Name="PART_ContentHost" 
-                                                          Margin="{TemplateBinding Padding}"
-                                                          VerticalAlignment="Center"/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsFocused" Value="True">
-                                            <Setter Property="BorderBrush" Value="#2563EB"/>
-                                            <Setter Property="BorderThickness" Value="3"/>
-                                        </Trigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </TextBox.Style>
-                        </TextBox>
-                    </Border>
+                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
+                        <TextBlock Text="Qty" 
+                                   FontSize="10" 
+                                   Foreground="#94A3B8" 
+                                   TextAlignment="Center"/>
+                        <TextBlock Text="{Binding Quantity}" 
+                                   FontSize="13" 
+                                   FontWeight="SemiBold" 
+                                   Foreground="#1E293B" 
+                                   TextAlignment="Center"/>
+                    </StackPanel>
 
-                    <!-- Total -->
-                    <TextBlock Grid.Column="2" 
-                       Text="{Binding Total, StringFormat='${0:F2}'}" 
-                       FontWeight="Bold" 
-                       FontSize="13"
-                       Foreground="#1E293B"
-                       VerticalAlignment="Center"
-                       HorizontalAlignment="Right"/>
+                    <StackPanel Grid.Column="2" HorizontalAlignment="Right">
+                        <TextBlock Text="Total" 
+                                   FontSize="10" 
+                                   Foreground="#94A3B8" 
+                                   TextAlignment="Right"/>
+                        <TextBlock Text="{Binding Total, StringFormat='${0:F2}'}" 
+                                   FontSize="13" 
+                                   FontWeight="Bold" 
+                                   Foreground="#1E293B" 
+                                   TextAlignment="Right"/>
+                    </StackPanel>
 
-                    <!-- Remove Button -->
-                    <Button Grid.Column="3" 
-                    Content="×" 
-                    Command="{Binding DataContext.RemoveFromCartCommand, 
-                             RelativeSource={RelativeSource AncestorType=UserControl}}"
-                    CommandParameter="{Binding}"
-                    Width="24" 
-                    Height="24"
-                    Background="#EF4444"
-                    Foreground="White"
-                    FontWeight="Bold"
-                    FontSize="14"
-                    BorderThickness="0"
-                    Cursor="Hand">
+                    <Button Grid.Column="3"
+                            Content="×"
+                            Command="{Binding DataContext.RemoveFromCartCommand, 
+                                     RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                            CommandParameter="{Binding}"
+                            Width="24" 
+                            Height="24"
+                            Background="#EF4444"
+                            Foreground="White"
+                            FontWeight="Bold"
+                            FontSize="14"
+                            BorderThickness="0"
+                            Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" 
-                                CornerRadius="5">
+                                        CornerRadius="5">
                                     <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
+                                                      VerticalAlignment="Center"/>
                                 </Border>
                             </ControlTemplate>
                         </Button.Template>
@@ -375,7 +362,71 @@
             </Border>
         </DataTemplate>
 
-        <!-- Enhanced Touch-Optimized Product Card Template - Optimized for 1024x768 -->
+        <DataTemplate x:Key="TouchCategoryCardTemplate">
+            <Border Style="{StaticResource TouchCategoryCard}">
+                <Border.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" 
+                                  Command="{Binding DataContext.SelectCategoryCardCommand, 
+                                           RelativeSource={RelativeSource AncestorType=UserControl}}" 
+                                  CommandParameter="{Binding}"/>
+                </Border.InputBindings>
+
+                <Grid Margin="12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <Border Grid.Row="0"
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Top"
+                            CornerRadius="25"
+                            Width="50"
+                            Height="50"
+                            Background="#3B82F6"
+                            Margin="0,0,0,8">
+                        <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetterConverter}}"
+                                   FontSize="24"
+                                   FontWeight="Bold"
+                                   Foreground="White"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                    </Border>
+
+                    <StackPanel Grid.Row="1"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,8">
+                        <TextBlock Text="{Binding Name}" 
+                                   FontWeight="Bold" 
+                                   FontSize="16"
+                                   Foreground="#1E293B"
+                                   TextAlignment="Center"
+                                   TextWrapping="Wrap"
+                                   MaxHeight="40"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Row="2"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,8">
+                        <TextBlock Text="{Binding ProductCount, StringFormat={}{0} Products}" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="14"
+                                   Foreground="#64748B"
+                                   TextAlignment="Center"/>
+                    </StackPanel>
+
+                    <TextBlock Grid.Row="3"
+                               Text="Tap to Browse"
+                               FontSize="11"
+                               FontStyle="Italic"
+                               Foreground="#94A3B8"
+                               HorizontalAlignment="Center"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+
         <DataTemplate x:Key="TouchProductCardTemplate">
             <Border Style="{StaticResource TouchProductCard}">
                 <Border.InputBindings>
@@ -393,7 +444,6 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Stock Badge -->
                     <Border Grid.Row="0"
                             HorizontalAlignment="Right" 
                             VerticalAlignment="Top"
@@ -415,47 +465,36 @@
                                 </Style.Triggers>
                             </Style>
                         </Border.Style>
-                        <TextBlock Text="{Binding StockStatus}" 
-                                   Foreground="White" 
-                                   FontSize="9"
-                                   FontWeight="Bold"/>
+                        <TextBlock Text="{Binding CurrentStock}" 
+                                   FontSize="9" 
+                                   FontWeight="Bold" 
+                                   Foreground="White"/>
                     </Border>
 
-                    <!-- Product Name - Optimized for 1024x768 -->
-                    <StackPanel Grid.Row="1" 
-                                VerticalAlignment="Center" 
+                    <StackPanel Grid.Row="1"
                                 HorizontalAlignment="Center"
-                                Margin="1">
-                        <!-- Product Name with optimized sizing for 4 cards per row -->
+                                Margin="0,0,0,6"
+                                MaxHeight="48">
                         <TextBlock Text="{Binding Name}" 
-                                   FontWeight="Bold"
-                                   FontSize="13"
-                              
+                                   FontWeight="SemiBold" 
+                                   FontSize="12"
                                    Foreground="#1E293B"
-                                   TextWrapping="Wrap"
                                    TextAlignment="Center"
-                                   LineHeight="16"
-                              
-                                   MaxWidth="125"
-                           
-                                   Margin="0,0,0,6"
-                                   MaxHeight="48"/>
-                        <!-- Limit height for smaller card -->
+                                   TextWrapping="Wrap"
+                                   TextTrimming="CharacterEllipsis"
+                                   MaxHeight="36"/>
                     </StackPanel>
 
-                    <!-- Price Section - Optimized sizing -->
                     <StackPanel Grid.Row="2"
                                 HorizontalAlignment="Center"
                                 Margin="0,2,0,6">
                         <TextBlock Text="{Binding FormattedSalePrice}" 
                                    FontWeight="Bold" 
                                    FontSize="16"
-                                   
                                    Foreground="#2563EB"
                                    TextAlignment="Center"/>
                     </StackPanel>
 
-                    <!-- Click to Add Indicator -->
                     <TextBlock Grid.Row="3"
                                Text="Tap to Add"
                                FontSize="10"
@@ -471,92 +510,78 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
-            <!-- Main content area - More space since table nav is moved -->
             <RowDefinition Height="Auto"/>
-            <!-- Combined payment footer with table selection -->
             <RowDefinition Height="Auto"/>
-            <!-- Status bar -->
         </Grid.RowDefinitions>
 
-        <!-- Main Content Area - 2-Column Layout with More Space -->
         <Grid Grid.Row="0" Margin="16">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <!-- Maximized product area -->
                 <ColumnDefinition Width="300"/>
-                <!-- Cart panel - optimized for 1024x768 -->
             </Grid.ColumnDefinitions>
 
-            <!-- Center Panel - Maximized Product Grid -->
             <Border Grid.Column="0" 
                     Style="{StaticResource TouchCardPanel}" 
                     Margin="0,0,12,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Header -->
                     <Border Grid.Row="0" Style="{StaticResource TouchCardHeader}">
-                        <TextBlock Text="Products" Style="{StaticResource SectionTitle}"/>
-                    </Border>
-
-                    <!-- Category Filter -->
-                    <Border Grid.Row="1" 
-                            Background="#F8FAFC" 
-                            BorderBrush="#E2E8F0" 
-                            BorderThickness="0,0,0,1" 
-                            Padding="16,10">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
 
-                            <TextBlock Grid.Column="0"
-                                       Text="Category:"
-                                       FontWeight="SemiBold"
-                                       FontSize="15"
-                                       Foreground="#374151"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,10,0"/>
+                            <Button Grid.Column="0"
+                                    Content="← Categories" 
+                                    Command="{Binding ShowCategoriesCommand}"
+                                    Style="{StaticResource TouchSecondaryButton}"
+                                    FontSize="14"
+                                    Padding="12,8"
+                                    Margin="0,0,12,0"
+                                    Visibility="{Binding IsShowingCategories, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}"/>
 
-                            <ComboBox Grid.Column="1"
-                                      ItemsSource="{Binding Categories}"
-                                      SelectedItem="{Binding SelectedCategory}"
-                                      Style="{StaticResource TouchCategoryFilter}">
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <TextBlock Text="{Binding DisplayName}"
-                                                   FontSize="14"
-                                                   Padding="6,4"/>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                            </ComboBox>
+                            <TextBlock Grid.Column="1" 
+                                       Text="{Binding CurrentPageTitle}" 
+                                       Style="{StaticResource SectionTitle}"/>
                         </Grid>
                     </Border>
 
-                    <!-- Product Grid with Optimized Spacing for 1024x768 -->
-                    <ScrollViewer Grid.Row="2" 
+                    <ScrollViewer Grid.Row="1" 
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled"
                                   Padding="8">
-                        <ItemsControl ItemsSource="{Binding SearchedProducts}"
-                                      ItemTemplate="{StaticResource TouchProductCardTemplate}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal" 
-                                               HorizontalAlignment="Left"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
+                        <Grid>
+                            <ItemsControl ItemsSource="{Binding Categories}"
+                                          ItemTemplate="{StaticResource TouchCategoryCardTemplate}"
+                                          Visibility="{Binding IsShowingCategories, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" 
+                                                   HorizontalAlignment="Left"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+
+                            <ItemsControl ItemsSource="{Binding SearchedProducts}"
+                                          ItemTemplate="{StaticResource TouchProductCardTemplate}"
+                                          Visibility="{Binding IsShowingCategories, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=Invert}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" 
+                                                   HorizontalAlignment="Left"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </Grid>
                     </ScrollViewer>
                 </Grid>
             </Border>
 
-            <!-- Right Panel - Cart -->
             <Border Grid.Column="1" Style="{StaticResource TouchCardPanel}">
                 <Grid>
                     <Grid.RowDefinitions>
@@ -565,7 +590,6 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <!-- Cart Header -->
                     <Border Grid.Row="0" Style="{StaticResource TouchCardHeader}">
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -586,7 +610,6 @@
                         </Grid>
                     </Border>
 
-                    <!-- Cart Items -->
                     <ScrollViewer Grid.Row="1" 
                                   VerticalScrollBarVisibility="Auto"
                                   HorizontalScrollBarVisibility="Disabled">
@@ -594,7 +617,6 @@
                                       ItemTemplate="{StaticResource TouchCartItemTemplate}"/>
                     </ScrollViewer>
 
-                    <!-- Cart Totals -->
                     <Border Grid.Row="2" 
                             Background="#F8FAFC" 
                             BorderBrush="#E2E8F0" 
@@ -644,63 +666,41 @@
             </Border>
         </Grid>
 
-        <!-- Single Row Payment Footer with Table Selection - Optimized for 1024x768 -->
         <Border Grid.Row="1" 
-                Style="{StaticResource TouchCardPanel}" 
-                Margin="12,0,12,0"
-                Background="#FEFEFE">
-            <Grid Margin="16,12">
+                Background="White" 
+                BorderBrush="#E2E8F0" 
+                BorderThickness="0,1,0,0" 
+                Padding="16,12"
+                Effect="{StaticResource DropShadowEffect}">
+            <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Table info -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Table select button -->
                     <ColumnDefinition Width="*"/>
-                    <!-- Spacer -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Print button -->
                     <ColumnDefinition Width="Auto"/>
-                    <!-- Complete sale button -->
                 </Grid.ColumnDefinitions>
 
-                <!-- Table Information -->
-                <StackPanel Grid.Column="0" 
-                            Orientation="Horizontal" 
-                            VerticalAlignment="Center"
-                            Margin="0,0,12,0">
-                    <TextBlock Text="🍽️" 
-                               FontSize="14"
-                               VerticalAlignment="Center"
-                               Margin="0,0,5,0"/>
-
-                    <StackPanel VerticalAlignment="Center">
-                        <TextBlock Text="{Binding CurrentTableInfo, Mode=OneWay, TargetNullValue='No table selected'}"
-                                   FontWeight="SemiBold"
-                                   FontSize="12"
-                                   Foreground="#0F172A"/>
-
-                        <StackPanel Orientation="Horizontal" Margin="0,1,0,0">
-                            <Border Background="#DBEAFE" CornerRadius="3" Padding="3,1" Margin="0,0,2,0">
-                                <TextBlock FontSize="9" Foreground="#1E40AF">
-                                    <Run Text="{Binding CartItems.Count, Mode=OneWay}"/>
-                                    <Run Text="items"/>
-                                </TextBlock>
-                            </Border>
-                            <Border Background="#D1FAE5" CornerRadius="3" Padding="3,1" Margin="0,0,2,0">
-                                <TextBlock Text="{Binding TotalAmount, Mode=OneWay, StringFormat='${0:F2}'}"
-                                           FontSize="9" 
-                                           Foreground="#065F46"/>
-                            </Border>
-                            <Border Background="#F0F9FF" CornerRadius="3" Padding="3,1">
-                                <TextBlock Text="{Binding TableNavigationInfo, Mode=OneWay}"
-                                           FontSize="9"
-                                           Foreground="#0891B2"/>
-                            </Border>
-                        </StackPanel>
-                    </StackPanel>
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,20,0">
+                    <TextBlock Text="💰" FontSize="16" Margin="0,0,6,0"/>
+                    <TextBlock Text="Drawer:" FontWeight="SemiBold" FontSize="14" Margin="0,0,4,0"/>
+                    <TextBlock Text="{Binding IsDrawerOpen, Converter={StaticResource BooleanToStringConverter}}" 
+                               FontSize="14" FontWeight="Bold">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsDrawerOpen}" Value="True">
+                                        <Setter Property="Foreground" Value="#10B981"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsDrawerOpen}" Value="False">
+                                        <Setter Property="Foreground" Value="#EF4444"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
 
-                <!-- Table Selection Button -->
                 <Button Grid.Column="1"
                         Content="📍 Select Table"
                         Command="{Binding SelectTableCommand}"
@@ -710,7 +710,6 @@
                         Padding="10,6"
                         Margin="0,0,12,0"/>
 
-                <!-- Print Receipt Button -->
                 <Button Grid.Column="3"
                         Content="🖨️ Print" 
                         Command="{Binding PrintReceiptCommand}"
@@ -721,7 +720,6 @@
                         FontWeight="Bold"
                         Margin="0,0,10,0"/>
 
-                <!-- Complete Sale Button -->
                 <Button Grid.Column="4"
                         Content="Complete Sale" 
                         Command="{Binding CheckoutCommand}"
@@ -734,7 +732,6 @@
             </Grid>
         </Border>
 
-        <!-- Status Bar -->
         <Border Grid.Row="2" 
                 Background="#F1F5F9" 
                 BorderBrush="#E2E8F0" 

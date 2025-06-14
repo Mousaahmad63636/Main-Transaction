@@ -3,36 +3,42 @@ using System.Globalization;
 using System.Windows;
 using System.Windows.Data;
 
-namespace QuickTechPOS
+namespace QuickTechPOS.Converters
 {
     /// <summary>
-    /// Converts a boolean value to a Visibility value (true becomes Visible, false becomes Collapsed)
+    /// Converter that converts boolean to Visibility with optional inversion
     /// </summary>
     public class BooleanToVisibilityConverter : IValueConverter
     {
-        /// <summary>
-        /// Converts a boolean to a Visibility (true to Visible, false to Collapsed)
-        /// </summary>
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is bool boolValue)
             {
+                // Check if we should invert the logic
+                bool invert = parameter?.ToString()?.ToLower() == "invert";
+
+                if (invert)
+                    boolValue = !boolValue;
+
                 return boolValue ? Visibility.Visible : Visibility.Collapsed;
             }
-
             return Visibility.Collapsed;
         }
 
-        /// <summary>
-        /// Converts a Visibility to a boolean (Visible to true, Collapsed to false)
-        /// </summary>
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
         {
             if (value is Visibility visibility)
             {
-                return visibility == Visibility.Visible;
-            }
+                bool result = visibility == Visibility.Visible;
 
+                // Check if we should invert the logic
+                bool invert = parameter?.ToString()?.ToLower() == "invert";
+
+                if (invert)
+                    result = !result;
+
+                return result;
+            }
             return false;
         }
     }

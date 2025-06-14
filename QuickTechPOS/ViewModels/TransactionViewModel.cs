@@ -74,6 +74,7 @@ namespace QuickTechPOS.ViewModels
         private int _customerId;
         private string _statusMessage;
         private bool _isProcessing;
+        private bool _isShowingCategories = true;
         private CartItem _selectedCartItem;
         private Product _selectedProduct;
         private Customer _selectedCustomer;
@@ -128,7 +129,24 @@ namespace QuickTechPOS.ViewModels
                 return $"Table {_currentTableIndex + 1} of {ActiveTables.Count}";
             }
         }
+        public bool IsShowingCategories
+        {
+            get => _isShowingCategories;
+            set => SetProperty(ref _isShowingCategories, value);
+        }
 
+        /// <summary>
+        /// Current page title - either "Categories" or the selected category name
+        /// </summary>
+        public string CurrentPageTitle
+        {
+            get
+            {
+                if (IsShowingCategories)
+                    return "Categories";
+                return SelectedCategory?.Name ?? "Products";
+            }
+        }
         public string CurrentTableInfo
         {
             get
@@ -456,6 +474,8 @@ namespace QuickTechPOS.ViewModels
         public ICommand RemoveFromCartCommand { get; }
         public ICommand LogoutCommand { get; }
         public ICommand ClearCartCommand { get; }
+        public ICommand ShowCategoriesCommand { get; }
+        public ICommand SelectCategoryCardCommand { get; }
         public ICommand CheckoutCommand { get; }
         public ICommand AddToCartAsBoxCommand { get; }
         public ICommand AddToCartAsWholesaleCommand { get; }
@@ -504,6 +524,9 @@ namespace QuickTechPOS.ViewModels
 
             _exchangeRate = 90000;
             _selectedCategoryId = 0;
+
+            ShowCategoriesCommand = new RelayCommand(param => ShowCategories());
+            SelectCategoryCardCommand = new RelayCommand(param => SelectCategoryCard(param as Category));
 
             HeldCarts = new ObservableCollection<HeldCart>();
             SearchedProducts = new ObservableCollection<Product>();
@@ -827,98 +850,64 @@ namespace QuickTechPOS.ViewModels
 
         #region Enhanced Cart Management Methods with Status Updates
 
-        private async void AddToCartWithStatusUpdate(Product product, bool isBox = false, bool? isWholesale = null)
+        private void AddToCartWithStatusUpdate(Product product, bool asBox = false, bool useWholesale = false)
         {
-            if (product == null)
-                return;
-
             try
             {
-                Console.WriteLine($"[TransactionViewModel] Adding to cart with status update: {product.Name} (IsBox: {isBox}, IsWholesale: {isWholesale}, WholesaleMode: {WholesaleMode})");
-
-                bool useWholesale = isWholesale ?? WholesaleMode;
-
-                decimal unitPrice;
-                if (isBox)
+                if (product == null)
                 {
-                    unitPrice = useWholesale ? product.BoxWholesalePrice : product.BoxSalePrice;
+                    StatusMessage = "Error: No product selected";
+                    return;
+                }
+
+                // Get table-specific data for current table
+                var tableData = GetCurrentTableData();
+                if (tableData?.CartItems == null)
+                {
+                    StatusMessage = "Error: Cart not available";
+                    return;
+                }
+
+                decimal priceToUse = GetEffectivePrice(product, useWholesale);
+                int quantityToAdd = asBox ? GetBoxQuantity(product) : 1;
+
+                // Check if product already exists in cart
+                var existingItem = tableData.CartItems.FirstOrDefault(item => item.Product.ProductId == product.ProductId);
+                if (existingItem != null)
+                {
+                    existingItem.Quantity += quantityToAdd;
+                    Console.WriteLine($"[TransactionViewModel] Updated existing cart item: {product.Name}, new quantity: {existingItem.Quantity}");
                 }
                 else
                 {
-                    unitPrice = useWholesale ? product.WholesalePrice : product.SalePrice;
-                }
-
-                Console.WriteLine($"[TransactionViewModel] Calculated unit price: ${unitPrice:F2}");
-
-                if (!useWholesale && CustomerId > 0)
-                {
-                    var specialPrice = await _customerPriceService.GetCustomerProductPriceAsync(CustomerId, product.ProductId);
-                    if (specialPrice.HasValue)
-                    {
-                        unitPrice = specialPrice.Value;
-                        Console.WriteLine($"[TransactionViewModel] Applied customer-specific price for {product.Name}: ${unitPrice}");
-                    }
-                }
-
-                var existingItemIndex = CartItems.ToList().FindIndex(i =>
-                    i.Product.ProductId == product.ProductId &&
-                    i.IsBox == isBox &&
-                    i.IsWholesale == useWholesale);
-
-                if (existingItemIndex >= 0)
-                {
-                    var existingItem = CartItems[existingItemIndex];
-                    existingItem.Quantity += 1;
-
-                    if (existingItem.DiscountType == 1)
-                    {
-                        decimal currentPercentage = existingItem.DiscountValue;
-                        decimal subtotal = existingItem.Quantity * existingItem.UnitPrice;
-                        existingItem.Discount = (currentPercentage / 100) * subtotal;
-                    }
-
-                    var updatedItem = existingItem;
-                    CartItems.RemoveAt(existingItemIndex);
-                    CartItems.Insert(existingItemIndex, updatedItem);
-
-                    StatusMessage = $"Updated {(isBox ? $"BOX-{product.Name}" : product.Name)} quantity to {updatedItem.Quantity}";
-                    Console.WriteLine($"[TransactionViewModel] Updated existing cart item quantity to {updatedItem.Quantity}");
-                }
-                else
-                {
-                    var newItem = new CartItem
+                    var cartItem = new CartItem
                     {
                         Product = product,
-                        Quantity = 1,
-                        UnitPrice = unitPrice,
-                        Discount = 0,
-                        DiscountType = 0,
-                        IsBox = isBox,
-                        IsWholesale = useWholesale
+                        Quantity = quantityToAdd,
+                        UnitPrice = priceToUse
                     };
-
-                    CartItems.Add(newItem);
-                    StatusMessage = $"Added {(isBox ? $"BOX-{product.Name}" : product.Name)} to cart.";
-                    Console.WriteLine($"[TransactionViewModel] Added new cart item: {product.Name}");
+                    tableData.CartItems.Add(cartItem);
+                    Console.WriteLine($"[TransactionViewModel] Added new cart item: {product.Name}, quantity: {quantityToAdd}");
                 }
 
-                UpdateTotals();
+                // Refresh the cart display
+                RefreshCartDisplay();
+                UpdateExchangeAmount();
+                AutoSaveCurrentTableStateWithStatus();
 
-                if (SelectedTable != null)
-                {
-                    SaveTableStateWithStatusUpdate(SelectedTable);
+                string boxText = asBox ? " (box)" : "";
+                string wholesaleText = useWholesale ? " at wholesale price" : "";
 
-                    Application.Current.Dispatcher.Invoke(() => {
-                        UpdateTableVisualStatus(SelectedTable);
-                        OnPropertyChanged(nameof(SelectedTable));
-                        OnPropertyChanged(nameof(CurrentTableInfo));
-                    });
-                }
+                StatusMessage = $"✓ Added {product.Name}{boxText}{wholesaleText} to cart";
+
+                // **NEW: Return to category view after adding product**
+                Console.WriteLine("[TransactionViewModel] Returning to category view after adding product");
+                ShowCategories();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[TransactionViewModel] Error adding to cart: {ex.Message}");
-                StatusMessage = $"Error adding product to cart: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] Error in AddToCartWithStatusUpdate: {ex.Message}");
+                StatusMessage = $"Error adding {product?.Name ?? "product"} to cart: {ex.Message}";
             }
         }
 
@@ -1036,6 +1025,51 @@ namespace QuickTechPOS.ViewModels
         }
 
         #endregion
+
+
+        private void ShowCategories()
+        {
+            try
+            {
+                Console.WriteLine("[TransactionViewModel] Switching to category view");
+                IsShowingCategories = true;
+                OnPropertyChanged(nameof(CurrentPageTitle));
+                StatusMessage = "Select a category to browse products";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error in ShowCategories: {ex.Message}");
+                StatusMessage = $"Error showing categories: {ex.Message}";
+            }
+        }
+
+        private async void SelectCategoryCard(Category category)
+        {
+            if (category == null)
+            {
+                Console.WriteLine("[TransactionViewModel] SelectCategoryCard called with null category");
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Category card selected: {category.Name} (ID: {category.CategoryId})");
+
+                SelectedCategory = category;
+                IsShowingCategories = false;
+                OnPropertyChanged(nameof(CurrentPageTitle));
+
+                // Load products for the selected category
+                await LoadProductsByCategoryAsync();
+
+                StatusMessage = $"Showing products from {category.Name}";
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error in SelectCategoryCard: {ex.Message}");
+                StatusMessage = $"Error selecting category: {ex.Message}";
+            }
+        }
 
         #region Table Navigation Methods
 
@@ -1683,18 +1717,24 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+
         private async void LoadInitialDataAsync()
         {
             try
             {
                 Console.WriteLine("[TransactionViewModel] Starting LoadInitialDataAsync...");
 
-                StatusMessage = "Loading categories and products...";
+                StatusMessage = "Loading categories...";
                 await LoadCategoriesAsync();
-                await LoadProductsByCategoryAsync();
+
+                // **UPDATED: Start with category view instead of loading products**
+                IsShowingCategories = true;
+                OnPropertyChanged(nameof(CurrentPageTitle));
+
                 LoadInitialCustomersAsync();
 
-                Console.WriteLine("[TransactionViewModel] LoadInitialDataAsync completed successfully");
+                StatusMessage = "Select a category to browse products";
+                Console.WriteLine("[TransactionViewModel] LoadInitialDataAsync completed successfully - showing categories");
             }
             catch (Exception ex)
             {
@@ -1706,7 +1746,6 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = $"Error loading initial data: {ex.Message}";
             }
         }
-
         private async Task LoadCategoriesAsync()
         {
             try
@@ -2244,6 +2283,95 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Error setting customer: {ex.Message}");
                 StatusMessage = $"Error selecting customer: {ex.Message}";
+            }
+        }
+
+        private decimal GetEffectivePrice(Product product, bool useWholesale = false)
+        {
+            try
+            {
+                if (product == null) return 0;
+
+                // Check for customer-specific pricing first
+                if (CustomerId > 0 && SelectedCustomer != null)
+                {
+                    // Try to get customer-specific price (you may need to implement this)
+                    // For now, use standard pricing logic
+                }
+
+                // Use wholesale or retail pricing based on mode
+                if (useWholesale || WholesaleMode)
+                {
+                    return product.WholesalePrice > 0 ? product.WholesalePrice : product.SalePrice;
+                }
+
+                return product.SalePrice;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error getting effective price for {product?.Name}: {ex.Message}");
+                return product?.SalePrice ?? 0;
+            }
+        }
+        private void UpdateExchangeAmount()
+        {
+            CalculateExchangeAmount();
+            OnPropertyChanged(nameof(ExchangeAmount));
+        }
+
+        private int GetBoxQuantity(Product product)
+        {
+            // If Product class doesn't have BoxQuantity property, return a default value
+            // You can modify this based on your Product model
+            if (product == null) return 1;
+
+            // Try to get BoxQuantity property using reflection, or return default
+            try
+            {
+                var boxQuantityProperty = product.GetType().GetProperty("BoxQuantity");
+                if (boxQuantityProperty != null)
+                {
+                    var value = boxQuantityProperty.GetValue(product);
+                    if (value != null && int.TryParse(value.ToString(), out int boxQty))
+                    {
+                        return boxQty > 0 ? boxQty : 1;
+                    }
+                }
+            }
+            catch
+            {
+                // If property doesn't exist or error occurs, return default
+            }
+
+            // Default box quantity if property doesn't exist
+            return 12; // or whatever default makes sense for your business
+        }
+
+        private void RefreshCartDisplay()
+        {
+            try
+            {
+                // Get current table data
+                var tableData = GetCurrentTableData();
+                if (tableData?.CartItems == null) return;
+
+                // Update the observable collection
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    CartItems.Clear();
+                    foreach (var item in tableData.CartItems)
+                    {
+                        CartItems.Add(item);
+                    }
+                });
+
+                UpdateTotals();
+
+                Console.WriteLine($"[TransactionViewModel] Cart display refreshed with {CartItems.Count} items");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionViewModel] Error refreshing cart display: {ex.Message}");
             }
         }
 

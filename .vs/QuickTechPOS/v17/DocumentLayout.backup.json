@@ -1,9 +1,13 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\11-6-sunshine UI POS\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
+  "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\11-6-sunshine ui pos\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\transactionview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\most important\\15-6-sunshine ui pos standard\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
+      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\most important\\15-6-sunshine ui pos standard\\7-6-2025 pos page sunshine\\pos page\\quicktechpos\\views\\transactionview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\views\\transactionview.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
     }
   ],
@@ -19,10 +23,23 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
+              "RelativeDocumentMoniker": "QuickTechPOS\\appsettings.json",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\appsettings.json",
+              "RelativeToolTip": "QuickTechPOS\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2025-06-15T18:45:32.895Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "TransactionView.xaml",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\11-6-sunshine UI POS\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
               "RelativeDocumentMoniker": "QuickTechPOS\\Views\\TransactionView.xaml",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\11-6-sunshine UI POS\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\Views\\TransactionView.xaml",
               "RelativeToolTip": "QuickTechPOS\\Views\\TransactionView.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
               "WhenOpened": "2025-06-14T20:36:49.603Z",

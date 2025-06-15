@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "vdAM9svBMGg=",
+  "dgSpecHash": "o80DYWquDmw=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Mr. Ahmad\\Desktop\\11-6-sunshine UI POS\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
+  "projectFilePath": "C:\\Users\\Mr. Ahmad\\Desktop\\most important\\15-6-sunshine UI POS standard\\7-6-2025 POS PAGE Sunshine\\POS PAGE\\QuickTechPOS\\QuickTechPOS.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Mr. Ahmad\\.nuget\\packages\\azure.core\\1.25.0\\azure.core.1.25.0.nupkg.sha512",
     "C:\\Users\\Mr. Ahmad\\.nuget\\packages\\azure.identity\\1.7.0\\azure.identity.1.7.0.nupkg.sha512",

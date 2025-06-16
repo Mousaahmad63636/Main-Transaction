@@ -277,6 +277,7 @@
             </Style.Triggers>
         </Style>
 
+        <!-- Touch-Optimized Cart Item Template - IMPROVED for Better Decimal Input Experience -->
         <DataTemplate x:Key="TouchCartItemTemplate">
             <Border BorderBrush="#F1F5F9" BorderThickness="0,0,0,1" Padding="12,10">
                 <Grid>
@@ -287,61 +288,104 @@
                         <ColumnDefinition Width="30"/>
                     </Grid.ColumnDefinitions>
 
+                    <!-- Product Info -->
                     <StackPanel Grid.Column="0">
                         <TextBlock Text="{Binding Product.Name}" 
-                                   FontWeight="SemiBold" 
-                                   FontSize="13"
-                                   Foreground="#1E293B"
-                                   TextTrimming="CharacterEllipsis"
-                                   MaxWidth="150"/>
+                           FontWeight="SemiBold" 
+                           FontSize="13"
+                           Foreground="#1E293B"
+                           TextTrimming="CharacterEllipsis"
+                           MaxWidth="150"/>
                         <TextBlock Text="{Binding UnitPrice, StringFormat='${0:F2}'}" 
-                                   FontSize="11" 
-                                   Foreground="#64748B"/>
+                           FontSize="11"
+                           Foreground="#64748B"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Column="1" HorizontalAlignment="Center">
-                        <TextBlock Text="Qty" 
-                                   FontSize="10" 
-                                   Foreground="#94A3B8" 
-                                   TextAlignment="Center"/>
-                        <TextBlock Text="{Binding Quantity}" 
-                                   FontSize="13" 
-                                   FontWeight="SemiBold" 
-                                   Foreground="#1E293B" 
-                                   TextAlignment="Center"/>
-                    </StackPanel>
+                    <!-- IMPROVED: Better Quantity Input with Immediate Feedback -->
+                    <Border Grid.Column="1" 
+                    Background="White" 
+                    BorderBrush="#CBD5E1" 
+                    BorderThickness="2"
+                    CornerRadius="6"
+                    Height="32">
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="BorderBrush" Value="#CBD5E1"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding ElementName=QuantityTextBox, Path=IsFocused}" Value="True">
+                                        <Setter Property="BorderBrush" Value="#2563EB"/>
+                                        <Setter Property="BorderThickness" Value="3"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
 
-                    <StackPanel Grid.Column="2" HorizontalAlignment="Right">
-                        <TextBlock Text="Total" 
-                                   FontSize="10" 
-                                   Foreground="#94A3B8" 
-                                   TextAlignment="Right"/>
-                        <TextBlock Text="{Binding Total, StringFormat='${0:F2}'}" 
-                                   FontSize="13" 
-                                   FontWeight="Bold" 
-                                   Foreground="#1E293B" 
-                                   TextAlignment="Right"/>
-                    </StackPanel>
+                        <TextBox x:Name="QuantityTextBox"
+                         Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
+                         BorderThickness="0"
+                         Background="Transparent"
+                         VerticalContentAlignment="Center"
+                         HorizontalContentAlignment="Center"
+                         FontSize="13"
+                         FontWeight="SemiBold"
+                         TextAlignment="Center"
+                         MaxLength="8"
+                         LostFocus="Quantity_LostFocus"
+                         GotFocus="Quantity_GotFocus"
+                         KeyDown="Quantity_KeyDown"
+                         PreviewTextInput="Quantity_PreviewTextInput"
+                         ToolTip="Enter quantity: 1, 1.5, 1,4 (decimals allowed)">
 
-                    <Button Grid.Column="3"
-                            Content="×"
-                            Command="{Binding DataContext.RemoveFromCartCommand, 
-                                     RelativeSource={RelativeSource AncestorType=UserControl}}" 
-                            CommandParameter="{Binding}"
-                            Width="24" 
-                            Height="24"
-                            Background="#EF4444"
-                            Foreground="White"
-                            FontWeight="Bold"
-                            FontSize="14"
-                            BorderThickness="0"
-                            Cursor="Hand">
+                            <TextBox.Style>
+                                <Style TargetType="TextBox">
+                                    <Setter Property="Foreground" Value="#1E293B"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsFocused" Value="True">
+                                            <Setter Property="Background" Value="#F0F9FF"/>
+                                        </Trigger>
+                                        <!-- Validation state indicators -->
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="Invalid">
+                                            <Setter Property="Foreground" Value="#DC2626"/>
+                                            <Setter Property="Background" Value="#FEF2F2"/>
+                                        </DataTrigger>
+                                        <DataTrigger Binding="{Binding RelativeSource={RelativeSource Self}, Path=Tag}" Value="Valid">
+                                            <Setter Property="Foreground" Value="#059669"/>
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </Border>
+
+                    <!-- Total -->
+                    <TextBlock Grid.Column="2" 
+                       Text="{Binding Total, StringFormat='${0:F2}'}" 
+                       FontWeight="Bold" 
+                       FontSize="13"
+                       Foreground="#1E293B"
+                       VerticalAlignment="Center"
+                       HorizontalAlignment="Right"/>
+
+                    <!-- Remove Button -->
+                    <Button Grid.Column="3" 
+                    Content="×" 
+                    Command="{Binding DataContext.RemoveFromCartCommand, 
+                             RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding}"
+                    Width="24" 
+                    Height="24"
+                    Background="#EF4444"
+                    Foreground="White"
+                    FontWeight="Bold"
+                    FontSize="14"
+                    BorderThickness="0"
+                    Cursor="Hand">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}" 
-                                        CornerRadius="5">
+                                CornerRadius="5">
                                     <ContentPresenter HorizontalAlignment="Center" 
-                                                      VerticalAlignment="Center"/>
+                                              VerticalAlignment="Center"/>
                                 </Border>
                             </ControlTemplate>
                         </Button.Template>

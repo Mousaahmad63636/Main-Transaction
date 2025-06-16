@@ -198,45 +198,130 @@ namespace QuickTechPOS.Views
         {
             if (sender is TextBox textBox)
             {
-                if ((e.Key >= Key.D0 && e.Key <= Key.D9) ||
-                    (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9) ||
-                    e.Key == Key.OemPeriod ||
-                    e.Key == Key.Decimal ||
-                    e.Key == Key.Back ||
-                    e.Key == Key.Delete ||
-                    e.Key == Key.Tab ||
-                    e.Key == Key.Enter ||
-                    e.Key == Key.Left ||
-                    e.Key == Key.Right ||
-                    e.Key == Key.Home ||
-                    e.Key == Key.End)
+                try
                 {
-                    if (e.Key == Key.Enter)
+                    // Allow navigation and editing keys
+                    if (e.Key == Key.Back || e.Key == Key.Delete ||
+                        e.Key == Key.Left || e.Key == Key.Right ||
+                        e.Key == Key.Home || e.Key == Key.End ||
+                        e.Key == Key.Tab)
                     {
-                        textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-                        e.Handled = true;
+                        textBox.Tag = null; // Clear validation state
+                        return;
                     }
 
-                    if ((e.Key == Key.OemPeriod || e.Key == Key.Decimal) &&
-                        textBox.Text.Contains("."))
+                    // Enter key saves and moves to next
+                    if (e.Key == Key.Enter)
+                    {
+                        ProcessQuantityUpdate(textBox);
+                        textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    // Escape key cancels edit
+                    if (e.Key == Key.Escape)
+                    {
+                        if (textBox.DataContext is CartItem cartItem)
+                        {
+                            textBox.Text = FormatQuantity(cartItem.Quantity);
+                            textBox.Tag = null;
+                        }
+                        textBox.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+                        e.Handled = true;
+                        return;
+                    }
+
+                    // Block function keys and other special keys
+                    if (e.Key >= Key.F1 && e.Key <= Key.F24)
                     {
                         e.Handled = true;
                     }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[TransactionView] Error in KeyDown: {ex.Message}");
+                }
+            }
+        }
+
+        private async Task ProcessQuantityUpdate(TextBox textBox)
+        {
+            if (!(textBox.DataContext is CartItem cartItem))
+                return;
+
+            try
+            {
+                string inputText = textBox.Text?.Trim() ?? "";
+                Console.WriteLine($"[TransactionView] Processing quantity update for {cartItem.Product.Name}: '{inputText}'");
+
+                // Handle empty input
+                if (string.IsNullOrEmpty(inputText))
+                {
+                    textBox.Text = FormatQuantity(cartItem.Quantity);
+                    textBox.Tag = null;
+                    return;
+                }
+
+                if (TryParseQuantity(inputText, out decimal parsedQuantity))
+                {
+                    // Valid input
+                    decimal oldQuantity = cartItem.Quantity;
+                    cartItem.Quantity = parsedQuantity;
+
+                    // Format the display value
+                    textBox.Text = FormatQuantity(parsedQuantity);
+                    textBox.Tag = "Valid";
+
+                    Console.WriteLine($"[TransactionView] Quantity updated for {cartItem.Product.Name}: {oldQuantity} → {parsedQuantity}");
+
+                    // Update the cart and table status
+                    _viewModel.UpdateCartItemQuantityWithStatus(cartItem);
+                    await UpdateTableStatusForCurrentCart();
+                    ProvideHapticFeedback();
+
+                    // Clear validation state after a short delay
+                    var timer = new System.Windows.Threading.DispatcherTimer
+                    {
+                        Interval = TimeSpan.FromMilliseconds(1000)
+                    };
+                    timer.Tick += (s, e) =>
+                    {
+                        textBox.Tag = null;
+                        timer.Stop();
+                    };
+                    timer.Start();
                 }
                 else
                 {
-                    e.Handled = true;
+                    // Invalid input - show error and reset
+                    Console.WriteLine($"[TransactionView] Invalid quantity input: '{inputText}'. Resetting to previous value.");
+
+                    textBox.Tag = "Invalid";
+
+                    // Show error message
+                    string errorMessage = $"Invalid quantity '{inputText}'.\n\nPlease enter a number between {MIN_QUANTITY} and 999,999.\nExamples: 1, 1.5, 2,3";
+                    MessageBox.Show(errorMessage, "Invalid Quantity", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                    // Reset to previous valid value
+                    textBox.Text = FormatQuantity(cartItem.Quantity);
+
+                    // Keep focus and select all for easy correction
+                    textBox.Focus();
+                    textBox.SelectAll();
                 }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[TransactionView] Error processing quantity update: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"Quantity update error: {ex.Message}");
+
+                // Reset to safe state
+                textBox.Text = FormatQuantity(cartItem.Quantity);
+                textBox.Tag = null;
             }
         }
 
-        private void Quantity_GotFocus(object sender, RoutedEventArgs e)
-        {
-            if (sender is TextBox textBox)
-            {
-                textBox.SelectAll();
-            }
-        }
 
         private void OptimizeForPOSDisplay()
         {
@@ -462,23 +547,32 @@ namespace QuickTechPOS.Views
             if (string.IsNullOrWhiteSpace(input))
                 return false;
 
-            if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.CurrentCulture, out quantity))
+            try
             {
-                if (quantity >= MIN_QUANTITY && quantity <= 999999)
+                // First try with current culture (handles regional decimal separators)
+                if (decimal.TryParse(input, NumberStyles.Number, CultureInfo.CurrentCulture, out quantity))
                 {
-                    quantity = Math.Round(quantity, 2);
-                    return true;
+                    if (quantity >= MIN_QUANTITY && quantity <= 999999)
+                    {
+                        quantity = Math.Round(quantity, 2);
+                        return true;
+                    }
+                }
+
+                // Fallback: normalize comma to dot and try with invariant culture
+                var normalizedInput = input.Replace(',', '.');
+                if (decimal.TryParse(normalizedInput, NumberStyles.Number, CultureInfo.InvariantCulture, out quantity))
+                {
+                    if (quantity >= MIN_QUANTITY && quantity <= 999999)
+                    {
+                        quantity = Math.Round(quantity, 2);
+                        return true;
+                    }
                 }
             }
-
-            var invariantInput = input.Replace(',', '.');
-            if (decimal.TryParse(invariantInput, NumberStyles.Number, CultureInfo.InvariantCulture, out quantity))
+            catch (Exception ex)
             {
-                if (quantity >= MIN_QUANTITY && quantity <= 999999)
-                {
-                    quantity = Math.Round(quantity, 2);
-                    return true;
-                }
+                Console.WriteLine($"[TransactionView] Error parsing quantity '{input}': {ex.Message}");
             }
 
             return false;
@@ -486,13 +580,22 @@ namespace QuickTechPOS.Views
 
         private string FormatQuantity(decimal quantity)
         {
-            if (quantity == Math.Floor(quantity))
+            try
             {
-                return quantity.ToString("0");
+                // Show clean format: "1" for whole numbers, "1.5" for decimals
+                if (quantity == Math.Floor(quantity))
+                {
+                    return quantity.ToString("0", CultureInfo.CurrentCulture);
+                }
+                else
+                {
+                    return quantity.ToString("0.##", CultureInfo.CurrentCulture);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return quantity.ToString("0.##");
+                Console.WriteLine($"[TransactionView] Error formatting quantity {quantity}: {ex.Message}");
+                return quantity.ToString();
             }
         }
 
@@ -599,6 +702,64 @@ namespace QuickTechPOS.Views
             }
         }
 
+
+        private void Quantity_PreviewTextInput(object sender, TextCompositionEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                try
+                {
+                    // Get the full text that would result after this input
+                    string currentText = textBox.Text;
+                    int caretIndex = textBox.CaretIndex;
+                    string resultText = currentText.Insert(caretIndex, e.Text);
+
+                    // Allow decimal separators (both comma and dot)
+                    if (e.Text == "," || e.Text == ".")
+                    {
+                        // Only allow one decimal separator
+                        if (currentText.Contains(",") || currentText.Contains("."))
+                        {
+                            e.Handled = true;
+                            return;
+                        }
+                        return; // Allow the decimal separator
+                    }
+
+                    // Allow digits
+                    if (char.IsDigit(e.Text[0]))
+                    {
+                        // Test if the resulting text would be valid
+                        if (TryParseQuantity(resultText, out decimal testQuantity))
+                        {
+                            // Provide immediate visual feedback for valid input
+                            textBox.Tag = "Valid";
+                        }
+                        else
+                        {
+                            // Check if it's just too large or has too many decimals
+                            if (decimal.TryParse(resultText.Replace(',', '.'), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal parsed))
+                            {
+                                if (parsed > 999999)
+                                {
+                                    e.Handled = true; // Prevent input if too large
+                                    return;
+                                }
+                            }
+                        }
+                        return; // Allow the digit
+                    }
+
+                    // Block all other characters
+                    e.Handled = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[TransactionView] Error in PreviewTextInput: {ex.Message}");
+                    e.Handled = true;
+                }
+            }
+        }
         private void ApplyEnhancedScreenSizeOptimizations()
         {
             try
@@ -631,49 +792,33 @@ namespace QuickTechPOS.Views
             }
         }
 
+        private void Quantity_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                try
+                {
+                    // Select all text for easy replacement
+                    textBox.SelectAll();
+                    textBox.Tag = null; // Clear any validation state
+
+                    Console.WriteLine($"[TransactionView] Quantity field focused for editing");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[TransactionView] Error in GotFocus: {ex.Message}");
+                }
+            }
+        }
+
         private async void Quantity_LostFocus(object sender, RoutedEventArgs e)
         {
             if (sender is TextBox textBox && textBox.DataContext is CartItem cartItem)
             {
-                try
-                {
-                    string inputText = textBox.Text?.Trim() ?? "";
-                    Console.WriteLine($"[TransactionView] Quantity input received for {cartItem.Product.Name}: '{inputText}'");
-
-                    if (TryParseQuantity(inputText, out decimal parsedQuantity))
-                    {
-                        cartItem.Quantity = parsedQuantity;
-                        textBox.Text = FormatQuantity(parsedQuantity);
-
-                        Console.WriteLine($"[TransactionView] Quantity updated for {cartItem.Product.Name}: {cartItem.Quantity}");
-
-                        _viewModel.UpdateCartItemQuantityWithStatus(cartItem);
-                        await UpdateTableStatusForCurrentCart();
-                        ProvideHapticFeedback();
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[TransactionView] Invalid quantity input: '{inputText}'. Resetting to previous value.");
-
-                        textBox.Text = FormatQuantity(cartItem.Quantity);
-
-                        string errorMessage = $"Invalid quantity '{inputText}'. Please enter a decimal number ≥ {MIN_QUANTITY}.";
-                        MessageBox.Show(errorMessage, "Invalid Quantity", MessageBoxButton.OK, MessageBoxImage.Warning);
-
-                        textBox.Focus();
-                        textBox.SelectAll();
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[TransactionView] Quantity update error: {ex.Message}");
-                    System.Diagnostics.Debug.WriteLine($"Quantity update error: {ex.Message}");
-
-                    textBox.Text = FormatQuantity(cartItem.Quantity);
-                    textBox.GetBindingExpression(TextBox.TextProperty)?.UpdateTarget();
-                }
+                await ProcessQuantityUpdate(textBox);
             }
         }
+
 
         private async void Discount_LostFocus(object sender, RoutedEventArgs e)
         {

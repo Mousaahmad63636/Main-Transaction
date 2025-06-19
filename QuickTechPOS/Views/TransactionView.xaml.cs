@@ -710,30 +710,44 @@ namespace QuickTechPOS.Views
                 try
                 {
                     // Get the full text that would result after this input
-                    string currentText = textBox.Text;
+                    string currentText = textBox.Text ?? "";
                     int caretIndex = textBox.CaretIndex;
-                    string resultText = currentText.Insert(caretIndex, e.Text);
+
+                    // Handle selection - if text is selected, it will be replaced
+                    string selectedText = textBox.SelectedText ?? "";
+                    string textBeforeCaret = currentText.Substring(0, textBox.SelectionStart);
+                    string textAfterSelection = currentText.Substring(textBox.SelectionStart + textBox.SelectionLength);
+                    string resultText = textBeforeCaret + e.Text + textAfterSelection;
+
+                    Console.WriteLine($"[TransactionView] Input '{e.Text}', Current: '{currentText}', Result: '{resultText}'");
 
                     // Allow decimal separators (both comma and dot)
                     if (e.Text == "," || e.Text == ".")
                     {
-                        // Only allow one decimal separator
-                        if (currentText.Contains(",") || currentText.Contains("."))
+                        // Check if there's already a decimal separator in the text that will remain
+                        string textWithoutSelection = textBeforeCaret + textAfterSelection;
+                        bool alreadyHasDecimal = textWithoutSelection.Contains(",") || textWithoutSelection.Contains(".");
+
+                        if (alreadyHasDecimal)
                         {
+                            Console.WriteLine($"[TransactionView] Blocking decimal separator - already exists");
                             e.Handled = true;
                             return;
                         }
+
+                        Console.WriteLine($"[TransactionView] Allowing decimal separator");
                         return; // Allow the decimal separator
                     }
 
                     // Allow digits
                     if (char.IsDigit(e.Text[0]))
                     {
-                        // Test if the resulting text would be valid
+                        // Check if the resulting text would be valid
                         if (TryParseQuantity(resultText, out decimal testQuantity))
                         {
                             // Provide immediate visual feedback for valid input
                             textBox.Tag = "Valid";
+                            Console.WriteLine($"[TransactionView] Allowing digit - valid result: {testQuantity}");
                         }
                         else
                         {
@@ -742,15 +756,18 @@ namespace QuickTechPOS.Views
                             {
                                 if (parsed > 999999)
                                 {
+                                    Console.WriteLine($"[TransactionView] Blocking digit - result too large: {parsed}");
                                     e.Handled = true; // Prevent input if too large
                                     return;
                                 }
                             }
+                            Console.WriteLine($"[TransactionView] Allowing digit despite invalid parse");
                         }
                         return; // Allow the digit
                     }
 
                     // Block all other characters
+                    Console.WriteLine($"[TransactionView] Blocking character: '{e.Text}'");
                     e.Handled = true;
                 }
                 catch (Exception ex)

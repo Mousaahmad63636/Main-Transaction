@@ -247,11 +247,11 @@
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderBrush" Value="#E2E8F0"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="CornerRadius" Value="8"/>
             <Setter Property="Margin" Value="0,0,8,8"/>
             <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Height" Value="170"/>
-            <Setter Property="Width" Value="160"/>
+            <Setter Property="Height" Value="100"/>
+            <Setter Property="Width" Value="140"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect ShadowDepth="2" Direction="270" 
@@ -301,13 +301,13 @@
                            Foreground="#64748B"/>
                     </StackPanel>
 
-                    <!-- IMPROVED: Better Quantity Input with Immediate Feedback -->
+                    <!-- FIXED: Better Quantity Input with Proper Decimal Support -->
                     <Border Grid.Column="1" 
-                    Background="White" 
-                    BorderBrush="#CBD5E1" 
-                    BorderThickness="2"
-                    CornerRadius="6"
-                    Height="32">
+        Background="White" 
+        BorderBrush="#CBD5E1" 
+        BorderThickness="2"
+        CornerRadius="6"
+        Height="32">
                         <Border.Style>
                             <Style TargetType="Border">
                                 <Setter Property="BorderBrush" Value="#CBD5E1"/>
@@ -321,20 +321,20 @@
                         </Border.Style>
 
                         <TextBox x:Name="QuantityTextBox"
-                         Text="{Binding Quantity, UpdateSourceTrigger=PropertyChanged, Mode=TwoWay}"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         VerticalContentAlignment="Center"
-                         HorizontalContentAlignment="Center"
-                         FontSize="13"
-                         FontWeight="SemiBold"
-                         TextAlignment="Center"
-                         MaxLength="8"
-                         LostFocus="Quantity_LostFocus"
-                         GotFocus="Quantity_GotFocus"
-                         KeyDown="Quantity_KeyDown"
-                         PreviewTextInput="Quantity_PreviewTextInput"
-                         ToolTip="Enter quantity: 1, 1.5, 1,4 (decimals allowed)">
+             Text="{Binding Quantity, UpdateSourceTrigger=LostFocus, Mode=TwoWay}"
+             BorderThickness="0"
+             Background="Transparent"
+             VerticalContentAlignment="Center"
+             HorizontalContentAlignment="Center"
+             FontSize="13"
+             FontWeight="SemiBold"
+             TextAlignment="Center"
+             MaxLength="8"
+             LostFocus="Quantity_LostFocus"
+             GotFocus="Quantity_GotFocus"
+             KeyDown="Quantity_KeyDown"
+             PreviewTextInput="Quantity_PreviewTextInput"
+             ToolTip="Enter quantity: 1, 1.5, 1,4 (decimals allowed)">
 
                             <TextBox.Style>
                                 <Style TargetType="TextBox">
@@ -405,7 +405,6 @@
                 </Grid>
             </Border>
         </DataTemplate>
-
         <DataTemplate x:Key="TouchCategoryCardTemplate">
             <Border Style="{StaticResource TouchCategoryCard}">
                 <Border.InputBindings>
@@ -417,55 +416,40 @@
 
                 <Grid Margin="12">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0"
-                            HorizontalAlignment="Center" 
-                            VerticalAlignment="Top"
-                            CornerRadius="25"
-                            Width="50"
-                            Height="50"
-                            Background="#3B82F6"
-                            Margin="0,0,0,10">
-                        <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetterConverter}}"
-                                   FontSize="24"
-                                   FontWeight="Bold"
-                                   Foreground="White"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
-                    </Border>
-
-                    <StackPanel Grid.Row="1"
+                    <!-- Category Name - Primary Display -->
+                    <StackPanel Grid.Row="0"
                                 HorizontalAlignment="Center"
-                                VerticalAlignment="Center"
-                                Margin="0,0,0,10">
+                                VerticalAlignment="Center">
                         <TextBlock Text="{Binding Name}" 
                                    FontWeight="Bold" 
-                                   FontSize="14"
+                                   FontSize="16"
                                    Foreground="#1E293B"
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"
-                                   LineHeight="18"
-                                   MaxWidth="130"/>
+                                   LineHeight="20"
+                                   MaxWidth="120"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="2"
+                    <!-- Product Count -->
+                    <StackPanel Grid.Row="1"
                                 HorizontalAlignment="Center"
-                                Margin="0,0,0,8">
+                                Margin="0,0,0,4">
                         <TextBlock Text="{Binding ProductCount, StringFormat={}{0} Products}" 
                                    FontWeight="SemiBold" 
-                                   FontSize="13"
+                                   FontSize="12"
                                    Foreground="#64748B"
                                    TextAlignment="Center"/>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="3"
+                    <!-- Action Text -->
+                    <TextBlock Grid.Row="2"
                                Text="Tap to Browse"
-                               FontSize="11"
+                               FontSize="10"
                                FontStyle="Italic"
                                Foreground="#94A3B8"
                                HorizontalAlignment="Center"/>
@@ -473,6 +457,7 @@
             </Border>
         </DataTemplate>
 
+        <!-- Updated TouchProductCardTemplate - No Quantity Display -->
         <DataTemplate x:Key="TouchProductCardTemplate">
             <Border Style="{StaticResource TouchProductCard}">
                 <Border.InputBindings>
@@ -484,43 +469,16 @@
 
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
-                    <Border Grid.Row="0"
-                            HorizontalAlignment="Right" 
-                            VerticalAlignment="Top"
-                            CornerRadius="3"
-                            Padding="4,1"
-                            Margin="0,0,0,4">
-                        <Border.Style>
-                            <Style TargetType="Border">
-                                <Style.Triggers>
-                                    <DataTrigger Binding="{Binding StockStatus}" Value="In Stock">
-                                        <Setter Property="Background" Value="#10B981"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding StockStatus}" Value="Low Stock">
-                                        <Setter Property="Background" Value="#F59E0B"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding StockStatus}" Value="Out of Stock">
-                                        <Setter Property="Background" Value="#EF4444"/>
-                                    </DataTrigger>
-                                </Style.Triggers>
-                            </Style>
-                        </Border.Style>
-                        <TextBlock Text="{Binding CurrentStock}" 
-                                   FontSize="9" 
-                                   FontWeight="Bold" 
-                                   Foreground="White"/>
-                    </Border>
-
-                    <StackPanel Grid.Row="1"
+                    <!-- Product Name -->
+                    <StackPanel Grid.Row="0"
                                 HorizontalAlignment="Center"
-                                Margin="0,0,0,6"
-                                MaxHeight="48">
+                                VerticalAlignment="Center"
+                                Margin="0,4,0,8">
                         <TextBlock Text="{Binding Name}" 
                                    FontWeight="SemiBold" 
                                    FontSize="12"
@@ -528,10 +486,11 @@
                                    TextAlignment="Center"
                                    TextWrapping="Wrap"
                                    TextTrimming="CharacterEllipsis"
-                                   MaxHeight="36"/>
+                                   MaxHeight="48"/>
                     </StackPanel>
 
-                    <StackPanel Grid.Row="2"
+                    <!-- Price -->
+                    <StackPanel Grid.Row="1"
                                 HorizontalAlignment="Center"
                                 Margin="0,2,0,6">
                         <TextBlock Text="{Binding FormattedSalePrice}" 
@@ -541,7 +500,8 @@
                                    TextAlignment="Center"/>
                     </StackPanel>
 
-                    <TextBlock Grid.Row="3"
+                    <!-- Action Text -->
+                    <TextBlock Grid.Row="2"
                                Text="Tap to Add"
                                FontSize="10"
                                FontStyle="Italic"

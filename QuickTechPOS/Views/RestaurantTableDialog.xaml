@@ -117,10 +117,12 @@
         <Style x:Key="TableCard" TargetType="Border">
             <Setter Property="Background" Value="White"/>
             <Setter Property="BorderThickness" Value="2"/>
-            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Margin" Value="4"/>
-            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Padding" Value="8"/>
             <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Width" Value="140"/>
+            <Setter Property="Height" Value="120"/>
             <Setter Property="Effect">
                 <Setter.Value>
                     <DropShadowEffect ShadowDepth="1" Direction="270" 
@@ -165,8 +167,8 @@
         </Style>
 
         <Style x:Key="StatusBadge" TargetType="Border">
-            <Setter Property="CornerRadius" Value="12"/>
-            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Padding" Value="4,2"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="Available">
@@ -186,7 +188,7 @@
 
         <Style x:Key="StatusText" TargetType="TextBlock">
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontSize" Value="10"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Status}" Value="Available">
@@ -217,27 +219,28 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
 
+                    <!-- Table Number - Large and prominent -->
                     <TextBlock Grid.Row="0" 
                                Text="{Binding DisplayName}" 
                                FontWeight="Bold"
-                               FontSize="18"
+                               FontSize="24"
                                HorizontalAlignment="Center"
                                Foreground="#1E293B"
-                               Margin="0,0,0,8"/>
+                               Margin="0,0,0,4"/>
 
+                    <!-- Status Badge - Compact -->
                     <Border Grid.Row="1" 
                             Style="{StaticResource StatusBadge}"
-                            Margin="0,0,0,8">
+                            Margin="0,0,0,4">
                         <StackPanel Orientation="Horizontal" 
                                    HorizontalAlignment="Center">
-                            <TextBlock FontSize="14" 
+                            <TextBlock FontSize="10" 
                                       VerticalAlignment="Center"
-                                      Margin="0,0,4,0">
+                                      Margin="0,0,2,0">
                                 <TextBlock.Style>
                                     <Style TargetType="TextBlock">
                                         <Style.Triggers>
@@ -246,7 +249,7 @@
                                                 <Setter Property="Foreground" Value="#166534"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Status}" Value="Occupied">
-                                                <Setter Property="Text" Value="🔴"/>
+                                                <Setter Property="Text" Value="●"/>
                                                 <Setter Property="Foreground" Value="#991B1B"/>
                                             </DataTrigger>
                                             <DataTrigger Binding="{Binding Status}" Value="Reserved">
@@ -267,52 +270,41 @@
                         </StackPanel>
                     </Border>
 
-                    <TextBlock Grid.Row="2" 
-                               Text="{Binding Description}"
-                               FontSize="12"
-                               Foreground="#64748B"
-                               TextWrapping="Wrap"
-                               HorizontalAlignment="Center"
-                               Visibility="{Binding Description, Converter={StaticResource StringToVisibilityConverter}}"
-                               Margin="0,0,0,8"/>
+                    <!-- Spacer -->
+                    <Grid Grid.Row="2"/>
 
-                    <Grid Grid.Row="3"/>
-
-                    <StackPanel Grid.Row="4" 
-                                Orientation="Horizontal"
-                                HorizontalAlignment="Center">
-
-                        <Button Command="{Binding DataContext.SelectTableCommand, 
-                                         RelativeSource={RelativeSource AncestorType=Window}}"
-                                CommandParameter="{Binding}"
-                                Margin="0,0,4,0"
-                                FontSize="12"
-                                Padding="12,6">
-                            <Button.Style>
-                                <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding Status}" Value="Occupied">
-                                            <Setter Property="Content" Value="Continue Order"/>
-                                            <Setter Property="Background" Value="#EF4444"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Available">
-                                            <Setter Property="Content" Value="Select"/>
-                                            <Setter Property="Background" Value="#10B981"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Reserved">
-                                            <Setter Property="Content" Value="Use Reserved"/>
-                                            <Setter Property="Background" Value="#F59E0B"/>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding Status}" Value="Out of Service">
-                                            <Setter Property="Content" Value="Unavailable"/>
-                                            <Setter Property="Background" Value="#94A3B8"/>
-                                            <Setter Property="IsEnabled" Value="False"/>
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-                    </StackPanel>
+                    <!-- Select Button - Compact -->
+                    <Button Grid.Row="3"
+                            Command="{Binding DataContext.SelectTableCommand, 
+                                     RelativeSource={RelativeSource AncestorType=Window}}"
+                            CommandParameter="{Binding}"
+                            FontSize="10"
+                            Padding="8,4"
+                            HorizontalAlignment="Stretch">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource SuccessButton}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding Status}" Value="Occupied">
+                                        <Setter Property="Content" Value="Continue"/>
+                                        <Setter Property="Background" Value="#EF4444"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Available">
+                                        <Setter Property="Content" Value="Select"/>
+                                        <Setter Property="Background" Value="#10B981"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Reserved">
+                                        <Setter Property="Content" Value="Use"/>
+                                        <Setter Property="Background" Value="#F59E0B"/>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Status}" Value="Out of Service">
+                                        <Setter Property="Content" Value="N/A"/>
+                                        <Setter Property="Background" Value="#94A3B8"/>
+                                        <Setter Property="IsEnabled" Value="False"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
                 </Grid>
             </Border>
         </DataTemplate>

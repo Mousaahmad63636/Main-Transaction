@@ -56,48 +56,47 @@ namespace QuickTechPOS.Services
                 // Calculate debt information
                 bool hasDebt = transaction.PaidAmount < transaction.TotalAmount;
                 decimal debtAmount = hasDebt ? transaction.TotalAmount - transaction.PaidAmount : 0;
-                decimal newCustomerBalance = previousCustomerBalance + debtAmount;
-                bool isCustomerTransaction = customerId > 0 && transaction.CustomerName != "Walk-in Customer";
+                bool isCustomerTransaction = customerId > 0;
 
-                receipt.AppendLine("===================================");
-                receipt.AppendLine("             RECEIPT              ");
-                receipt.AppendLine("===================================");
-                receipt.AppendLine();
-
-                receipt.AppendLine($"          {companyName}          ");
+                // Header
+                receipt.AppendLine(companyName);
                 if (!string.IsNullOrEmpty(address))
                 {
-                    receipt.AppendLine($"      {address}       ");
+                    receipt.AppendLine(address);
                 }
                 if (!string.IsNullOrEmpty(phone))
                 {
-                    receipt.AppendLine($"         {phone}          ");
+                    receipt.AppendLine($"Tel: {phone}");
                 }
-                receipt.AppendLine();
-
-                receipt.AppendLine($"Transaction #: {transaction.TransactionId}");
                 receipt.AppendLine($"Date: {transaction.TransactionDate:yyyy-MM-dd HH:mm:ss}");
-                receipt.AppendLine($"Cashier: {transaction.CashierName}");
+                receipt.AppendLine($"Transaction #{transaction.TransactionId}");
 
-                // Show customer name for non-walk-in customers
+                if (transaction.CashierId != null)
+                {
+                    receipt.AppendLine($"Cashier: {transaction.CashierName}");
+                }
+
+                // Determine payment method display
+                string paymentMethodDisplay;
                 if (isCustomerTransaction)
                 {
-                    receipt.AppendLine($"Customer: {transaction.CustomerName}");
-                }
-
-                // Determine payment method display based on transaction type
-                string paymentMethodDisplay;
-                if (hasDebt && isCustomerTransaction)
-                {
-                    if (transaction.PaidAmount == 0)
+                    if (hasDebt)
                     {
-                        // Pure debt transaction - no cash paid
-                        paymentMethodDisplay = "Walk in customer";
+                        if (transaction.PaidAmount == 0)
+                        {
+                            // Full debt
+                            paymentMethodDisplay = "Account";
+                        }
+                        else
+                        {
+                            // Mixed payment - cash + debt
+                            paymentMethodDisplay = $"Mixed ({transaction.PaymentMethod} + Account)";
+                        }
                     }
                     else
                     {
-                        // Mixed payment - cash + debt
-                        paymentMethodDisplay = $"Mixed ({transaction.PaymentMethod} + Account)";
+                        // Regular cash transaction
+                        paymentMethodDisplay = transaction.PaymentMethod;
                     }
                 }
                 else
@@ -129,42 +128,16 @@ namespace QuickTechPOS.Services
 
                 receipt.AppendLine("------------------------------------");
 
-                // Payment breakdown section
+                // Payment breakdown section - Always show both USD and LBP amounts
                 receipt.AppendLine($"Subtotal:         {currency}{transaction.TotalAmount:F2}");
 
-                if (useAlternativeCurrency)
+                // Always show LBP amount when exchange rate is available
+                if (exchangeRate > 0)
                 {
                     decimal alternativeAmount = transaction.TotalAmount * exchangeRate;
-                    receipt.AppendLine($"Exchange Rate:     1 {currency} = {exchangeRate:F0} LBP");
+               
                     receipt.AppendLine($"Total (LBP):       LBP {alternativeAmount:F0}");
                 }
-
-                receipt.AppendLine();
-                receipt.AppendLine("------------- PAYMENT -------------");
-
-                if (hasDebt && isCustomerTransaction)
-                {
-                    // Show payment breakdown for debt transactions
-                    receipt.AppendLine($"Cash Paid:         {currency}{transaction.PaidAmount:F2}");
-                    receipt.AppendLine($"Amount on Account: {currency}{debtAmount:F2}");
-                    receipt.AppendLine($"Total Paid:        {currency}{transaction.TotalAmount:F2}");
-
-                    if (transaction.PaidAmount > transaction.TotalAmount)
-                    {
-                        decimal change = transaction.PaidAmount - transaction.TotalAmount;
-                        receipt.AppendLine($"Change:            {currency}{change:F2}");
-                    }
-                }
-                else
-                {
-                    // Regular cash transaction
-                    receipt.AppendLine($"Amount Paid:       {currency}{transaction.PaidAmount:F2}");
-                    if (transaction.ChangeAmount > 0)
-                    {
-                        receipt.AppendLine($"Change:            {currency}{transaction.ChangeAmount:F2}");
-                    }
-                }
-
 
 
                 receipt.AppendLine();
@@ -187,6 +160,7 @@ namespace QuickTechPOS.Services
 
             return receipt.ToString();
         }
+
 
         /// <summary>
         /// Prints a receipt to the default printer or saves to file
@@ -498,7 +472,6 @@ namespace QuickTechPOS.Services
                 return $"Error: {ex.Message} - Receipt queued for later printing";
             }
         }
-
         /// <summary>
         /// Creates a formatted receipt document for printing
         /// </summary>
@@ -534,123 +507,114 @@ namespace QuickTechPOS.Services
             // Calculate debt information
             bool hasDebt = transaction.PaidAmount < transaction.TotalAmount;
             decimal debtAmount = hasDebt ? transaction.TotalAmount - transaction.PaidAmount : 0;
-            decimal newCustomerBalance = previousCustomerBalance + debtAmount;
-            bool isCustomerTransaction = customerId > 0 && transaction.CustomerName != "Walk-in Customer";
+            bool isCustomerTransaction = customerId > 0;
 
+            // Header
             var header = new Paragraph
             {
                 TextAlignment = TextAlignment.Center,
-                Margin = new Thickness(0, 3, 0, 0)
+                Margin = new Thickness(0, 5, 0, 10)
             };
 
-            header.Inlines.Add(new Run(companyName)
+            // Try to load logo if path is provided
+            if (!string.IsNullOrWhiteSpace(logoPath) && File.Exists(logoPath))
             {
-                FontSize = 18,
-                FontWeight = FontWeights.Bold,
-                Foreground = Brushes.Black
-            });
-            header.Inlines.Add(new LineBreak());
-
-            try
-            {
-                if (!string.IsNullOrEmpty(logoPath))
+                try
                 {
                     BitmapImage logo = new BitmapImage();
-                    if (File.Exists(logoPath))
-                    {
-                        logo.BeginInit();
-                        logo.CacheOption = BitmapCacheOption.OnLoad;
-                        logo.UriSource = new Uri(logoPath);
-                        logo.EndInit();
-                        logo.Freeze();
+                    logo.BeginInit();
+                    logo.UriSource = new Uri(logoPath);
+                    logo.CacheOption = BitmapCacheOption.OnLoad;
+                    logo.EndInit();
+                    logo.Freeze();
 
-                        Image logoImage = new Image
-                        {
-                            Source = logo,
-                            Width = 150,
-                            Height = 70,
-                            Stretch = Stretch.Uniform,
-                            Margin = new Thickness(0, 5, 0, 5)
-                        };
-
-                        header.Inlines.Add(new InlineUIContainer(logoImage));
-                        header.Inlines.Add(new LineBreak());
-                    }
-                    else
+                    Image logoImage = new Image
                     {
-                        LoadDefaultLogo(header);
-                    }
+                        Source = logo,
+                        Width = 150,
+                        Height = 70,
+                        Stretch = Stretch.Uniform,
+                        Margin = new Thickness(0, 5, 0, 5)
+                    };
+
+                    header.Inlines.Add(new InlineUIContainer(logoImage));
+                    header.Inlines.Add(new LineBreak());
                 }
-                else
+                catch (Exception ex)
                 {
-                    LoadDefaultLogo(header);
+                    Debug.WriteLine($"Error loading logo image: {ex.Message}");
+                    // Just continue without logo
                 }
             }
-            catch (Exception ex)
+            else
             {
-                Debug.WriteLine($"Error loading logo image: {ex.Message}");
+                // Try to load default logo if no specific path
                 LoadDefaultLogo(header);
             }
 
+            header.Inlines.Add(new Run(companyName ?? "Company Name")
+            {
+                FontSize = 18,
+                FontWeight = FontWeights.Bold
+            });
+            header.Inlines.Add(new LineBreak());
+
             if (!string.IsNullOrWhiteSpace(address))
             {
-                header.Inlines.Add(new Run(address)
-                {
-                    FontSize = 12,
-                    FontWeight = FontWeights.Normal
-                });
+                header.Inlines.Add(new Run(address) { FontSize = 12 });
                 header.Inlines.Add(new LineBreak());
             }
 
             if (!string.IsNullOrWhiteSpace(phoneNumber))
             {
-                header.Inlines.Add(new Run(phoneNumber)
-                {
-                    FontSize = 12,
-                    FontWeight = FontWeights.Normal
-                });
+                header.Inlines.Add(new Run($"Tel: {phoneNumber}") { FontSize = 12 });
                 header.Inlines.Add(new LineBreak());
             }
 
             if (!string.IsNullOrWhiteSpace(email))
             {
-                header.Inlines.Add(new Run(email)
-                {
-                    FontSize = 11,
-                    FontWeight = FontWeights.Normal
-                });
+                header.Inlines.Add(new Run($"Email: {email}") { FontSize = 12 });
+                header.Inlines.Add(new LineBreak());
             }
 
             flowDocument.Blocks.Add(header);
+            flowDocument.Blocks.Add(CreateDivider());
 
             // Transaction details
-            var metaTable = new Table { FontSize = 11, CellSpacing = 0 };
-            metaTable.Columns.Add(new TableColumn { Width = new GridLength(100) });
-            metaTable.Columns.Add(new TableColumn { Width = GridLength.Auto });
+            var metaTable = new Table { FontSize = 12, CellSpacing = 0 };
+            metaTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
+            metaTable.Columns.Add(new TableColumn { Width = new GridLength(3, GridUnitType.Star) });
             metaTable.RowGroups.Add(new TableRowGroup());
-            AddMetaRow(metaTable, "Transaction #:", transactionId.ToString());
-            AddMetaRow(metaTable, "Date:", transaction.TransactionDate.ToString("MM/dd/yyyy hh:mm tt"));
-            AddMetaRow(metaTable, "Cashier:", transaction.CashierName);
 
-            // Show customer name for non-walk-in customers
-            if (isCustomerTransaction)
+            AddMetaRow(metaTable, "Transaction:", $"#{transactionId}");
+            AddMetaRow(metaTable, "Date:", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            if (!string.IsNullOrWhiteSpace(transaction.CashierName))
             {
-                AddMetaRow(metaTable, "Customer:", transaction.CustomerName);
+                AddMetaRow(metaTable, "Cashier:", transaction.CashierName);
             }
 
-            // Determine payment method display based on transaction type
+            // Determine payment method display
             string paymentMethodDisplay;
-            if (hasDebt && isCustomerTransaction)
+            if (isCustomerTransaction)
             {
-                if (transaction.PaidAmount == 0)
+                if (hasDebt)
                 {
-                    // Pure debt transaction - no cash paid
-                    paymentMethodDisplay = "Walk in Customer";
+                    if (transaction.PaidAmount == 0)
+                    {
+                        // Full debt
+                        paymentMethodDisplay = "Account";
+                    }
+                    else
+                    {
+                        // Mixed payment - cash + debt
+                        paymentMethodDisplay = $"Mixed ({transaction.PaymentMethod} + Account)";
+                    }
                 }
                 else
                 {
-                    // Mixed payment - cash + debt
-                    paymentMethodDisplay = $"Mixed ({transaction.PaymentMethod} + Account)";
+                    // Regular cash transaction
+                    paymentMethodDisplay = transaction.PaymentMethod;
                 }
             }
             else
@@ -698,9 +662,6 @@ namespace QuickTechPOS.Services
             paymentTable.Columns.Add(new TableColumn { Width = new GridLength(2, GridUnitType.Star) });
             paymentTable.RowGroups.Add(new TableRowGroup());
 
-            // Subtotal
-          //  AddTotalRow(paymentTable, "Subtotal:", $"${totalAmount:N2}");
-
             if (discountAmount > 0)
             {
                 AddTotalRow(paymentTable, "Discount:", $"-${discountAmount:N2}");
@@ -709,36 +670,17 @@ namespace QuickTechPOS.Services
             // Final total
             decimal finalTotal = Math.Max(0, totalAmount - discountAmount);
 
-            // Calculate in LBP if exchange rate is provided
-            decimal totalLBP = finalTotal * exchangeRate;
+            // Always show USD total first
+            AddTotalRow(paymentTable, "Total (USD):", $"${finalTotal:N2}", true);
 
-            // Payment breakdown
-            if (hasDebt && isCustomerTransaction)
-            {
-
-                AddTotalRow(paymentTable, "Total:", $"${finalTotal:N2}", true);
-
-                if (transaction.PaidAmount > finalTotal)
-                {
-                    decimal change = transaction.PaidAmount - finalTotal;
-                    AddTotalRow(paymentTable, "Change:", $"${change:N2}");
-                }
-            }
-            else
-            {
-
-            }
-
-            // Add LBP total if exchange rate is available
+            // Always show LBP total when exchange rate is available
             if (exchangeRate > 0)
             {
-                AddTotalRow(paymentTable, "Total (LBP):", $"{totalLBP:N0} LBP");
+                decimal totalLBP = finalTotal * exchangeRate;
+                AddTotalRow(paymentTable, "Total (LBP):", $"{totalLBP:N0} LBP", true);
             }
 
             flowDocument.Blocks.Add(paymentTable);
-
-         
-
             flowDocument.Blocks.Add(CreateDivider());
 
             // Footer
@@ -772,7 +714,6 @@ namespace QuickTechPOS.Services
 
             return flowDocument;
         }
-
         /// <summary>
         /// Attempts to load a default logo
         /// </summary>

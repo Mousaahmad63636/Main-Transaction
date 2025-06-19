@@ -1,0 +1,20 @@
+﻿QuickTechPOS
+
+
+winexe
+C#
+.cs
+C:\Users\Mr. Ahmad\Desktop\16-6-sunshine UI POS standard\QuickTechPOS\obj\Debug\net8.0-windows\
+QuickTechPOS
+none
+false
+TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR_GREATER;NET7_0_OR_GREATER;NET8_0_OR_GREATER;NETCOREAPP3_0_OR_GREATER;NETCOREAPP3_1_OR_GREATER;WINDOWS7_0_OR_GREATER
+C:\Users\Mr. Ahmad\Desktop\16-6-sunshine UI POS standard\QuickTechPOS\App.xaml
+18-1113368124
+11413424753
+86-687478580
+236-801797371
+MainView.xaml;MainWindow.xaml;Resources\StringResources.ar.xaml;Resources\StringResources.fr.xaml;Resources\StringResources.xaml;Views\AddCustomerDialog.xaml;Views\CashInDialog.xaml;Views\CashOutDialog.xaml;Views\CloseDrawerDialog.xaml;Views\CustomerSelectionDialog.xaml;Views\FailedTransactionRecoveryDialog.xaml;Views\LanguageSettingsDialog.xaml;Views\LoginView.xaml;Views\OpenDrawerDialog.xaml;Views\PrintJobStatusDialog.xaml;Views\RestaurantTableDialog.xaml;Views\RestoreCartDialog.xaml;Views\TransactionView.xaml;
+
+False
+

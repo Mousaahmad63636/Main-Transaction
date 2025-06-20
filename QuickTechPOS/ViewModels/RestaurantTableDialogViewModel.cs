@@ -191,6 +191,9 @@ namespace QuickTechPOS.ViewModels
 
         #region Public Methods
 
+        /// <summary>
+        /// UPDATED: Enhanced table loading with proper status synchronization
+        /// </summary>
         public async Task LoadTablesAsync()
         {
             try
@@ -203,7 +206,84 @@ namespace QuickTechPOS.ViewModels
                 IsLoading = true;
                 StatusMessage = "Loading restaurant tables...";
 
+                // CRITICAL FIX: Force refresh table statuses before loading
+                Console.WriteLine("[RestaurantTableDialogViewModel] Forcing table status refresh before loading...");
+
+                // Get fresh table data from database
                 var loadedTables = await _tableService.GetAllTablesAsync();
+
+                // ENHANCED FIX: Get real-time table states from active transactions
+                var activeTransactionViewModel = System.Windows.Application.Current.MainWindow?.DataContext as TransactionViewModel;
+
+                if (activeTransactionViewModel != null)
+                {
+                    Console.WriteLine("[RestaurantTableDialogViewModel] Found active TransactionViewModel - applying current table states");
+
+                    // Get all current table states in one call
+                    var tableStates = activeTransactionViewModel.GetAllTableStates();
+
+                    foreach (var table in loadedTables)
+                    {
+                        try
+                        {
+                            if (tableStates.ContainsKey(table.Id))
+                            {
+                                var (itemCount, correctStatus) = tableStates[table.Id];
+
+                                // Update table status if it doesn't match current reality
+                                if (table.Status != correctStatus)
+                                {
+                                    Console.WriteLine($"[RestaurantTableDialogViewModel] Updating table {table.DisplayName} status from '{table.Status}' to '{correctStatus}' (Items: {itemCount})");
+                                    table.Status = correctStatus;
+
+                                    // Persist the correct status to database asynchronously
+                                    _ = Task.Run(async () =>
+                                    {
+                                        try
+                                        {
+                                            await _tableService.UpdateTableStatusAsync(table.Id, correctStatus);
+                                            Console.WriteLine($"[RestaurantTableDialogViewModel] Persisted status update for table {table.Id}");
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine($"[RestaurantTableDialogViewModel] Error persisting status for table {table.Id}: {ex.Message}");
+                                        }
+                                    });
+                                }
+                            }
+                            else
+                            {
+                                // Table not in active transactions, should be Available
+                                if (table.Status == "Occupied")
+                                {
+                                    Console.WriteLine($"[RestaurantTableDialogViewModel] Table {table.DisplayName} has no active transaction but is marked Occupied - setting to Available");
+                                    table.Status = "Available";
+
+                                    _ = Task.Run(async () =>
+                                    {
+                                        try
+                                        {
+                                            await _tableService.UpdateTableStatusAsync(table.Id, "Available");
+                                            Console.WriteLine($"[RestaurantTableDialogViewModel] Cleared occupied status for empty table {table.Id}");
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            Console.WriteLine($"[RestaurantTableDialogViewModel] Error clearing status for table {table.Id}: {ex.Message}");
+                                        }
+                                    });
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[RestaurantTableDialogViewModel] Error updating status for table {table.Id}: {ex.Message}");
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("[RestaurantTableDialogViewModel] No active TransactionViewModel found - using database states");
+                }
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
@@ -222,10 +302,13 @@ namespace QuickTechPOS.ViewModels
 
                 StatusMessage = $"Loaded {Tables.Count} tables successfully";
                 _hasLoadedInitially = true;
+
+                Console.WriteLine($"[RestaurantTableDialogViewModel] Successfully loaded and synchronized {loadedTables.Count} tables");
             }
             catch (Exception ex)
             {
                 StatusMessage = $"Error loading tables: {ex.Message}";
+                Console.WriteLine($"[RestaurantTableDialogViewModel] Error in LoadTablesAsync: {ex.Message}");
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {

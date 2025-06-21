@@ -3,8 +3,12 @@
   "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\appsettings.json||{3B902123-F8A7-4915-9F01-361F908088D0}"
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\services\\receiptprinterservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\services\\receiptprinterservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -19,14 +23,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "appsettings.json",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\appsettings.json",
-              "RelativeDocumentMoniker": "QuickTechPOS\\appsettings.json",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\appsettings.json",
-              "RelativeToolTip": "QuickTechPOS\\appsettings.json",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
-              "WhenOpened": "2025-06-19T19:36:08.309Z",
+              "Title": "TransactionViewModel.cs",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "RelativeDocumentMoniker": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "RelativeToolTip": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
+              "ViewState": "AgIAAFcKAAAAAAAAAAAuwOEJAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T20:11:35.067Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ReceiptPrinterService.cs",
+              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\Services\\ReceiptPrinterService.cs",
+              "RelativeDocumentMoniker": "QuickTechPOS\\Services\\ReceiptPrinterService.cs",
+              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\Services\\ReceiptPrinterService.cs",
+              "RelativeToolTip": "QuickTechPOS\\Services\\ReceiptPrinterService.cs",
+              "ViewState": "AgIAAIsDAAAAAAAAAAAiwLQDAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-06-20T20:03:19.035Z",
               "EditorCaption": ""
             }
           ]

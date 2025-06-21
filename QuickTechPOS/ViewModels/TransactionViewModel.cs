@@ -2526,6 +2526,7 @@ private void SaveTableState(RestaurantTable table)
 
         #region Checkout and Transaction Methods
 
+
         private async Task CheckoutAsync()
         {
             try
@@ -2669,13 +2670,16 @@ private void SaveTableState(RestaurantTable table)
 
                 Console.WriteLine($"[TransactionViewModel] Transaction #{transaction.TransactionId} created successfully");
                 Console.WriteLine($"[TransactionViewModel] - Total Amount: {transaction.TotalAmount:C2}, Paid Amount: {transaction.PaidAmount:C2}, Payment Method: {transaction.PaymentMethod}");
+                // Get table information for receipt
+                string tableNumber = SelectedTable?.TableNumber.ToString() ?? null;
 
                 string receiptResult = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
                     transaction,
                     CartItems.ToList(),
                     customerIdForTransaction,
                     0,
-                    ExchangeRate);
+                    ExchangeRate,
+                    tableNumber);
 
                 bool printed = !receiptResult.Contains("cancelled") && !receiptResult.Contains("error");
                 Console.WriteLine($"[TransactionViewModel] Receipt printing result: {receiptResult}");
@@ -2742,6 +2746,14 @@ private void SaveTableState(RestaurantTable table)
                 IsProcessing = false;
             }
         }
+
+
+
+
+
+
+
+
 
         private string DeterminePaymentMethod(decimal totalAmount, decimal paidAmount, bool addToCustomerDebt, decimal amountToDebt)
         {

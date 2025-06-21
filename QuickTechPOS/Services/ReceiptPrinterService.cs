@@ -135,7 +135,7 @@ namespace QuickTechPOS.Services
                 if (exchangeRate > 0)
                 {
                     decimal alternativeAmount = transaction.TotalAmount * exchangeRate;
-               
+
                     receipt.AppendLine($"Total (LBP):       LBP {alternativeAmount:F0}");
                 }
 
@@ -302,8 +302,9 @@ namespace QuickTechPOS.Services
         /// <param name="customerId">Customer ID</param>
         /// <param name="previousCustomerBalance">Previous customer balance</param>
         /// <param name="exchangeRate">Exchange rate for alternative currency</param>
+        /// <param name="tableNumber">Table number for restaurant transactions</param>
         /// <returns>Status message indicating success or failure</returns>
-        public async Task<string> PrintTransactionReceiptWpfAsync(Transaction transaction, List<CartItem> cartItems, int customerId = 0, decimal previousCustomerBalance = 0, decimal exchangeRate = 90000)
+        public async Task<string> PrintTransactionReceiptWpfAsync(Transaction transaction, List<CartItem> cartItems, int customerId = 0, decimal previousCustomerBalance = 0, decimal exchangeRate = 90000, string tableNumber = null)
         {
             try
             {
@@ -432,7 +433,8 @@ namespace QuickTechPOS.Services
                             previousCustomerBalance,
                             exchangeRate,
                             customerId,
-                            logoPath);
+                            logoPath,
+                            tableNumber);
 
                         // Print the document
                         Console.WriteLine("Printing...");
@@ -491,7 +493,8 @@ namespace QuickTechPOS.Services
             decimal previousCustomerBalance,
             decimal exchangeRate,
             int customerId = 0,
-            string logoPath = null)
+            string logoPath = null,
+            string tableNumber = null)
         {
             var flowDocument = new FlowDocument
             {
@@ -588,6 +591,12 @@ namespace QuickTechPOS.Services
 
             AddMetaRow(metaTable, "Transaction:", $"#{transactionId}");
             AddMetaRow(metaTable, "Date:", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+
+            // Add table number if provided
+            if (!string.IsNullOrWhiteSpace(tableNumber))
+            {
+                AddMetaRow(metaTable, "Table:", tableNumber);
+            }
 
             if (!string.IsNullOrWhiteSpace(transaction.CashierName))
             {

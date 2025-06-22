@@ -9,7 +9,6 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-using QuickTechPOS;
 using System;
 using System.Diagnostics;
 using System.Windows;

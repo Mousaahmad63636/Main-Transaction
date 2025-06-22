@@ -19,12 +19,11 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
 using System.Threading;
 
 namespace QuickTechPOS.ViewModels
 {
-    public class TransactionViewModel : BaseViewModel
+    public class TransactionViewModel : BaseViewModel, IDisposable
     {
         #region Table-Specific Data Storage
 
@@ -32,6 +31,18 @@ namespace QuickTechPOS.ViewModels
         private ObservableCollection<RestaurantTable> _activeTables;
         private int _currentTableIndex = -1;
 
+        private class TableTransactionData
+        {
+            public List<CartItem> CartItems { get; set; } = new List<CartItem>();
+            public int CustomerId { get; set; } = 0;
+            public string CustomerName { get; set; } = "Walk-in Customer";
+            public Customer SelectedCustomer { get; set; }
+            public decimal PaidAmount { get; set; } = 0;
+            public bool AddToCustomerDebt { get; set; } = false;
+            public decimal AmountToDebt { get; set; } = 0;
+            public DateTime LastActivity { get; set; } = DateTime.Now;
+            public string Notes { get; set; } = string.Empty;
+        }
 
         #endregion
 
@@ -53,6 +64,8 @@ namespace QuickTechPOS.ViewModels
 
         #region Private Fields
 
+        private readonly SemaphoreSlim _tableSwitchLock = new SemaphoreSlim(1, 1);
+        private volatile bool _isLoadingTableState = false;
         private bool _wholesaleMode;
         private string _barcodeQuery;
         private int _selectedCategoryId;
@@ -125,9 +138,6 @@ namespace QuickTechPOS.ViewModels
             set => SetProperty(ref _isShowingCategories, value);
         }
 
-        /// <summary>
-        /// Current page title - either "Categories" or the selected category name
-        /// </summary>
         public string CurrentPageTitle
         {
             get
@@ -645,7 +655,6 @@ namespace QuickTechPOS.ViewModels
                     string oldStatus = table.Status;
                     table.Status = newStatus;
 
-                    // CRITICAL FIX: Update database immediately and synchronously where possible
                     try
                     {
                         bool dbSuccess = await PersistTableStatusToDatabase(table.Id, newStatus);
@@ -659,21 +668,18 @@ namespace QuickTechPOS.ViewModels
                         Console.WriteLine($"[TransactionViewModel] Error persisting table status: {ex.Message}");
                     }
 
-                    // Update active tables collection
                     var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
                     if (activeTable != null)
                     {
                         activeTable.Status = newStatus;
                     }
 
-                    // ENHANCED FIX: Force immediate UI refresh
                     Application.Current.Dispatcher.Invoke(() => {
                         OnPropertyChanged(nameof(SelectedTable));
                         OnPropertyChanged(nameof(ActiveTables));
                         OnPropertyChanged(nameof(CurrentTableInfo));
                         OnPropertyChanged(nameof(TableDisplayText));
 
-                        // Force collection refresh for better UI update
                         if (ActiveTables != null)
                         {
                             var temp = ActiveTables.ToList();
@@ -684,7 +690,6 @@ namespace QuickTechPOS.ViewModels
                             }
                         }
 
-                        // Notify any open table dialogs that status has changed
                         CommandManager.InvalidateRequerySuggested();
                     });
 
@@ -697,9 +702,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// Persists table status to database with immediate execution
-        /// </summary>
         private async Task<bool> PersistTableStatusToDatabase(int tableId, string status)
         {
             try
@@ -723,9 +725,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// Gets all current table states for dialog display
-        /// </summary>
         public Dictionary<int, (int ItemCount, string Status)> GetAllTableStates()
         {
             var tableStates = new Dictionary<int, (int ItemCount, string Status)>();
@@ -742,7 +741,6 @@ namespace QuickTechPOS.ViewModels
                     tableStates[tableId] = (itemCount, status);
                 }
 
-                // Include current table if it's not in the saved data yet
                 if (SelectedTable != null && !tableStates.ContainsKey(SelectedTable.Id))
                 {
                     int currentItemCount = CartItems?.Count ?? 0;
@@ -760,20 +758,17 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // ENHANCED FIX: Add method to force refresh all table statuses for external callers
         public async Task ForceRefreshAllTableStatusesAsync()
         {
             try
             {
                 Console.WriteLine("[TransactionViewModel] Force refreshing all table statuses...");
 
-                // Update current table if selected
                 if (SelectedTable != null)
                 {
                     await Task.Run(() => UpdateTableVisualStatus(SelectedTable));
                 }
 
-                // Update all active tables
                 if (ActiveTables != null)
                 {
                     var updateTasks = ActiveTables.Select(async table =>
@@ -784,7 +779,6 @@ namespace QuickTechPOS.ViewModels
                     await Task.WhenAll(updateTasks);
                 }
 
-                // Refresh UI
                 Application.Current.Dispatcher.Invoke(() => {
                     UpdateTableDisplayInformation();
                     OnPropertyChanged(nameof(SelectedTable));
@@ -945,7 +939,6 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
-                // Get table-specific data for current table
                 var tableData = GetCurrentTableData();
                 if (tableData?.CartItems == null)
                 {
@@ -956,7 +949,6 @@ namespace QuickTechPOS.ViewModels
                 decimal priceToUse = GetEffectivePrice(product, useWholesale);
                 int quantityToAdd = asBox ? GetBoxQuantity(product) : 1;
 
-                // Check if product already exists in cart
                 var existingItem = tableData.CartItems.FirstOrDefault(item => item.Product.ProductId == product.ProductId);
                 if (existingItem != null)
                 {
@@ -975,7 +967,6 @@ namespace QuickTechPOS.ViewModels
                     Console.WriteLine($"[TransactionViewModel] Added new cart item: {product.Name}, quantity: {quantityToAdd}");
                 }
 
-                // Refresh the cart display
                 RefreshCartDisplay();
                 UpdateExchangeAmount();
                 AutoSaveCurrentTableStateWithStatus();
@@ -985,7 +976,6 @@ namespace QuickTechPOS.ViewModels
 
                 StatusMessage = $"✓ Added {product.Name}{boxText}{wholesaleText} to cart";
 
-                // **NEW: Return to category view after adding product**
                 Console.WriteLine("[TransactionViewModel] Returning to category view after adding product");
                 ShowCategories();
             }
@@ -1144,7 +1134,6 @@ namespace QuickTechPOS.ViewModels
                 IsShowingCategories = false;
                 OnPropertyChanged(nameof(CurrentPageTitle));
 
-                // Load products for the selected category
                 await LoadProductsByCategoryAsync();
 
                 StatusMessage = $"Showing products from {category.Name}";
@@ -1181,20 +1170,6 @@ namespace QuickTechPOS.ViewModels
             return _tableTransactionData[table.Id];
         }
 
-        /// <summary>
-        /// Saves the current transaction state for the specified table with comprehensive data preservation.
-        /// This method performs a deep copy of all cart items and preserves all customer and payment information
-        /// to ensure table-specific transaction isolation and prevent data loss during table navigation.
-        /// </summary>
-        /// <param name="table">The restaurant table to save state for. If null, the method returns immediately.</param>
-        /// <remarks>
-        /// This method is critical for multi-table POS operations, ensuring that:
-        /// - Cart items are deep-copied to prevent reference issues
-        /// - Customer selections and payment data are preserved
-        /// - Table-specific pricing and discounts are maintained
-        /// - Transaction timestamps are updated for audit purposes
-        /// - Table status is synchronized immediately across the entire application
-        /// </remarks>
         private async void SaveTableState(RestaurantTable table)
         {
             if (table == null || _isLoadingTableState)
@@ -1207,7 +1182,6 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Starting SaveTableState for {table.DisplayName} (ID: {table.Id})...");
 
-                // Ensure table data structure exists in the dictionary
                 var tableData = EnsureTableData(table);
                 if (tableData == null)
                 {
@@ -1216,23 +1190,18 @@ namespace QuickTechPOS.ViewModels
                     return;
                 }
 
-                // Use DeepCopyHelper for proper cart item copying
                 tableData.CartItems = DeepCopyHelper.DeepCopyCartItems(CartItems);
 
-                // Save comprehensive customer information
                 tableData.CustomerId = CustomerId;
                 tableData.CustomerName = !string.IsNullOrWhiteSpace(CustomerName) ? CustomerName : "Walk-in Customer";
                 tableData.SelectedCustomer = SelectedCustomer;
 
-                // Save complete payment and transaction state
                 tableData.PaidAmount = PaidAmount;
                 tableData.AddToCustomerDebt = AddToCustomerDebt;
                 tableData.AmountToDebt = AmountToDebt;
 
-                // Update activity timestamp for audit and session management
                 tableData.LastActivity = DateTime.Now;
 
-                // Calculate summary information
                 var totalItemCount = tableData.CartItems.Count;
                 var totalValue = tableData.CartItems.Sum(item => item.Total);
                 var customerInfo = tableData.CustomerId > 0 ? $" (Customer: {tableData.CustomerName})" : " (Walk-in)";
@@ -1243,7 +1212,6 @@ namespace QuickTechPOS.ViewModels
                                  $"Debt: {(tableData.AddToCustomerDebt ? $"${tableData.AmountToDebt:F2}" : "None")}" +
                                  customerInfo);
 
-                // CRITICAL FIX: Immediate status synchronization
                 string newStatus = totalItemCount > 0 ? "Occupied" : "Available";
 
                 if (table.Status != newStatus)
@@ -1251,7 +1219,6 @@ namespace QuickTechPOS.ViewModels
                     string oldStatus = table.Status;
                     table.Status = newStatus;
 
-                    // Update database synchronously and wait for completion
                     try
                     {
                         bool dbSuccess = await PersistTableStatusToDatabase(table.Id, newStatus);
@@ -1265,21 +1232,18 @@ namespace QuickTechPOS.ViewModels
                         Console.WriteLine($"[TransactionViewModel] Error persisting table status: {ex.Message}");
                     }
 
-                    // Update active tables collection
                     var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
                     if (activeTable != null)
                     {
                         activeTable.Status = newStatus;
                     }
 
-                    // ENHANCED FIX: Force immediate UI refresh
                     Application.Current.Dispatcher.Invoke(() => {
                         OnPropertyChanged(nameof(SelectedTable));
                         OnPropertyChanged(nameof(ActiveTables));
                         OnPropertyChanged(nameof(CurrentTableInfo));
                         OnPropertyChanged(nameof(TableDisplayText));
 
-                        // Force collection refresh for better UI update
                         if (ActiveTables != null)
                         {
                             var temp = ActiveTables.ToList();
@@ -1290,17 +1254,14 @@ namespace QuickTechPOS.ViewModels
                             }
                         }
 
-                        // Notify any open table dialogs that status has changed
                         CommandManager.InvalidateRequerySuggested();
                     });
 
                     Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status from {oldStatus} to {newStatus} and persisted to database");
                 }
 
-                // Update synchronization service immediately
                 await TableStatusSynchronizationServiceSingleton.Instance.UpdateTableItemCountAsync(table.Id, totalItemCount);
 
-                // Force UI refresh for table-related properties
                 UpdateTableDisplayInformation();
 
                 Console.WriteLine($"[TransactionViewModel] SaveTableState completed successfully for {table.DisplayName}");
@@ -1318,7 +1279,6 @@ namespace QuickTechPOS.ViewModels
 
                 StatusMessage = $"Error saving table state: {ex.Message}";
 
-                // Attempt to maintain system stability by ensuring table data exists even after error
                 try
                 {
                     EnsureTableData(table);
@@ -1377,10 +1337,6 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        /// <summary>
-        /// Loads the transaction state for the currently selected table with proper deep copying
-        /// to prevent reference sharing issues between tables
-        /// </summary>
         private void LoadCurrentTableState()
         {
             if (SelectedTable == null)
@@ -1402,13 +1358,10 @@ namespace QuickTechPOS.ViewModels
             {
                 Console.WriteLine($"[TransactionViewModel] Loading state for {SelectedTable.DisplayName}...");
 
-                // Set loading flag to prevent recursive saves
                 _isLoadingTableState = true;
 
-                // Suspend UI updates during bulk changes
                 IsProcessing = true;
 
-                // CRITICAL FIX: Use deep copy for cart items to prevent reference sharing
                 Application.Current.Dispatcher.Invoke(() => {
                     CartItems.Clear();
                     var deepCopiedItems = DeepCopyHelper.DeepCopyCartItems(tableData.CartItems);
@@ -1418,23 +1371,19 @@ namespace QuickTechPOS.ViewModels
                     }
                 });
 
-                // Restore customer information
                 CustomerId = tableData.CustomerId;
                 CustomerName = tableData.CustomerName ?? "Walk-in Customer";
                 SelectedCustomer = tableData.SelectedCustomer;
 
-                // Restore payment information
                 PaidAmount = tableData.PaidAmount;
                 AddToCustomerDebt = tableData.AddToCustomerDebt;
                 AmountToDebt = tableData.AmountToDebt;
 
-                // Update totals and exchange amount
                 UpdateTotals();
                 CalculateExchangeAmount();
                 CalculateAmountToDebt();
                 RefreshAllProperties();
 
-                // Resume UI updates
                 IsProcessing = false;
 
                 Console.WriteLine($"[TransactionViewModel] Loaded state for {SelectedTable.DisplayName}: " +
@@ -1446,7 +1395,6 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Error loading table state: {ex.Message}");
                 StatusMessage = $"Error loading table state: {ex.Message}";
 
-                // Ensure UI is responsive even if loading fails
                 IsProcessing = false;
             }
             finally
@@ -1477,12 +1425,9 @@ namespace QuickTechPOS.ViewModels
             UpdateTotals();
         }
 
-        /// <summary>
-        /// Handles table selection changes with thread-safe switching and proper state management
-        /// </summary>
         private async void OnTableSelectionChanged(RestaurantTable previousTable)
         {
-            if (!await _tableSwitchLock.WaitAsync(5000)) // 5 second timeout
+            if (!await _tableSwitchLock.WaitAsync(5000))
             {
                 Console.WriteLine("[TransactionViewModel] Table switch timeout - operation cancelled");
                 StatusMessage = "Table switch timeout - please try again";
@@ -1494,14 +1439,12 @@ namespace QuickTechPOS.ViewModels
                 Console.WriteLine($"[TransactionViewModel] Table selection changed: " +
                                  $"{previousTable?.DisplayName ?? "None"} -> {SelectedTable?.DisplayName ?? "None"}");
 
-                // Save previous table state with thread safety
                 if (previousTable != null && !_isLoadingTableState)
                 {
                     await Task.Run(() => SaveTableState(previousTable));
                     Console.WriteLine($"[TransactionViewModel] Saved state for table: {previousTable.DisplayName}");
                 }
 
-                // Load new table state
                 if (SelectedTable != null)
                 {
                     LoadCurrentTableState();
@@ -1512,7 +1455,6 @@ namespace QuickTechPOS.ViewModels
                     ClearTransactionState();
                 }
 
-                // Refresh UI
                 UpdateTableDisplayInformation();
                 RefreshTransactionUI();
             }
@@ -1845,11 +1787,9 @@ namespace QuickTechPOS.ViewModels
                 if (SelectedTable != null)
                 {
                     SaveCurrentTableState();
-                    // Force visual status update before opening dialog
                     Task.Run(() => UpdateTableVisualStatus(SelectedTable));
                 }
 
-                // CRITICAL FIX: Refresh all table statuses before opening dialog
                 RefreshAllTableStatuses();
 
                 var (success, selectedTable) = RestaurantTableDialog.ShowTableSelectionDialog(
@@ -1878,7 +1818,6 @@ namespace QuickTechPOS.ViewModels
                 StatusMessage = "Loading categories...";
                 await LoadCategoriesAsync();
 
-                // **UPDATED: Start with category view instead of loading products**
                 IsShowingCategories = true;
                 OnPropertyChanged(nameof(CurrentPageTitle));
 
@@ -2443,14 +2382,10 @@ namespace QuickTechPOS.ViewModels
             {
                 if (product == null) return 0;
 
-                // Check for customer-specific pricing first
                 if (CustomerId > 0 && SelectedCustomer != null)
                 {
-                    // Try to get customer-specific price (you may need to implement this)
-                    // For now, use standard pricing logic
                 }
 
-                // Use wholesale or retail pricing based on mode
                 if (useWholesale || WholesaleMode)
                 {
                     return product.WholesalePrice > 0 ? product.WholesalePrice : product.SalePrice;
@@ -2472,11 +2407,8 @@ namespace QuickTechPOS.ViewModels
 
         private int GetBoxQuantity(Product product)
         {
-            // If Product class doesn't have BoxQuantity property, return a default value
-            // You can modify this based on your Product model
             if (product == null) return 1;
 
-            // Try to get BoxQuantity property using reflection, or return default
             try
             {
                 var boxQuantityProperty = product.GetType().GetProperty("BoxQuantity");
@@ -2491,22 +2423,18 @@ namespace QuickTechPOS.ViewModels
             }
             catch
             {
-                // If property doesn't exist or error occurs, return default
             }
 
-            // Default box quantity if property doesn't exist
-            return 12; // or whatever default makes sense for your business
+            return 12;
         }
 
         private void RefreshCartDisplay()
         {
             try
             {
-                // Get current table data
                 var tableData = GetCurrentTableData();
                 if (tableData?.CartItems == null) return;
 
-                // Update the observable collection
                 Application.Current.Dispatcher.Invoke(() =>
                 {
                     CartItems.Clear();
@@ -2674,7 +2602,6 @@ namespace QuickTechPOS.ViewModels
 
                 Console.WriteLine($"[TransactionViewModel] Transaction #{transaction.TransactionId} created successfully");
                 Console.WriteLine($"[TransactionViewModel] - Total Amount: {transaction.TotalAmount:C2}, Paid Amount: {transaction.PaidAmount:C2}, Payment Method: {transaction.PaymentMethod}");
-                // Get table information for receipt
                 string tableNumber = SelectedTable?.TableNumber.ToString() ?? null;
 
                 string receiptResult = await _receiptPrinterService.PrintTransactionReceiptWpfAsync(
@@ -3836,6 +3763,32 @@ namespace QuickTechPOS.ViewModels
         {
             Console.WriteLine("[TransactionViewModel] Logout requested");
             Application.Current.MainWindow.Close();
+        }
+
+        #endregion
+
+        #region Dispose Pattern
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!_disposed && disposing)
+            {
+                _tableSwitchLock?.Dispose();
+                _disposed = true;
+            }
+        }
+
+        ~TransactionViewModel()
+        {
+            Dispose(false);
         }
 
         #endregion

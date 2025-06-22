@@ -3,16 +3,8 @@
   "WorkspaceRootPath": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\viewmodels\\transactionviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}",
       "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\app.xaml||{F11ACC28-31D1-4C80-A34B-F4E09D3D753C}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|c:\\users\\mr. ahmad\\desktop\\16-6-sunshine ui pos standard\\quicktechpos\\services\\tablestatussynchronizationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{F9C58AF9-351C-472B-A00E-B9302CBEC20F}|QuickTechPOS\\QuickTechPOS.csproj|solutionrelative:quicktechpos\\services\\tablestatussynchronizationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -22,44 +14,18 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 2,
+          "SelectedChildIndex": 0,
           "Children": [
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 0,
               "Title": "App.xaml",
               "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\App.xaml",
               "RelativeDocumentMoniker": "QuickTechPOS\\App.xaml",
               "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\App.xaml",
               "RelativeToolTip": "QuickTechPOS\\App.xaml",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
-              "WhenOpened": "2025-06-21T20:06:48.39Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 2,
-              "Title": "TableStatusSynchronizationService.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\Services\\TableStatusSynchronizationService.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\Services\\TableStatusSynchronizationService.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\Services\\TableStatusSynchronizationService.cs",
-              "RelativeToolTip": "QuickTechPOS\\Services\\TableStatusSynchronizationService.cs",
-              "ViewState": "AgIAAG0BAAAAAAAAAAA7wKEBAAABAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-21T20:01:03.322Z",
-              "EditorCaption": ""
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "TransactionViewModel.cs",
-              "DocumentMoniker": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "RelativeDocumentMoniker": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "ToolTip": "C:\\Users\\Mr. Ahmad\\Desktop\\16-6-sunshine UI POS standard\\QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "RelativeToolTip": "QuickTechPOS\\ViewModels\\TransactionViewModel.cs",
-              "ViewState": "AgIAABcAAAAAAAAAAAAcwDEAAAAyAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2025-06-21T19:41:19.239Z",
+              "WhenOpened": "2025-06-22T19:37:45.202Z",
               "EditorCaption": ""
             }
           ]

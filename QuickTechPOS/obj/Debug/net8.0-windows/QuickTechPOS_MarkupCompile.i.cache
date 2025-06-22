@@ -12,9 +12,9 @@ TRACE;DEBUG;NET;NET8_0;NETCOREAPP;WINDOWS;WINDOWS7_0;NET5_0_OR_GREATER;NET6_0_OR
 C:\Users\Mr. Ahmad\Desktop\16-6-sunshine UI POS standard\QuickTechPOS\App.xaml
 18-1113368124
 11413424753
-88-1506639838
+91-465819005
 236-801797371
 MainView.xaml;MainWindow.xaml;Resources\StringResources.ar.xaml;Resources\StringResources.fr.xaml;Resources\StringResources.xaml;Views\AddCustomerDialog.xaml;Views\CashInDialog.xaml;Views\CashOutDialog.xaml;Views\CloseDrawerDialog.xaml;Views\CustomerSelectionDialog.xaml;Views\FailedTransactionRecoveryDialog.xaml;Views\LanguageSettingsDialog.xaml;Views\LoginView.xaml;Views\OpenDrawerDialog.xaml;Views\PrintJobStatusDialog.xaml;Views\RestaurantTableDialog.xaml;Views\RestoreCartDialog.xaml;Views\TransactionView.xaml;
 
-True
+False
 

@@ -20,6 +20,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
+using System.Threading;
+
 namespace QuickTechPOS.ViewModels
 {
     public class TransactionViewModel : BaseViewModel
@@ -30,18 +32,6 @@ namespace QuickTechPOS.ViewModels
         private ObservableCollection<RestaurantTable> _activeTables;
         private int _currentTableIndex = -1;
 
-        private class TableTransactionData
-        {
-            public List<CartItem> CartItems { get; set; } = new List<CartItem>();
-            public int CustomerId { get; set; } = 0;
-            public string CustomerName { get; set; } = "Walk-in Customer";
-            public Customer SelectedCustomer { get; set; }
-            public decimal PaidAmount { get; set; } = 0;
-            public bool AddToCustomerDebt { get; set; } = false;
-            public decimal AmountToDebt { get; set; } = 0;
-            public DateTime LastActivity { get; set; } = DateTime.Now;
-            public string Notes { get; set; } = string.Empty;
-        }
 
         #endregion
 
@@ -707,6 +697,9 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
+        /// <summary>
+        /// Persists table status to database with immediate execution
+        /// </summary>
         private async Task<bool> PersistTableStatusToDatabase(int tableId, string status)
         {
             try
@@ -730,7 +723,9 @@ namespace QuickTechPOS.ViewModels
             }
         }
 
-        // ENHANCED FIX: Add method to get all table data for the dialog
+        /// <summary>
+        /// Gets all current table states for dialog display
+        /// </summary>
         public Dictionary<int, (int ItemCount, string Status)> GetAllTableStates()
         {
             var tableStates = new Dictionary<int, (int ItemCount, string Status)>();
@@ -747,14 +742,22 @@ namespace QuickTechPOS.ViewModels
                     tableStates[tableId] = (itemCount, status);
                 }
 
+                // Include current table if it's not in the saved data yet
+                if (SelectedTable != null && !tableStates.ContainsKey(SelectedTable.Id))
+                {
+                    int currentItemCount = CartItems?.Count ?? 0;
+                    string currentStatus = currentItemCount > 0 ? "Occupied" : "Available";
+                    tableStates[SelectedTable.Id] = (currentItemCount, currentStatus);
+                }
+
                 Console.WriteLine($"[TransactionViewModel] Retrieved states for {tableStates.Count} tables");
+                return tableStates;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[TransactionViewModel] Error getting table states: {ex.Message}");
+                return new Dictionary<int, (int ItemCount, string Status)>();
             }
-
-            return tableStates;
         }
 
         // ENHANCED FIX: Add method to force refresh all table statuses for external callers
@@ -1178,190 +1181,154 @@ namespace QuickTechPOS.ViewModels
             return _tableTransactionData[table.Id];
         }
 
-/// <summary>
-/// Saves the current transaction state for the specified table with comprehensive data preservation.
-/// This method performs a deep copy of all cart items and preserves all customer and payment information
-/// to ensure table-specific transaction isolation and prevent data loss during table navigation.
-/// </summary>
-/// <param name="table">The restaurant table to save state for. If null, the method returns immediately.</param>
-/// <remarks>
-/// This method is critical for multi-table POS operations, ensuring that:
-/// - Cart items are deep-copied to prevent reference issues
-/// - Customer selections and payment data are preserved
-/// - Table-specific pricing and discounts are maintained
-/// - Transaction timestamps are updated for audit purposes
-/// - Table status is synchronized across the entire application
-/// </remarks>
-private void SaveTableState(RestaurantTable table)
-{
-    if (table == null)
-    {
-        Console.WriteLine("[TransactionViewModel] SaveTableState: Cannot save state for null table");
-        return;
-    }
-
-    try
-    {
-        Console.WriteLine($"[TransactionViewModel] Starting SaveTableState for {table.DisplayName} (ID: {table.Id})...");
-
-        // Ensure table data structure exists in the dictionary
-        var tableData = EnsureTableData(table);
-        if (tableData == null)
+        /// <summary>
+        /// Saves the current transaction state for the specified table with comprehensive data preservation.
+        /// This method performs a deep copy of all cart items and preserves all customer and payment information
+        /// to ensure table-specific transaction isolation and prevent data loss during table navigation.
+        /// </summary>
+        /// <param name="table">The restaurant table to save state for. If null, the method returns immediately.</param>
+        /// <remarks>
+        /// This method is critical for multi-table POS operations, ensuring that:
+        /// - Cart items are deep-copied to prevent reference issues
+        /// - Customer selections and payment data are preserved
+        /// - Table-specific pricing and discounts are maintained
+        /// - Transaction timestamps are updated for audit purposes
+        /// - Table status is synchronized immediately across the entire application
+        /// </remarks>
+        private async void SaveTableState(RestaurantTable table)
         {
-            Console.WriteLine($"[TransactionViewModel] Failed to ensure table data for {table.DisplayName}");
-            StatusMessage = $"Error: Unable to save state for {table.DisplayName}";
-            return;
-        }
-
-        // Clear existing cart items to prevent duplication
-        tableData.CartItems.Clear();
-
-        // Deep copy all cart items with complete property preservation
-        if (CartItems != null && CartItems.Count > 0)
-        {
-            Console.WriteLine($"[TransactionViewModel] Copying {CartItems.Count} cart items for {table.DisplayName}...");
-
-            foreach (var originalItem in CartItems)
+            if (table == null || _isLoadingTableState)
             {
-                if (originalItem?.Product == null)
+                Console.WriteLine("[TransactionViewModel] SaveTableState: Cannot save state for null table or while loading");
+                return;
+            }
+
+            try
+            {
+                Console.WriteLine($"[TransactionViewModel] Starting SaveTableState for {table.DisplayName} (ID: {table.Id})...");
+
+                // Ensure table data structure exists in the dictionary
+                var tableData = EnsureTableData(table);
+                if (tableData == null)
                 {
-                    Console.WriteLine("[TransactionViewModel] Warning: Skipping null cart item or item with null product");
-                    continue;
+                    Console.WriteLine($"[TransactionViewModel] Failed to ensure table data for {table.DisplayName}");
+                    StatusMessage = $"Error: Unable to save state for {table.DisplayName}";
+                    return;
                 }
 
-                // Create a complete deep copy of the cart item
-                var copiedItem = new CartItem
+                // Use DeepCopyHelper for proper cart item copying
+                tableData.CartItems = DeepCopyHelper.DeepCopyCartItems(CartItems);
+
+                // Save comprehensive customer information
+                tableData.CustomerId = CustomerId;
+                tableData.CustomerName = !string.IsNullOrWhiteSpace(CustomerName) ? CustomerName : "Walk-in Customer";
+                tableData.SelectedCustomer = SelectedCustomer;
+
+                // Save complete payment and transaction state
+                tableData.PaidAmount = PaidAmount;
+                tableData.AddToCustomerDebt = AddToCustomerDebt;
+                tableData.AmountToDebt = AmountToDebt;
+
+                // Update activity timestamp for audit and session management
+                tableData.LastActivity = DateTime.Now;
+
+                // Calculate summary information
+                var totalItemCount = tableData.CartItems.Count;
+                var totalValue = tableData.CartItems.Sum(item => item.Total);
+                var customerInfo = tableData.CustomerId > 0 ? $" (Customer: {tableData.CustomerName})" : " (Walk-in)";
+
+                Console.WriteLine($"[TransactionViewModel] Successfully saved state for {table.DisplayName}: " +
+                                 $"{totalItemCount} items, Total value: ${totalValue:F2}, " +
+                                 $"Paid: ${tableData.PaidAmount:F2}, " +
+                                 $"Debt: {(tableData.AddToCustomerDebt ? $"${tableData.AmountToDebt:F2}" : "None")}" +
+                                 customerInfo);
+
+                // CRITICAL FIX: Immediate status synchronization
+                string newStatus = totalItemCount > 0 ? "Occupied" : "Available";
+
+                if (table.Status != newStatus)
                 {
-                    // Core product and quantity information
-                    Product = originalItem.Product,
-                    Quantity = originalItem.Quantity,
-                    UnitPrice = originalItem.UnitPrice,
+                    string oldStatus = table.Status;
+                    table.Status = newStatus;
 
-                    // Discount and pricing information
-                    Discount = originalItem.Discount,
-                    DiscountType = originalItem.DiscountType,
-                    DiscountValue = originalItem.DiscountValue,
+                    // Update database synchronously and wait for completion
+                    try
+                    {
+                        bool dbSuccess = await PersistTableStatusToDatabase(table.Id, newStatus);
+                        if (!dbSuccess)
+                        {
+                            Console.WriteLine($"[TransactionViewModel] WARNING: Database update failed for table {table.Id}");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[TransactionViewModel] Error persisting table status: {ex.Message}");
+                    }
 
-                    // Product variant flags
-                    IsBox = originalItem.IsBox,
-                    IsWholesale = originalItem.IsWholesale,
+                    // Update active tables collection
+                    var activeTable = ActiveTables?.FirstOrDefault(t => t.Id == table.Id);
+                    if (activeTable != null)
+                    {
+                        activeTable.Status = newStatus;
+                    }
 
-                    // Ensure calculated properties are preserved
-                    // Note: Total property will be recalculated automatically via CartItem.Total getter
-                };
+                    // ENHANCED FIX: Force immediate UI refresh
+                    Application.Current.Dispatcher.Invoke(() => {
+                        OnPropertyChanged(nameof(SelectedTable));
+                        OnPropertyChanged(nameof(ActiveTables));
+                        OnPropertyChanged(nameof(CurrentTableInfo));
+                        OnPropertyChanged(nameof(TableDisplayText));
 
-                tableData.CartItems.Add(copiedItem);
+                        // Force collection refresh for better UI update
+                        if (ActiveTables != null)
+                        {
+                            var temp = ActiveTables.ToList();
+                            ActiveTables.Clear();
+                            foreach (var t in temp)
+                            {
+                                ActiveTables.Add(t);
+                            }
+                        }
 
-                Console.WriteLine($"[TransactionViewModel] Copied item: {originalItem.Product.Name} " +
-                                $"(Qty: {originalItem.Quantity}, Price: ${originalItem.UnitPrice:F2}, " +
-                                $"IsBox: {originalItem.IsBox}, IsWholesale: {originalItem.IsWholesale})");
+                        // Notify any open table dialogs that status has changed
+                        CommandManager.InvalidateRequerySuggested();
+                    });
+
+                    Console.WriteLine($"[TransactionViewModel] Updated table {table.DisplayName} status from {oldStatus} to {newStatus} and persisted to database");
+                }
+
+                // Update synchronization service immediately
+                await TableStatusSynchronizationServiceSingleton.Instance.UpdateTableItemCountAsync(table.Id, totalItemCount);
+
+                // Force UI refresh for table-related properties
+                UpdateTableDisplayInformation();
+
+                Console.WriteLine($"[TransactionViewModel] SaveTableState completed successfully for {table.DisplayName}");
             }
-        }
-        else
-        {
-            Console.WriteLine($"[TransactionViewModel] No cart items to save for {table.DisplayName}");
-        }
-
-        // Save comprehensive customer information
-        tableData.CustomerId = CustomerId;
-        tableData.CustomerName = !string.IsNullOrWhiteSpace(CustomerName) ? CustomerName : "Walk-in Customer";
-        tableData.SelectedCustomer = SelectedCustomer;
-
-        // Save complete payment and transaction state
-        tableData.PaidAmount = PaidAmount;
-        tableData.AddToCustomerDebt = AddToCustomerDebt;
-        tableData.AmountToDebt = AmountToDebt;
-
-        // Update activity timestamp for audit and session management
-        tableData.LastActivity = DateTime.Now;
-
-        // Calculate and log summary information
-        var totalItemCount = tableData.CartItems.Count;
-        var totalValue = tableData.CartItems.Sum(item => item.Total);
-        var customerInfo = tableData.CustomerId > 0 ? $" (Customer: {tableData.CustomerName})" : " (Walk-in)";
-
-        Console.WriteLine($"[TransactionViewModel] Successfully saved state for {table.DisplayName}: " +
-                         $"{totalItemCount} items, Total value: ${totalValue:F2}, " +
-                         $"Paid: ${tableData.PaidAmount:F2}, " +
-                         $"Debt: {(tableData.AddToCustomerDebt ? $"${tableData.AmountToDebt:F2}" : "None")}" +
-                         customerInfo);
-
-        // FIXED: Synchronize table status with the TableStatusSynchronizationService
-        // This ensures the red/green color marking is consistent across the entire application
-        try
-        {
-            // Update the table's status locally
-            string newStatus = totalItemCount > 0 ? "Occupied" : "Available";
-            bool statusChanged = table.Status != newStatus;
-            
-            if (statusChanged)
+            catch (Exception ex)
             {
-                Console.WriteLine($"[TransactionViewModel] Table {table.DisplayName} status changing from '{table.Status}' to '{newStatus}'");
-                table.Status = newStatus;
-            }
+                var errorMsg = $"Unexpected error saving state for {table.DisplayName}: {ex.Message}";
+                Console.WriteLine($"[TransactionViewModel] {errorMsg}");
+                Console.WriteLine($"[TransactionViewModel] Stack trace: {ex.StackTrace}");
 
-            // CRITICAL FIX: Synchronize status with the TableStatusSynchronizationService
-            // This ensures the table selection dialog shows the correct red/green colors
-            var syncService = Services.TableStatusSynchronizationServiceSingleton.Instance;
-            Task.Run(async () =>
-            {
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[TransactionViewModel] Inner exception: {ex.InnerException.Message}");
+                }
+
+                StatusMessage = $"Error saving table state: {ex.Message}";
+
+                // Attempt to maintain system stability by ensuring table data exists even after error
                 try
                 {
-                    await syncService.UpdateTableItemCountAsync(table.Id, totalItemCount);
-                    Console.WriteLine($"[TransactionViewModel] Successfully synchronized table {table.DisplayName} status with service: {totalItemCount} items -> {newStatus}");
+                    EnsureTableData(table);
                 }
-                catch (Exception syncEx)
+                catch (Exception ensureEx)
                 {
-                    Console.WriteLine($"[TransactionViewModel] Error synchronizing table status: {syncEx.Message}");
+                    Console.WriteLine($"[TransactionViewModel] Critical error: Cannot ensure table data after save failure: {ensureEx.Message}");
                 }
-            });
+            }
         }
-        catch (Exception statusEx)
-        {
-            Console.WriteLine($"[TransactionViewModel] Error updating table status: {statusEx.Message}");
-        }
-
-        // Force UI refresh for table-related properties
-        UpdateTableDisplayInformation();
-
-        Console.WriteLine($"[TransactionViewModel] SaveTableState completed successfully for {table.DisplayName}");
-    }
-    catch (ArgumentNullException ex)
-    {
-        var errorMsg = $"Invalid argument while saving table state: {ex.ParamName}";
-        Console.WriteLine($"[TransactionViewModel] {errorMsg} - {ex.Message}");
-        StatusMessage = errorMsg;
-    }
-    catch (InvalidOperationException ex)
-    {
-        var errorMsg = $"Invalid operation during table state save: {ex.Message}";
-        Console.WriteLine($"[TransactionViewModel] {errorMsg}");
-        StatusMessage = errorMsg;
-    }
-    catch (Exception ex)
-    {
-        var errorMsg = $"Unexpected error saving state for {table.DisplayName}: {ex.Message}";
-        Console.WriteLine($"[TransactionViewModel] {errorMsg}");
-        Console.WriteLine($"[TransactionViewModel] Stack trace: {ex.StackTrace}");
-
-        if (ex.InnerException != null)
-        {
-            Console.WriteLine($"[TransactionViewModel] Inner exception: {ex.InnerException.Message}");
-        }
-
-        StatusMessage = $"Error saving table state: {ex.Message}";
-
-        // Attempt to maintain system stability by ensuring table data exists even after error
-        try
-        {
-            EnsureTableData(table);
-        }
-        catch (Exception ensureEx)
-        {
-            Console.WriteLine($"[TransactionViewModel] Critical error: Cannot ensure table data after save failure: {ensureEx.Message}");
-        }
-    }
-}
 
         private void SaveCurrentTableState()
         {
@@ -1410,6 +1377,10 @@ private void SaveTableState(RestaurantTable table)
             }
         }
 
+        /// <summary>
+        /// Loads the transaction state for the currently selected table with proper deep copying
+        /// to prevent reference sharing issues between tables
+        /// </summary>
         private void LoadCurrentTableState()
         {
             if (SelectedTable == null)
@@ -1431,42 +1402,58 @@ private void SaveTableState(RestaurantTable table)
             {
                 Console.WriteLine($"[TransactionViewModel] Loading state for {SelectedTable.DisplayName}...");
 
+                // Set loading flag to prevent recursive saves
+                _isLoadingTableState = true;
+
+                // Suspend UI updates during bulk changes
                 IsProcessing = true;
 
+                // CRITICAL FIX: Use deep copy for cart items to prevent reference sharing
                 Application.Current.Dispatcher.Invoke(() => {
                     CartItems.Clear();
-                    foreach (var item in tableData.CartItems)
+                    var deepCopiedItems = DeepCopyHelper.DeepCopyCartItems(tableData.CartItems);
+                    foreach (var item in deepCopiedItems)
                     {
                         CartItems.Add(item);
                     }
                 });
 
+                // Restore customer information
                 CustomerId = tableData.CustomerId;
                 CustomerName = tableData.CustomerName ?? "Walk-in Customer";
                 SelectedCustomer = tableData.SelectedCustomer;
+
+                // Restore payment information
                 PaidAmount = tableData.PaidAmount;
                 AddToCustomerDebt = tableData.AddToCustomerDebt;
                 AmountToDebt = tableData.AmountToDebt;
 
+                // Update totals and exchange amount
                 UpdateTotals();
                 CalculateExchangeAmount();
                 CalculateAmountToDebt();
                 RefreshAllProperties();
 
-                Console.WriteLine($"[TransactionViewModel] Loaded state for {SelectedTable.DisplayName}: {CartItems.Count} items, Customer: {CustomerName}, Total: ${TotalAmount:F2}");
+                // Resume UI updates
+                IsProcessing = false;
+
+                Console.WriteLine($"[TransactionViewModel] Loaded state for {SelectedTable.DisplayName}: " +
+                                 $"{CartItems.Count} items, Total: ${TotalAmount:F2}, " +
+                                 $"Customer: {CustomerName}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[TransactionViewModel] Error loading table state: {ex.Message}");
                 StatusMessage = $"Error loading table state: {ex.Message}";
-                ClearTransactionState();
+
+                // Ensure UI is responsive even if loading fails
+                IsProcessing = false;
             }
             finally
             {
-                IsProcessing = false;
+                _isLoadingTableState = false;
             }
         }
-
         private void ClearTransactionState()
         {
             CartItems.Clear();
@@ -1490,18 +1477,31 @@ private void SaveTableState(RestaurantTable table)
             UpdateTotals();
         }
 
-        private void OnTableSelectionChanged(RestaurantTable previousTable)
+        /// <summary>
+        /// Handles table selection changes with thread-safe switching and proper state management
+        /// </summary>
+        private async void OnTableSelectionChanged(RestaurantTable previousTable)
         {
+            if (!await _tableSwitchLock.WaitAsync(5000)) // 5 second timeout
+            {
+                Console.WriteLine("[TransactionViewModel] Table switch timeout - operation cancelled");
+                StatusMessage = "Table switch timeout - please try again";
+                return;
+            }
+
             try
             {
-                Console.WriteLine($"[TransactionViewModel] Switching tables: {previousTable?.DisplayName ?? "None"} -> {SelectedTable?.DisplayName ?? "None"}");
+                Console.WriteLine($"[TransactionViewModel] Table selection changed: " +
+                                 $"{previousTable?.DisplayName ?? "None"} -> {SelectedTable?.DisplayName ?? "None"}");
 
-                if (previousTable != null)
+                // Save previous table state with thread safety
+                if (previousTable != null && !_isLoadingTableState)
                 {
-                    SaveTableState(previousTable);
+                    await Task.Run(() => SaveTableState(previousTable));
                     Console.WriteLine($"[TransactionViewModel] Saved state for table: {previousTable.DisplayName}");
                 }
 
+                // Load new table state
                 if (SelectedTable != null)
                 {
                     LoadCurrentTableState();
@@ -1512,6 +1512,7 @@ private void SaveTableState(RestaurantTable table)
                     ClearTransactionState();
                 }
 
+                // Refresh UI
                 UpdateTableDisplayInformation();
                 RefreshTransactionUI();
             }
@@ -1520,8 +1521,11 @@ private void SaveTableState(RestaurantTable table)
                 StatusMessage = $"Error switching tables: {ex.Message}";
                 Console.WriteLine($"[TransactionViewModel] Table switch error: {ex.Message}");
             }
+            finally
+            {
+                _tableSwitchLock.Release();
+            }
         }
-
         private void EnsureTableDataIsInitialized(RestaurantTable table)
         {
             if (table == null) return;

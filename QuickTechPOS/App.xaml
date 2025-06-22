@@ -29,6 +29,9 @@
                     <local:InverseBooleanToVisibilityConverter x:Key="InverseBooleanToVisibilityConverter"/>
                     <local:DifferenceToColorConverter x:Key="DifferenceToColorConverter"/>
                     <local:DifferenceToTextColorConverter x:Key="DifferenceToTextColorConverter"/>
+                    <converters:TableStatusToColorConverter x:Key="TableStatusToColorConverter"/>
+                    <converters:TableStatusToTextColorConverter x:Key="TableStatusToTextColorConverter"/>
+                    <converters:TableStatusToBorderColorConverter x:Key="TableStatusToBorderColorConverter"/>
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>

@@ -3570,6 +3570,9 @@ namespace QuickTechPOS.ViewModels
 
         #region Direct Printing Methods
 
+        // File: QuickTechPOS/ViewModels/TransactionViewModel.cs
+        // Location: Inside the #region Direct Printing Methods
+
         private async Task PrintReceiptDirectAsync()
         {
             try
@@ -3584,6 +3587,7 @@ namespace QuickTechPOS.ViewModels
                     IsProcessing = true;
 
                     string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string tableNumber = SelectedTable?.TableNumber.ToString() ?? null; // ← FIX: Added table number extraction
                     string originalCustomerName = LoadedTransaction.CustomerName;
                     LoadedTransaction.CustomerName = $"{originalCustomerName} - {tableInfo}";
 
@@ -3592,7 +3596,8 @@ namespace QuickTechPOS.ViewModels
                         CartItems.ToList(),
                         CustomerId,
                         0,
-                        ExchangeRate);
+                        ExchangeRate,
+                        tableNumber); // ← FIX: Added table number parameter
 
                     StatusMessage = $"Receipt for transaction #{LoadedTransaction.TransactionId} ({tableInfo}): {result}";
                     Console.WriteLine($"[TransactionViewModel] Receipt printed directly: {result}");
@@ -3613,6 +3618,7 @@ namespace QuickTechPOS.ViewModels
                     IsProcessing = true;
 
                     string tableInfo = SelectedTable?.DisplayName ?? "No Table";
+                    string tableNumber = SelectedTable?.TableNumber.ToString() ?? null; // ← FIX: Added table number extraction
                     string customerNameWithTable = $"{(CustomerName ?? "Walk-in Customer")} - {tableInfo}";
 
                     var previewTransaction = new Transaction
@@ -3636,7 +3642,8 @@ namespace QuickTechPOS.ViewModels
                         CartItems.ToList(),
                         CustomerId,
                         0,
-                        ExchangeRate);
+                        ExchangeRate,
+                        tableNumber); // ← FIX: Added table number parameter
 
                     StatusMessage = result.Replace("Transaction", $"Preview ({tableInfo})");
                     Console.WriteLine($"[TransactionViewModel] Cart preview printed directly: {result}");

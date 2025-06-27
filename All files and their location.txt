@@ -11,6 +11,7 @@ QuickTechPOS
 - MainWindow.xaml
 - MainWindow.xaml.cs
 - QuickTechPOS.csproj
+
 - QuickTechPOS.csproj.user
 
 QuickTechPOS\Helpers

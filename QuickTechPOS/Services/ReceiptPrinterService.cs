@@ -340,9 +340,9 @@ namespace QuickTechPOS.Services
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Error retrieving business settings: {ex.Message}");
-                        companyName = "QuickTech POS";
+                        companyName = "Sunshine Resort";
                         address = "123 Main Street";
-                        phoneNumber = "(555) 123-4567";
+                        phoneNumber = "71468848";
                         email = "info@quicktech.com";
                         footerText1 = "Sunshine Resort \n 71468848";
                         footerText2 = "Powered By QuickTech";
